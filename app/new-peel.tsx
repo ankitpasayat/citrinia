@@ -1,6 +1,8 @@
 import { createServerActionClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 
+export const dynamic = "force-dynamic";
+
 export default function NewPeel() {
   const addPeel = async (formData: FormData) => {
     "use server";

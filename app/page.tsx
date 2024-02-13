@@ -4,6 +4,8 @@ import AuthButtonServer from "./auth-button-server";
 import { redirect } from "next/navigation";
 import NewPeel from "./new-peel";
 
+export const dynamic = "force-dynamic";
+
 export default async function Home() {
   const supabase = createServerComponentClient<Database>({ cookies });
   const {
