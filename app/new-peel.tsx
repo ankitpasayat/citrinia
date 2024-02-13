@@ -4,7 +4,6 @@ import { cookies } from "next/headers";
 export default function NewPeel() {
   const addPeel = async (formData: FormData) => {
     "use server";
-    console.log("working on server");
     const title = String(formData.get("title"));
     const supabase = createServerActionClient<Database>({ cookies });
     const {
