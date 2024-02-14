@@ -30,9 +30,7 @@ export default function AuthButtonClient({
   };
 
   return session ? (
-    <>
-      <Button onClick={handleSignOut}>Logout</Button>
-    </>
+    <Button onClick={handleSignOut}>Logout</Button>
   ) : (
     <Button onClick={handleSignIn}>Login</Button>
   );
