@@ -1,6 +1,6 @@
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
-[UI is WIP]
+[UI is WIP, Demo at [citrinia.vercel.app](https://citrinia.vercel.app/)]
 
 ## Getting Started
 
