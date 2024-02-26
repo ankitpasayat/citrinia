@@ -1,6 +1,6 @@
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
-[UI is WIP, Demo [here](https://citrinia.vercel.app/)]
+[UI is WIP, Demo [here](https://citrinia.vercel.app/). ** SUPABASE PROJECT IS PAUSED AT THE MOMENT SO THIS LINE WON'T DO MUCH **]
 
 ## Getting Started
 
