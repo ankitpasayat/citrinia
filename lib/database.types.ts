@@ -9,6 +9,39 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      follows: {
+        Row: {
+          created_at: string
+          followee_id: string
+          follower_id: string
+        }
+        Insert: {
+          created_at?: string
+          followee_id: string
+          follower_id: string
+        }
+        Update: {
+          created_at?: string
+          followee_id?: string
+          follower_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "follows_followee_id_fkey"
+            columns: ["followee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "follows_follower_id_fkey"
+            columns: ["follower_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       likes: {
         Row: {
           created_at: string
@@ -30,14 +63,14 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "public_likes_peel_id_fkey"
+            foreignKeyName: "likes_peel_id_fkey"
             columns: ["peel_id"]
             isOneToOne: false
             referencedRelation: "peels"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "public_likes_user_id_fkey"
+            foreignKeyName: "likes_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -49,24 +82,34 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          parent_id: string | null
           title: string
           user_id: string
         }
         Insert: {
           created_at?: string
           id?: string
+          parent_id?: string | null
           title: string
           user_id: string
         }
         Update: {
           created_at?: string
           id?: string
+          parent_id?: string | null
           title?: string
           user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "public_peels_user_id_fkey"
+            foreignKeyName: "peels_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "peels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "peels_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -77,25 +120,28 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string
+          bio: string
           id: string
           name: string
           username: string
         }
         Insert: {
           avatar_url: string
+          bio?: string
           id: string
           name: string
           username: string
         }
         Update: {
           avatar_url?: string
+          bio?: string
           id?: string
           name?: string
           username?: string
         }
         Relationships: [
           {
-            foreignKeyName: "public_profiles_id_fkey"
+            foreignKeyName: "profiles_id_fkey"
             columns: ["id"]
             isOneToOne: true
             referencedRelation: "users"

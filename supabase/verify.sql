@@ -66,19 +66,24 @@ do $$ begin
 end $$;
 \echo check 5 ok: peels in supabase_realtime publication
 
--- 6. RLS enabled on all three tables, 6 policies, API roles have table grants.
+-- 6. RLS enabled on every table, 11 policies, API roles have table grants.
 do $$ begin
-  if exists (select 1 from pg_tables where schemaname = 'public' and tablename in ('profiles','peels','likes') and not rowsecurity) then
+  if exists (select 1 from pg_tables where schemaname = 'public' and tablename in ('profiles','peels','likes','follows') and not rowsecurity) then
     raise exception 'check 6 FAILED: RLS not enabled on every table';
   end if;
-  if (select count(*) from pg_policies where schemaname = 'public') <> 6 then
-    raise exception 'check 6 FAILED: expected 6 policies, found %', (select count(*) from pg_policies where schemaname = 'public');
+  if (select count(*) from pg_policies where schemaname = 'public') <> 11 then
+    raise exception 'check 6 FAILED: expected 11 policies, found %', (select count(*) from pg_policies where schemaname = 'public');
   end if;
   if not has_table_privilege('authenticated', 'public.peels', 'insert') or not has_table_privilege('anon', 'public.profiles', 'select') then
     raise exception 'check 6 FAILED: API roles lack table grants';
   end if;
+  if not has_table_privilege('authenticated', 'public.peels', 'delete')
+     or not has_table_privilege('authenticated', 'public.follows', 'insert')
+     or not has_column_privilege('authenticated', 'public.profiles', 'bio', 'update') then
+    raise exception 'check 6 FAILED: authenticated lacks the core-feature grants';
+  end if;
 end $$;
-\echo check 6 ok: RLS on, 6 policies, grants present
+\echo check 6 ok: RLS on, 11 policies, grants present
 
 -- 7. RLS behaviour as an authenticated user: own peel ok, spoofed user_id blocked, own like ok, spoofed like blocked.
 set local role authenticated;
@@ -113,6 +118,92 @@ do $$ begin
 end $$;
 reset role;
 \echo check 8 ok: anon sees profiles but not peels
+
+-- 9. Replies: parent_id must point at a real peel, and deleting a parent composts its replies.
+insert into public.peels (id, title, user_id) values ('10000000-0000-0000-0000-000000000002', 'parent peel', :'ada');
+insert into public.peels (id, title, user_id, parent_id)
+  values ('10000000-0000-0000-0000-000000000003', 'a reply', :'bob', '10000000-0000-0000-0000-000000000002');
+do $$ begin
+  insert into public.peels (title, user_id, parent_id)
+    values ('reply to nothing', '00000000-0000-0000-0000-000000000001', '1000000f-0000-0000-0000-00000000ffff');
+  raise exception 'check 9 FAILED: parent_id accepted an id that is not a peel';
+exception when foreign_key_violation then null; end $$;
+do $$ begin
+  if (select parent_id from public.peels where id = '10000000-0000-0000-0000-000000000003')
+       is distinct from '10000000-0000-0000-0000-000000000002'::uuid then
+    raise exception 'check 9 FAILED: reply did not keep its parent_id';
+  end if;
+  delete from public.peels where id = '10000000-0000-0000-0000-000000000002';
+  if exists (select 1 from public.peels where id = '10000000-0000-0000-0000-000000000003') then
+    raise exception 'check 9 FAILED: deleting a parent left its reply behind';
+  end if;
+end $$;
+\echo check 9 ok: replies reference a parent peel and cascade on delete
+
+-- 10. Follows: no following yourself, no following twice.
+insert into public.follows (follower_id, followee_id) values (:'ada', :'bob');
+do $$ begin
+  insert into public.follows (follower_id, followee_id)
+    values ('00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000001');
+  raise exception 'check 10 FAILED: self-follow accepted';
+exception when check_violation then null; end $$;
+do $$ begin
+  insert into public.follows (follower_id, followee_id)
+    values ('00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000002');
+  raise exception 'check 10 FAILED: duplicate follow accepted';
+exception when unique_violation then null; end $$;
+\echo check 10 ok: follows reject self and duplicates
+
+-- 11. Bio length: 160 accepted, 161 rejected.
+update public.profiles set bio = repeat('x', 160) where id = :'ada';
+do $$ begin
+  update public.profiles set bio = repeat('x', 161) where id = '00000000-0000-0000-0000-000000000001';
+  raise exception 'check 11 FAILED: 161-char bio accepted';
+exception when check_violation then null; end $$;
+\echo check 11 ok: bio capped at 160 characters
+
+-- 12. RLS as ada: she deletes her own peel and edits her own bio, and nobody else's.
+insert into public.peels (id, title, user_id) values ('10000000-0000-0000-0000-000000000004', 'bob''s peel', :'bob');
+insert into public.peels (id, title, user_id) values ('10000000-0000-0000-0000-000000000005', 'ada''s peel', :'ada');
+set local role authenticated;
+do $$ begin
+  perform set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000001', true);
+  perform set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-000000000001","role":"authenticated"}', true);
+end $$;
+do $$
+declare n int;
+begin
+  delete from public.peels where id = '10000000-0000-0000-0000-000000000005';
+  get diagnostics n = row_count;
+  if n <> 1 then raise exception 'check 12 FAILED: ada could not delete her own peel (% rows)', n; end if;
+  delete from public.peels where id = '10000000-0000-0000-0000-000000000004';
+  get diagnostics n = row_count;
+  if n <> 0 then raise exception 'check 12 FAILED: RLS let ada delete bob''s peel (% rows)', n; end if;
+  update public.profiles set name = 'Ada L.', bio = 'first programmer'
+    where id = '00000000-0000-0000-0000-000000000001';
+  get diagnostics n = row_count;
+  if n <> 1 then raise exception 'check 12 FAILED: ada could not update her own profile (% rows)', n; end if;
+  update public.profiles set bio = 'hacked' where id = '00000000-0000-0000-0000-000000000002';
+  get diagnostics n = row_count;
+  if n <> 0 then raise exception 'check 12 FAILED: RLS let ada update bob''s bio (% rows)', n; end if;
+end $$;
+do $$ begin
+  update public.profiles set username = 'notada' where id = '00000000-0000-0000-0000-000000000001';
+  raise exception 'check 12 FAILED: authenticated can overwrite the GitHub-owned username';
+exception when insufficient_privilege then null; end $$;
+reset role;
+\echo check 12 ok: delete and profile edit are scoped to auth.uid(), username stays GitHub-owned
+
+-- 13. Anonymous role cannot read follows.
+set local role anon;
+do $$ begin
+  begin
+    if (select count(*) from public.follows) <> 0 then raise exception 'check 13 FAILED: anon can read follows'; end if;
+  exception when insufficient_privilege then null; -- no grant at all is also "cannot read"
+  end;
+end $$;
+reset role;
+\echo check 13 ok: anon cannot read follows
 
 rollback;
 \echo ALL CHECKS PASSED

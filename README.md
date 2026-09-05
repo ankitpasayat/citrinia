@@ -3,18 +3,23 @@
 A tiny Twitter-style feed. Posts are called peels. Log in with GitHub, post a
 peel, like other people's peels, and watch new peels arrive live.
 
-Built with Next.js (App Router, server actions), Supabase (Postgres, auth,
-realtime), Tailwind, and shadcn/ui components.
+Built with Next.js 16 (App Router, Turbopack, server actions) and Supabase
+(Postgres, auth, realtime). Styling is [StyleX](https://stylexjs.com) compiled at
+build time through `babel.config.js` and `postcss.config.js`; there is no
+Tailwind and no component library. A custom Babel config disables `next/font`, so
+Shrikhand and Nunito are self-hosted in `public/fonts` and declared in
+`app/globals.css`. Menus and sheets use the platform's own `popover` attribute
+and `<dialog>` rather than a headless UI dependency.
 
 ## Setup
 
 ### 1. Supabase project
 
 1. Create a project at [supabase.com](https://supabase.com).
-2. Open the SQL editor and run
-   [`supabase/migrations/20260905000000_init.sql`](supabase/migrations/20260905000000_init.sql).
-   It creates the `profiles`, `peels`, and `likes` tables, the signup trigger,
-   row-level security policies, and enables realtime on `peels`.
+2. Open the SQL editor and run every file in
+   [`supabase/migrations/`](supabase/migrations) in filename order. They create
+   the `profiles`, `peels`, and `likes` tables, the signup trigger, row-level
+   security policies, and enable realtime on `peels`.
 
 ### 2. GitHub OAuth
 
@@ -44,8 +49,9 @@ Open <http://localhost:3000>, log in with GitHub, and post something.
 ## Checks
 
 ```bash
-pnpm lint
-npx tsc --noEmit
-pnpm build
-supabase/verify.sh   # applies the migration to a throwaway Postgres in Docker and asserts the schema behaves
+pnpm lint        # eslint, including the StyleX rules
+pnpm typecheck   # tsc --noEmit
+pnpm test        # node --test over lib/
+pnpm build       # next build (Turbopack)
+pnpm verify:db   # applies the migrations to a throwaway Postgres in Docker and asserts the schema behaves
 ```

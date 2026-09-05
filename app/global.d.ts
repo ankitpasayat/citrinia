@@ -1,13 +1,15 @@
 import { Database as DB } from "@/lib/database.types";
 
-type Peel = DB["public"]["Tables"]["peels"]["Row"];
-type Profile = DB["public"]["Tables"]["profiles"]["Row"];
+type PeelRow = DB["public"]["Tables"]["peels"]["Row"];
+type ProfileRow = DB["public"]["Tables"]["profiles"]["Row"];
 
 declare global {
   type Database = DB;
-  type PeelUnionAuthor = Peel & {
+  type Profile = ProfileRow;
+  type PeelUnionAuthor = PeelRow & {
     author: Profile;
     likes: number;
+    replies: number;
     user_has_liked_peel: boolean;
   };
 }
