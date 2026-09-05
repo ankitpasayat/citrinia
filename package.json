@@ -13,7 +13,8 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "node --experimental-strip-types --test \"lib/**/*.test.ts\"",
-    "verify:db": "supabase/verify.sh"
+    "verify:db": "supabase/verify.sh",
+    "e2e": "playwright test"
   },
   "dependencies": {
     "@stylexjs/stylex": "0.19.0",
@@ -24,6 +25,7 @@
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@stylexjs/babel-plugin": "0.19.0",
     "@stylexjs/eslint-plugin": "0.19.0",
     "@stylexjs/postcss-plugin": "0.19.0",

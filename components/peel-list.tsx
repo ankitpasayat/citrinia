@@ -5,6 +5,7 @@
 // changes so other people's peels arrive without a reload.
 import * as stylex from "@stylexjs/stylex";
 import { useRouter } from "next/navigation";
+import type { RealtimeChannel } from "@supabase/supabase-js";
 import { useEffect, useId, useOptimistic } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { EmptyState } from "./empty-state";
@@ -38,14 +39,31 @@ export function PeelList({
   useEffect(() => {
     if (!live) return;
     const supabase = createClient();
-    const channel = supabase
-      .channel(`peels:${channelId}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "peels" }, () => {
-        router.refresh();
+    let channel: RealtimeChannel | undefined;
+    let cancelled = false;
+
+    // The session lives in a cookie, so the socket only learns the viewer's token
+    // asynchronously. Subscribing first wins that race and joins as `anon`, and the
+    // peels select policy is `to authenticated`, so RLS filters out every change and
+    // the feed silently never updates. setAuth() first, subscribe second.
+    supabase.realtime
+      .setAuth()
+      .then(() => {
+        if (cancelled) return;
+        channel = supabase
+          .channel(`peels:${channelId}`)
+          .on("postgres_changes", { event: "*", schema: "public", table: "peels" }, () => {
+            router.refresh();
+          })
+          .subscribe();
       })
-      .subscribe();
+      // No token, no channel: the feed still renders and every action still
+      // revalidates it, it just stops updating on its own.
+      .catch(() => {});
+
     return () => {
-      supabase.removeChannel(channel);
+      cancelled = true;
+      if (channel) supabase.removeChannel(channel);
     };
   }, [live, channelId, router]);
 

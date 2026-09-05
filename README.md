@@ -55,3 +55,32 @@ pnpm test        # node --test over lib/
 pnpm build       # next build (Turbopack)
 pnpm verify:db   # applies the migrations to a throwaway Postgres in Docker and asserts the schema behaves
 ```
+
+## End to end
+
+`pnpm e2e` drives the signed-in flows in a real browser with Playwright: post,
+reply, like, follow, search, edit profile, delete, theme and the live feed, as
+two users. GitHub OAuth cannot be completed headlessly, so the suite runs against
+a **local** Supabase stack and mints its sessions with the password grant
+(`e2e/auth.ts` writes the same cookie `@supabase/ssr` would). It seeds `ada` and
+`bob` and resets their data on every run, so it is repeatable.
+
+Docker has to be running. Three terminals, or three steps:
+
+```bash
+# 1. The local stack. Applies supabase/migrations in order.
+npx supabase start
+
+# 2. A production build wired to it. NEXT_PUBLIC_* values are inlined at build
+#    time, so the env has to be set for the build, not just for `next start`.
+eval "$(npx supabase status -o env | grep -E '^(API_URL|PUBLISHABLE_KEY)=')"
+export NEXT_PUBLIC_SUPABASE_URL="$API_URL" NEXT_PUBLIC_SUPABASE_ANON_KEY="$PUBLISHABLE_KEY"
+pnpm build
+pnpm exec next start -p 3210     # port 3210, so `pnpm dev` can keep 3000
+
+# 3. The suite.
+pnpm e2e
+```
+
+Screenshots land in `e2e/screenshots/` (gitignored) at both sizes. `npx supabase
+stop` tears the stack down; starting it again comes up with the data reset.
