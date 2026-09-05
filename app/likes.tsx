@@ -1,8 +1,9 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
+import { startTransition } from "react";
 
 export default function Likes({
   peel,
@@ -13,34 +14,32 @@ export default function Likes({
 }) {
   const router = useRouter();
 
-  const handeLikes = async () => {
-    const supabase = createClientComponentClient<Database>();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (user) {
-      if (peel.user_has_liked_peel) {
-        addOptimisticPeel({
-          ...peel,
-          likes: peel.likes - 1,
-          user_has_liked_peel: !peel.user_has_liked_peel,
-        });
+  const handleLikes = () => {
+    // React 19: optimistic updates must happen inside a transition, and before any await.
+    startTransition(async () => {
+      const liked = peel.user_has_liked_peel;
+      addOptimisticPeel({
+        ...peel,
+        likes: peel.likes + (liked ? -1 : 1),
+        user_has_liked_peel: !liked,
+      });
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+      if (liked) {
         await supabase
           .from("likes")
           .delete()
           .match({ user_id: user.id, peel_id: peel.id });
       } else {
-        addOptimisticPeel({
-          ...peel,
-          likes: peel.likes + 1,
-          user_has_liked_peel: !peel.user_has_liked_peel,
-        });
         await supabase
           .from("likes")
           .insert({ user_id: user.id, peel_id: peel.id });
       }
       router.refresh();
-    }
+    });
   };
-  return <Button onClick={handeLikes}>{peel.likes} Likes</Button>;
+  return <Button onClick={handleLikes}>{peel.likes} Likes</Button>;
 }

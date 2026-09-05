@@ -2,7 +2,7 @@
 
 import { useEffect, useOptimistic } from "react";
 import Likes from "./likes";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -19,7 +19,7 @@ export default function Peels({ peels }: { peels: PeelUnionAuthor[] }) {
     return newOptimisticPeels;
   });
 
-  const supabase = createClientComponentClient();
+  const supabase = createClient();
   const router = useRouter();
 
   useEffect(() => {

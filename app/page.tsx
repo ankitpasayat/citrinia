@@ -1,5 +1,4 @@
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
+import { createClient } from "@/lib/supabase/server";
 import AuthButtonServer from "./auth-button-server";
 import { redirect } from "next/navigation";
 import NewPeel from "./new-peel";
@@ -9,13 +8,13 @@ import { ModeToggle } from "./mode-toggle";
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const supabase = createServerComponentClient<Database>({ cookies });
+  const supabase = await createClient();
 
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  if (!session) {
+  if (!user) {
     redirect("/login");
   }
 
@@ -29,7 +28,7 @@ export default async function Home() {
       ...peel,
       author: Array.isArray(peel.author) ? peel.author[0] : peel.author,
       user_has_liked_peel: !!peel.likes.find(
-        (like) => like.user_id === session.user.id
+        (like) => like.user_id === user.id
       ),
       likes: peel.likes.length,
     })) ?? [];
@@ -38,7 +37,7 @@ export default async function Home() {
     <div>
       <ModeToggle />
       <AuthButtonServer />
-      <NewPeel user={session.user} />
+      <NewPeel user={user} />
       <Peels peels={peels} />
     </div>
   );

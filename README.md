@@ -1,36 +1,51 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Citrinia
 
-## Getting Started
+A tiny Twitter-style feed. Posts are called peels. Log in with GitHub, post a
+peel, like other people's peels, and watch new peels arrive live.
 
-First, run the development server:
+Built with Next.js (App Router, server actions), Supabase (Postgres, auth,
+realtime), Tailwind, and shadcn/ui components.
+
+## Setup
+
+### 1. Supabase project
+
+1. Create a project at [supabase.com](https://supabase.com).
+2. Open the SQL editor and run
+   [`supabase/migrations/20260905000000_init.sql`](supabase/migrations/20260905000000_init.sql).
+   It creates the `profiles`, `peels`, and `likes` tables, the signup trigger,
+   row-level security policies, and enables realtime on `peels`.
+
+### 2. GitHub OAuth
+
+1. Create an OAuth app at <https://github.com/settings/developers>.
+   Set the callback URL to `https://<your-project-ref>.supabase.co/auth/v1/callback`.
+2. In Supabase, under Authentication -> Providers -> GitHub, enable the provider
+   and paste the client ID and secret.
+3. Under Authentication -> URL Configuration, add `http://localhost:3000/auth/callback`
+   to the redirect URL allowlist (and your production URL later).
+
+### 3. Environment
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev (recommended)
-# or
-bun dev
+cp .env.example .env.local
+# fill in NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 4. Run
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+pnpm install
+pnpm dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+Open <http://localhost:3000>, log in with GitHub, and post something.
 
-## Learn More
+## Checks
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+```bash
+pnpm lint
+npx tsc --noEmit
+pnpm build
+supabase/verify.sh   # applies the migration to a throwaway Postgres in Docker and asserts the schema behaves
+```

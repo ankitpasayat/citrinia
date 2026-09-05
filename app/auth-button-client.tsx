@@ -1,18 +1,12 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import {
-  Session,
-  createClientComponentClient,
-} from "@supabase/auth-helpers-nextjs";
+import { createClient } from "@/lib/supabase/client";
+import { User } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 
-export default function AuthButtonClient({
-  session,
-}: {
-  session: Session | null;
-}) {
-  const supabase = createClientComponentClient<Database>();
+export default function AuthButtonClient({ user }: { user: User | null }) {
+  const supabase = createClient();
   const router = useRouter();
 
   const handleSignIn = async () => {
@@ -29,7 +23,7 @@ export default function AuthButtonClient({
     router.refresh();
   };
 
-  return session ? (
+  return user ? (
     <Button onClick={handleSignOut}>Logout</Button>
   ) : (
     <Button onClick={handleSignIn}>Login</Button>

@@ -1,13 +1,12 @@
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
+import { createClient } from "@/lib/supabase/server";
 import AuthButtonClient from "./auth-button-client";
-import { cookies } from "next/headers";
 
 export const dynamic = "force-dynamic";
 
 export default async function AuthButtonServer() {
-  const supabase = createServerComponentClient<Database>({ cookies });
+  const supabase = await createClient();
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  return <AuthButtonClient session={session} />;
+    data: { user },
+  } = await supabase.auth.getUser();
+  return <AuthButtonClient user={user} />;
 }

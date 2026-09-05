@@ -1,5 +1,4 @@
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
+import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import AuthButtonClient from "../auth-button-client";
 import { ModeToggle } from "../mode-toggle";
@@ -7,19 +6,19 @@ import { ModeToggle } from "../mode-toggle";
 export const dynamic = "force-dynamic";
 
 export default async function Login() {
-  const supabase = createServerComponentClient<Database>({ cookies });
+  const supabase = await createClient();
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  if (session) {
+  if (user) {
     redirect("/");
   }
 
   return (
     <div>
       <ModeToggle />
-      <AuthButtonClient session={session} />
+      <AuthButtonClient user={user} />
     </div>
   );
 }
