@@ -54,8 +54,10 @@ export const gradients = stylex.defineVars({
 // Media queries as compile-time constants; use them as keys inside stylex.create.
 export const bp = stylex.defineConsts({
   tablet: "@media (min-width: 600px)",
-  /** Three columns: a rail either side of the feed. */
+  /** Three columns: the icon rail, the feed and the aside. */
   desktop: "@media (min-width: 1024px)",
+  /** The rail widens and its labels sit beside the icons. */
+  wide: "@media (min-width: 1280px)",
   hover: "@media (hover: hover)",
   reduce: "@media (prefers-reduced-motion: reduce)",
 });

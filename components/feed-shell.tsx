@@ -2,10 +2,12 @@
 
 // The signed-in chrome: whatever the page renders, plus the navigation and the
 // one compose sheet they share. Every signed-in screen wraps its column in this.
-// Phones and tablets get the bottom bar; from the desktop breakpoint the page
-// becomes three columns -- a rail with the navigation and compose on the left,
-// the same column in the middle, and search plus whatever the page hands over
-// as `aside` (who to follow, say) on the right.
+// Phones get the bottom bar. From the tablet breakpoint the navigation is an
+// icon rail on the left with the column centred beside it; from the desktop
+// breakpoint the aside joins on the right -- search plus whatever the page hands
+// over as `aside` (who to follow, say); from the wide breakpoint the rail grows
+// its labels. The three columns add up to 1024 exactly with the icon rail, so
+// the feed keeps its 520px on an iPad in landscape.
 import * as stylex from "@stylexjs/stylex";
 import { usePathname } from "next/navigation";
 import { useCallback, useState } from "react";
@@ -47,11 +49,18 @@ export function FeedShell({
 
 const styles = stylex.create({
   shell: {
-    display: { default: "block", [bp.desktop]: "grid" },
-    gridTemplateColumns: "232px minmax(0, 520px) 300px",
+    display: { default: "block", [bp.tablet]: "grid" },
+    // The middle range is exclusive on purpose: StyleX emits overlapping media
+    // rules in an order of its own, and at 1280px the desktop rule was landing
+    // after the wide one and winning. A literal, because keys must be constants.
+    gridTemplateColumns: {
+      default: "76px minmax(0, 1fr)",
+      "@media (min-width: 1024px) and (max-width: 1279.98px)": "76px minmax(0, 520px) 300px",
+      [bp.wide]: "232px minmax(0, 520px) 300px",
+    },
     justifyContent: "center",
     alignItems: "start",
-    columnGap: 40,
+    columnGap: { default: 0, [bp.desktop]: 40 },
     paddingInline: { default: 0, [bp.desktop]: 24 },
   },
   middle: { minWidth: 0 },

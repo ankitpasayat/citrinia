@@ -21,10 +21,10 @@ const styles = stylex.create({
     gap: 12,
   },
   withTabs: {
-    // No bar to clear on desktop, where the rail holds the navigation.
+    // No bar to clear from the tablet breakpoint, where the rail holds the navigation.
     paddingBottom: {
       default: "calc(124px + env(safe-area-inset-bottom))",
-      [bp.desktop]: "calc(24px + env(safe-area-inset-bottom))",
+      [bp.tablet]: "calc(24px + env(safe-area-inset-bottom))",
     },
   },
 });

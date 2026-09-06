@@ -20,6 +20,9 @@ test("on a wide screen the feed is the middle of three columns, with a rail eith
   await expect(rail.getByRole("link", { name: "Alerts" })).toBeVisible();
   const railBox = await rail.boundingBox();
   expect(railBox!.x + railBox!.width).toBeLessThanOrEqual(box!.x);
+  // From bp.wide (1280px) it is the labelled rail, not the 76px icon rail.
+  expect(railBox!.width).toBeGreaterThanOrEqual(200);
+  await expect(rail.getByRole("link", { name: "Feed" })).toHaveText("Feed");
   const search = page.getByRole("search");
   await expect(search).toBeVisible();
   const searchBox = await search.boundingBox();
@@ -30,7 +33,7 @@ test("on a wide screen the feed is the middle of three columns, with a rail eith
   await page.screenshot({ path: "e2e/screenshots/feed-desktop.png" });
 });
 
-test("between the tablet and desktop breakpoints the phone layout is centred, bottom bar and all", async ({
+test("between the tablet and desktop breakpoints the column sits beside an icon rail, and the bottom bar is gone", async ({
   open,
 }) => {
   const page = await open("ada");
@@ -39,9 +42,48 @@ test("between the tablet and desktop breakpoints the phone layout is centred, bo
   await expect(page.getByRole("article")).toHaveCount(2);
   const box = await page.getByRole("article").first().boundingBox();
   expect(box!.width).toBeLessThanOrEqual(520);
-  expect(Math.abs(box!.x + box!.width / 2 - 450)).toBeLessThan(2);
+
+  // From bp.tablet (600px) the one visible navigation is the rail: on the left,
+  // icons only, narrower than 100px. The bar is gone, and so is the aside.
+  const nav = page.getByRole("navigation", { name: "Main" }).filter({ visible: true });
+  await expect(nav).toHaveCount(1);
+  await expect(nav.getByRole("link", { name: "Alerts" })).toBeVisible();
+  const navBox = await nav.boundingBox();
+  expect(navBox!.width).toBeLessThan(100);
+  expect(navBox!.x + navBox!.width).toBeLessThanOrEqual(box!.x);
+  // The column is centred in the space the rail leaves.
+  const middle = (navBox!.x + navBox!.width + 900) / 2;
+  expect(Math.abs(box!.x + box!.width / 2 - middle)).toBeLessThan(2);
   await expect(page.getByRole("search")).toHaveCount(0);
-  await expect(page.getByRole("link", { name: "Alerts" })).toHaveCount(1);
+  await expect(page.getByRole("button", { name: "New peel" }).filter({ visible: true })).toHaveCount(1);
+
+  await settle(page);
+  await page.screenshot({ path: "e2e/screenshots/feed-tablet.png" });
+});
+
+test("an iPad in landscape keeps the feed at 520 between the icon rail and the aside", async ({ open }) => {
+  const page = await open("ada");
+  await page.setViewportSize({ width: 1180, height: 820 });
+  await page.goto("/");
+  await expect(page.getByRole("article")).toHaveCount(2);
+
+  // 1024 to 1279: the three columns fit because the rail is the 76px icon
+  // rail, not the 232px labelled one; the feed never shrinks below its 520.
+  const box = await page.getByRole("article").first().boundingBox();
+  expect(box!.width).toBeGreaterThanOrEqual(500);
+  expect(box!.width).toBeLessThanOrEqual(520);
+  const nav = page.getByRole("navigation", { name: "Main" }).filter({ visible: true });
+  await expect(nav).toHaveCount(1);
+  const navBox = await nav.boundingBox();
+  expect(navBox!.width).toBeLessThan(100);
+  expect(navBox!.x + navBox!.width).toBeLessThanOrEqual(box!.x);
+  const search = page.getByRole("search");
+  await expect(search).toBeVisible();
+  expect((await search.boundingBox())!.x).toBeGreaterThanOrEqual(box!.x + box!.width);
+  await expect(page.getByRole("button", { name: "New peel" }).filter({ visible: true })).toHaveCount(1);
+
+  await settle(page);
+  await page.screenshot({ path: "e2e/screenshots/feed-ipad-landscape.png" });
 });
 
 test("installable: the manifest lists a 512px png and the worker is served with its scope header", async ({

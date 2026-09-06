@@ -1,8 +1,8 @@
 "use client";
 
 // The bottom bar: Feed, Search, the compose button, Alerts, You. Fixed to the
-// viewport but sized to the column, so it lines up with the content at every width.
-// From the desktop breakpoint the side rail (side-nav.tsx) takes over and this hides.
+// viewport, inset to the column's gutters. Phones only: from the tablet
+// breakpoint the side rail (side-nav.tsx) takes over and this hides.
 import * as stylex from "@stylexjs/stylex";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -74,14 +74,12 @@ function Tab({
 
 const styles = stylex.create({
   bar: {
-    display: { default: "grid", [bp.desktop]: "none" },
+    display: { default: "grid", [bp.tablet]: "none" },
     position: "fixed",
     zIndex: 10,
     bottom: "calc(18px + env(safe-area-inset-bottom))",
-    left: { default: 16, [bp.tablet]: "50%" },
-    right: { default: 16, [bp.tablet]: "auto" },
-    width: { default: "auto", [bp.tablet]: shape.column },
-    transform: { default: "none", [bp.tablet]: "translateX(-50%)" },
+    left: 16,
+    right: 16,
     height: 64,
     gridTemplateColumns: "1fr 1fr 76px 1fr 1fr",
     alignItems: "center",
