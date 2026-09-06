@@ -24,7 +24,7 @@ Last updated 2026-09-06 06:45 IST by the orchestrating session. Everything a fre
 Which batches to run: every NN from 01–50 without a `seed/content/bulk-NN.json`. Delete stray `seed/content/*.draft` files first (they are dead half-writes from a killed session). Sample each finished batch (5 random peels, 3 reply pairs) before trusting it; the gates catch most slop but not all.
 
 ## In-flight work when the last session stopped (2026-09-06 ~06:45 IST)
-- Bulk batches 09–16 were being written (8 agents). Their `.draft` files are dead; relaunch them.
+- Bulk batches 09, 11–16 were being written (batch 10 finished and is committed). Their `.draft` files are dead; relaunch them.
 - An agent was adding `--drip` to `seed/seed.mjs` plus `.github/workflows/drip.yml` and README docs. If `.github/workflows/drip.yml` is missing or `node --check seed/seed.mjs` / `node seed/seed.test.mjs` fail, restore the committed importer with `git checkout seed/seed.mjs` and redo that task (spec: stateless, DB-checked idempotency via `uuidFor`, round-robin cluster order, N top-level peels within the last 55 min, then replies/quotes whose parents exist (~N/2), reposts (~N/4), likes only from existing personas, a few follows; triggers ON; reads env vars when `.env.local` is absent; supports sb_secret keys; `--only a,b,c`).
 - After the drip lands: commit `seed/content`, `seed/personas`, `seed/media-pool.json`, the workflow; push; run the workflow once by hand (`gh workflow run drip.yml -f count=135`) and check the live feed.
 
