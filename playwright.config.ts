@@ -20,6 +20,10 @@ export default defineConfig({
     baseURL: BASE_URL,
     screenshot: "on",
     trace: "retain-on-failure",
+    // Every `open()` is a fresh context; letting each install the precache
+    // would add a megabyte of fetches per test and put a worker between the
+    // page and the server the tests are measuring.
+    serviceWorkers: "block",
   },
   projects: [
     {

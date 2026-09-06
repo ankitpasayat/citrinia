@@ -26,6 +26,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",
+    "@serwist/turbopack": "9.5.12",
     "@stylexjs/babel-plugin": "0.19.0",
     "@stylexjs/eslint-plugin": "0.19.0",
     "@stylexjs/postcss-plugin": "0.19.0",
@@ -33,14 +34,17 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "autoprefixer": "^10.0.1",
+    "esbuild": "0.28.2",
     "eslint": "^9.39.5",
     "eslint-config-next": "16.3.4",
     "postcss": "^8",
+    "serwist": "9.5.12",
     "typescript": "^5"
   },
   "pnpm": {
     "overrides": {
-      "postcss": "^8.5.23"
+      "postcss": "^8.5.23",
+      "browserslist": "^4.28.9"
     }
   }
 }

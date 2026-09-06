@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import * as stylex from "@stylexjs/stylex";
 import "./globals.css";
+import { RegisterSw } from "@/components/register-sw";
 import { colors, fonts } from "./tokens.stylex";
 import { themeClassNames, THEME_STORAGE_KEY } from "./themes";
 
@@ -34,6 +35,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="en" suppressHydrationWarning {...stylex.props(styles.html)}>
       <body {...stylex.props(styles.body)}>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <RegisterSw />
         {children}
       </body>
     </html>

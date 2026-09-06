@@ -15,8 +15,9 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - fonts, icon and manifest
+     * - the service worker (serwist/) and the offline page it precaches, neither of which has a session
      * - image files (svg, png, jpg, jpeg, gif, webp)
      */
-    "/((?!_next/static|_next/image|fonts/|icon.svg|manifest.webmanifest|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|fonts/|icon.svg|manifest.webmanifest|serwist/|offline|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

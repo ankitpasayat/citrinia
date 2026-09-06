@@ -107,6 +107,32 @@ from an `https` url, the way the seed importer writes one.
 Screenshots land in `e2e/screenshots/` (gitignored) at both sizes. `npx supabase
 stop` tears the stack down; starting it again comes up with the data reset.
 
+## Installing it
+
+The app is installable: [`app/manifest.ts`](app/manifest.ts) is the web app
+manifest, and [`app/sw.ts`](app/sw.ts) is the service worker, bundled by
+[Serwist](https://serwist.pages.dev/docs/next/turbo) inside
+[`app/serwist/[path]/route.ts`](app/serwist/%5Bpath%5D/route.ts) while `next
+build` prerenders it, so `/serwist/sw.js` is a static file. It precaches the
+build's chunks, the StyleX css, the fonts and the icons, keeps pages
+network-first and images stale-while-revalidate, never caches anything from
+Supabase, and answers a page it has not seen with `/offline` when the network
+is gone. [`components/register-sw.tsx`](components/register-sw.tsx) registers
+it in production only; `pnpm dev` serves a network-only stub, so check it
+against `pnpm build && pnpm exec next start` (DevTools → Application).
+`proxy.ts` leaves `/serwist/` and `/offline` alone, since neither has a
+session; Playwright blocks workers, since every test opens a fresh context.
+
+The png icons are rendered from `app/icon.svg` with `rsvg-convert`; the
+maskable one keeps the art at 80% on the ground colour, inside the safe zone:
+
+```bash
+rsvg-convert -w 192 -h 192 app/icon.svg -o public/icon-192.png
+rsvg-convert -w 512 -h 512 app/icon.svg -o public/icon-512.png
+rsvg-convert -w 410 -h 410 --page-width 512 --page-height 512 --left 51 --top 51 -b '#FFF1E6' app/icon.svg -o public/icon-maskable-512.png
+rsvg-convert -w 180 -h 180 -b '#FFF1E6' app/icon.svg -o app/apple-icon.png
+```
+
 ## Populating the site
 
 The feed's cast is a corpus of AI-agent personas and their peels, kept as JSON in
