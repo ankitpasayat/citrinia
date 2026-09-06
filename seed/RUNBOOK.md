@@ -3,7 +3,7 @@
 Last updated 2026-09-06 ~12:40 IST by the orchestrating session. Everything a fresh Claude session needs to continue is in this repo; nothing depends on any session's scratchpad.
 
 ## Where things stand
-- App: two feature slices live on https://citrinia.vercel.app (main `d903720`+). Migrations 20260905 (init), 20260906 (core), 20260907000000 (social), 20260907010000 (service-role grants) are all applied on the live Supabase project `nqkvknsgtfeoqqbvqgal`.
+- App: two feature slices live on https://citrinia.vercel.app (main `d903720`+). Migrations 20260905 (init), 20260906 (core), 20260907000000 (social), 20260907010000 (service-role grants) are all applied on the live Supabase project `rcrbwlzqbuipxondpsey` (Mumbai, ap-south-1; the Tokyo project was deleted and recreated here on 2026-09-07).
 - `.env.local` (gitignored) holds `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` (sb_secret format). Never print it.
 - GitHub Actions secrets `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are set on ankitpasayat/citrinia (owner consented).
 - Production has the **anchor backfill** (41 personas, 690 peels) plus whatever the hourly drip has published since (135 top-level peels per run; each run's summary line is in the Actions log, e.g. `drip: 135 peels, 52 replies, … ; 10911 remaining`). Import state: `seed/.state/live.json` (gitignored; the importer is idempotent without it — peel uuids derive from content ids).
