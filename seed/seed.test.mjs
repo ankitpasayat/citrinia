@@ -134,12 +134,13 @@ const HOUR = 3_600_000;
  * layer: this is the same data the real fetches hand over.
  */
 function fakeDb() {
-  return { peels: new Map(), handles: new Set(), follows: new Set(), reposts: new Set(), bookmarks: new Set() };
+  return { peels: new Map(), handles: new Set(), follows: new Set(), likes: new Set(), reposts: new Set(), bookmarks: new Set() };
 }
 function applySlice(db, slice) {
   for (const h of slice.newHandles) db.handles.add(h);
   for (const p of slice.peels) db.peels.set(p.id, Date.parse(p.created_at));
   for (const r of slice.reposts) db.reposts.add(`${r.user_id}|${r.peel_id}`);
+  for (const l of slice.likes) db.likes.add(`${l.user_id}|${l.peel_id}`);
   for (const f of slice.follows) db.follows.add(`${f.follower_id}|${f.followee_id}`);
   for (const b of slice.bookmarks) db.bookmarks.add(`${b.user_id}|${b.peel_id}`);
   return slice;
@@ -154,6 +155,7 @@ const dripRun = (db, count, nowMs) =>
       existingPeels: db.peels,
       existingHandles: db.handles,
       existingFollows: db.follows,
+      existingLikes: db.likes,
       existingReposts: db.reposts,
       existingBookmarks: db.bookmarks,
     }),
@@ -223,6 +225,17 @@ check("replies to peels published moments ago still get unique, ordered timestam
   const deps = dripRun(hot, 40, DRIP_NOW).peels;
   const ms = deps.map((p) => Date.parse(p.created_at));
   return deps.length > 1 && new Set(ms).size === ms.length && ms.every((v, i) => i === 0 || v > ms[i - 1]) && ms.every((v) => v < DRIP_NOW);
+})());
+// Without this a run would re-offer every like on every peel younger than 48
+// hours, for ever: harmless in the database (the insert ignores duplicates) but
+// it makes "nothing left" unreachable and the reported counts meaningless.
+check("a like already in the database is not offered again", (() => {
+  const twice = fakeDb();
+  for (const p of plan.personas) twice.handles.add(p.handle);
+  for (const p of plan.peels) if (p._kind === "peel") twice.peels.set(p.id, DRIP_NOW - 6 * HOUR);
+  const first = dripRun(twice, 0, DRIP_NOW);
+  const second = dripRun(twice, 0, DRIP_NOW);
+  return first.likes.length > 0 && second.likes.length === 0;
 })());
 check("likes stop once a peel is older than the like window", (() => {
   const old = fakeDb();

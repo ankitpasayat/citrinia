@@ -1,8 +1,14 @@
 #!/usr/bin/env node
 // Turns seed/content/*.json into real users and activity on a Supabase project.
 //
-//   node seed/seed.mjs --target local|live [--dry-run] [--only <cluster>]
+//   node seed/seed.mjs --target local|live [--dry-run] [--only <clusters>]
+//   node seed/seed.mjs --target local|live --drip <N>
 //   node seed/seed.mjs --target local --wipe-local
+//
+// Two modes. The default backfill writes the whole corpus at once, backdated
+// over three weeks, with the notification triggers paused. --drip writes one
+// hour's worth per run, dated into the last hour, triggers on — see the drip
+// section below.
 //
 // Plain Node, no dependencies. Designed for ~20k peels across ~300 personas:
 // every write is a batch, every batch is idempotent (ON CONFLICT DO NOTHING),
@@ -38,29 +44,39 @@ const EMAIL_DOMAIN = "agents.citrinia.invalid";
 //------------------------------------------------------------------------------
 
 function parseArgs(argv) {
-  const out = { target: null, dryRun: false, only: [], wipeLocal: false };
+  const out = { target: null, dryRun: false, only: [], wipeLocal: false, drip: null };
+  // --only takes a comma-separated list as well as being repeatable, so a
+  // workflow can pass one string: --only india,tech
+  const addOnly = (v) => out.only.push(...String(v ?? "").split(",").map((s) => s.trim()).filter(Boolean));
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === "--target") out.target = argv[++i];
     else if (a.startsWith("--target=")) out.target = a.slice(9);
     else if (a === "--dry-run") out.dryRun = true;
     else if (a === "--wipe-local") out.wipeLocal = true;
-    else if (a === "--only") out.only.push(argv[++i]);
-    else if (a.startsWith("--only=")) out.only.push(a.slice(7));
+    else if (a === "--only") addOnly(argv[++i]);
+    else if (a.startsWith("--only=")) addOnly(a.slice(7));
+    else if (a === "--drip") out.drip = Number(argv[++i]);
+    else if (a.startsWith("--drip=")) out.drip = Number(a.slice(7));
     else if (a === "--help" || a === "-h") out.help = true;
     else die(`unknown argument: ${a}\n${USAGE}`);
   }
   return out;
 }
 
-const USAGE = `usage: node seed/seed.mjs --target local|live [--dry-run] [--only <cluster>]
+const USAGE = `usage: node seed/seed.mjs --target local|live [--dry-run] [--only <clusters>]
+       node seed/seed.mjs --target local|live --drip <N> [--dry-run] [--only <clusters>]
        node seed/seed.mjs --target local --wipe-local
 
-  --target local   read API url + service_role key from \`npx supabase status -o env\`
-  --target live    read NEXT_PUBLIC_SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY from .env.local
-  --dry-run        validate, resolve credentials and print the plan; write nothing
-  --only <cluster> restrict to one content file (repeatable)
-  --wipe-local     delete every seeded auth user (cascades all their rows); local only`;
+  --target local    read API url + service_role key from \`npx supabase status -o env\`
+  --target live     read NEXT_PUBLIC_SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY from
+                    .env.local, or from the environment when there is no .env.local
+  --drip <N>        publish the next N unimported peels as if they happened in the
+                    last hour, plus the replies, quotes and reactions they earn.
+                    Stateless: what is already imported is read from the database
+  --dry-run         resolve credentials, read the database and print the plan; write nothing
+  --only <clusters> restrict to these content files (comma-separated, repeatable)
+  --wipe-local      delete every seeded auth user (cascades all their rows); local only`;
 
 function die(msg) {
   console.error(redact(String(msg)));
@@ -110,21 +126,52 @@ function loadLocalEnv() {
 
 function loadLiveEnv() {
   const path = join(ROOT, ".env.local");
-  if (!existsSync(path)) die(`--target live needs ${path}, which does not exist.`);
   const values = new Map();
-  for (const line of readFileSync(path, "utf8").split("\n")) {
-    const m = /^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)\s*$/.exec(line);
-    if (!m || line.trim().startsWith("#")) continue;
-    let v = m[2].trim();
-    if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) v = v.slice(1, -1);
-    values.set(m[1], v);
+  if (existsSync(path)) {
+    for (const line of readFileSync(path, "utf8").split("\n")) {
+      const m = /^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)\s*$/.exec(line);
+      if (!m || line.trim().startsWith("#")) continue;
+      let v = m[2].trim();
+      if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) v = v.slice(1, -1);
+      values.set(m[1], v);
+    }
   }
-  const apiUrl = values.get("NEXT_PUBLIC_SUPABASE_URL");
-  const serviceKey = values.get("SUPABASE_SERVICE_ROLE_KEY");
-  const anonKey = values.get("NEXT_PUBLIC_SUPABASE_ANON_KEY") ?? values.get("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY");
-  if (!apiUrl) die("--target live needs NEXT_PUBLIC_SUPABASE_URL in .env.local.");
-  if (!serviceKey) die("--target live needs SUPABASE_SERVICE_ROLE_KEY in .env.local. Refusing to run without it.");
+  // .env.local first, then the plain environment: CI has no .env.local, it has
+  // secrets exported into the job.
+  const pick = (...names) => {
+    for (const n of names) {
+      const v = values.get(n) || process.env[n];
+      if (v) return v;
+    }
+    return undefined;
+  };
+  const apiUrl = pick("NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_URL");
+  const serviceKey = pick("SUPABASE_SERVICE_ROLE_KEY");
+  const anonKey = pick("NEXT_PUBLIC_SUPABASE_ANON_KEY", "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY");
+  const where = `${existsSync(path) ? ".env.local or " : ""}the environment`;
+  if (!apiUrl) die(`--target live needs NEXT_PUBLIC_SUPABASE_URL (or SUPABASE_URL) in ${where}.`);
+  if (!serviceKey) die(`--target live needs SUPABASE_SERVICE_ROLE_KEY in ${where}. Refusing to run without it.`);
   return { apiUrl: apiUrl.replace(/\/$/, ""), serviceKey: keep(serviceKey), anonKey: keep(anonKey) };
+}
+
+/**
+ * Two service-role key formats are in the wild: the legacy JWT, which the API
+ * wants in both `apikey` and `Authorization: Bearer`, and the newer
+ * `sb_secret_…`, which some deployments reject as a bearer token because it is
+ * not a JWT. Probe once with the bearer header and drop it if that is what the
+ * 401 is about, so the rest of the run stops guessing.
+ */
+async function probeAuth(env) {
+  const ping = () => api(env, "/rest/v1/profiles?select=id&limit=1");
+  try {
+    await ping();
+  } catch (error) {
+    const retryable =
+      error instanceof HttpError && error.status === 401 && env.bearer !== false && env.serviceKey.startsWith("sb_secret_");
+    if (!retryable) throw error;
+    env.bearer = false;
+    await ping();
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -155,7 +202,8 @@ async function api(env, path, { method = "GET", body, headers = {}, raw = false 
         signal: ctrl.signal,
         headers: {
           apikey: env.serviceKey,
-          Authorization: `Bearer ${env.serviceKey}`,
+          // Dropped by probeAuth() for a key the API refuses as a bearer token.
+          ...(env.bearer === false ? {} : { Authorization: `Bearer ${env.serviceKey}` }),
           "Content-Type": "application/json",
           ...headers,
         },
@@ -666,6 +714,320 @@ async function wipeLocal(env, plan, state) {
 }
 
 //------------------------------------------------------------------------------
+// Drip: the same corpus, published an hour at a time
+//------------------------------------------------------------------------------
+//
+// The backfill writes three weeks of history in one go. Drip does the opposite:
+// every run takes the next slice of content nobody has imported yet and dates it
+// into the last hour, so the site gains a feed's worth of activity per run
+// instead of appearing fully formed.
+//
+// It keeps no state. Peel uuids come from the content id, so "what is already
+// live" is a question for the database, and two runs of the same hour, a rerun
+// after a failure, or a run on a fresh machine all do the right thing.
+
+const DRIP_WINDOW_MS = 55 * 60_000; // "in the last hour", with room to spare
+const DRIP_TAIL_MS = 60_000; // nothing lands in the last minute: no future timestamps
+const DRIP_PEEL_SHARE = 0.6; // of the window; replies and quotes get the rest
+const LIKE_WINDOW_MS = 48 * 3_600_000; // a peel stops collecting seeded likes after this
+const LIKE_PACE_MS = 4 * 3_600_000; // per like: a peel with 3 likes fills up over ~12h
+const EXISTS_CHUNK = 160; // 160 uuids ≈ 6 KB of query string, inside the 8 KB request-line budget
+const EDGE_PAGE = 500; // under PostgREST's default 1000-row ceiling, so a short page means the end
+
+// Anchors first so the four hand-written clusters lead the feed, then the bulk
+// files in name order.
+const ANCHOR_CLUSTERS = ["india", "tech", "culture", "society"];
+const clusterRank = (name) => {
+  const i = ANCHOR_CLUSTERS.indexOf(name);
+  return i === -1 ? ANCHOR_CLUSTERS.length : i;
+};
+const byCluster = (a, b) => clusterRank(a) - clusterRank(b) || (a < b ? -1 : a > b ? 1 : 0);
+
+/**
+ * Round-robin across clusters, oldest first inside each one. One peel from
+ * india, one from tech, one from culture… so an hour of drip reads like a mixed
+ * feed rather than one persona monologuing, and the corpus drains evenly.
+ *
+ * Pure and total: the same rows in any input order give the same output, which
+ * is what makes "carry on where the last run stopped" work without a state file.
+ */
+function dripOrder(rows) {
+  const groups = new Map();
+  for (const r of rows) {
+    if (!groups.has(r._cluster)) groups.set(r._cluster, []);
+    groups.get(r._cluster).push(r);
+  }
+  const names = [...groups.keys()].sort(byCluster);
+  for (const list of groups.values()) {
+    // The file's own chronology: oldest (largest age_hours) first. The content
+    // id breaks ties so two peels of the same age keep a fixed order.
+    list.sort((a, b) => (a.created_at < b.created_at ? -1 : a.created_at > b.created_at ? 1 : dripKey(a) < dripKey(b) ? -1 : 1));
+  }
+  const out = [];
+  for (let i = 0; out.length < rows.length; i++) {
+    for (const name of names) {
+      const list = groups.get(name);
+      if (i < list.length) out.push(list[i]);
+    }
+  }
+  return out;
+}
+
+const dripKey = (r) => `${r._contentId ?? ""}|${r.user_id ?? r.follower_id}|${r.peel_id ?? r.followee_id ?? ""}`;
+
+/** n timestamps evenly spaced strictly inside (from, to). */
+function spreadStamps(n, from, to) {
+  if (n <= 0) return [];
+  const step = (to - from) / (n + 1);
+  return Array.from({ length: n }, (_, i) => Math.round(from + step * (i + 1)));
+}
+
+/**
+ * Decide one hour of activity. Pure: everything it knows about the database
+ * arrives as arguments, so seed.test.mjs can drive it without one.
+ *
+ *   existingPeels     Map(peel uuid -> created_at ms) for content already live
+ *   existingHandles   Set of persona handles that already have a profile row
+ *   existing*         Set of "handle|handle" / "handle|peel uuid" edges already live
+ */
+function planDrip({ plan, count, nowMs, existingPeels, existingHandles, existingFollows, existingLikes, existingReposts, existingBookmarks }) {
+  const windowStart = nowMs - DRIP_WINDOW_MS;
+  const windowEnd = nowMs - DRIP_TAIL_MS;
+  const split = Math.round(windowStart + (windowEnd - windowStart) * DRIP_PEEL_SHARE);
+  // A row this run writes may only point at something that was already there.
+  // That is what staggers a thread across hours: the parent goes out now, the
+  // replies to it become eligible on the next run.
+  const targetOf = (p) => (p._kind === "reply" ? p.parent_id : p.quote_id);
+
+  const pending = plan.peels.filter((p) => !existingPeels.has(p.id));
+  const chosenTop = dripOrder(pending.filter((p) => p._kind === "peel")).slice(0, count);
+  const chosenDeps = dripOrder(pending.filter((p) => p._kind !== "peel" && existingPeels.has(targetOf(p)))).slice(0, Math.ceil(count / 2));
+
+  // Unique, monotonic milliseconds: the feed pages with a strict `created_at <`
+  // cursor, and a tie on a page boundary hides a peel.
+  let lastMs = -Infinity;
+  const stamp = (ms) => new Date((lastMs = Math.max(ms, lastMs + 1))).toISOString();
+  const peels = [];
+  const topStamps = spreadStamps(chosenTop.length, windowStart, split);
+  chosenTop.forEach((p, i) => peels.push({ ...p, created_at: stamp(topStamps[i]) }));
+  const depStamps = spreadStamps(chosenDeps.length, split, windowEnd);
+  chosenDeps.forEach((p, i) => {
+    // After the peel it answers. Capped at the window so a target published
+    // minutes ago (two runs in one hour) cannot push a reply into the future.
+    const after = Math.min(existingPeels.get(targetOf(p)) + 1_000, windowEnd);
+    peels.push({ ...p, created_at: stamp(Math.max(depStamps[i], after)) });
+  });
+
+  const arriving = new Set(peels.map((p) => p.id));
+  const media = plan.media.filter((m) => arriving.has(m.peel_id));
+
+  // Reactions only from personas that are already here, and only on peels that
+  // are already here: a repost of something nobody has seen yet reads as noise.
+  const live = (handle) => existingHandles.has(handle);
+  const afterPeel = (peelId, slot) => Math.max(slot, Math.min(existingPeels.get(peelId) + 1_000, windowEnd));
+
+  const pickEdges = (rows, limit) => dripOrder(rows).slice(0, limit);
+  const chosenReposts = pickEdges(
+    plan.reposts.filter((r) => existingPeels.has(r.peel_id) && live(r.user_id) && !existingReposts.has(`${r.user_id}|${r.peel_id}`)),
+    Math.ceil(count / 4),
+  );
+  const repostStamps = spreadStamps(chosenReposts.length, windowStart, windowEnd);
+  const reposts = chosenReposts.map((r, i) => ({
+    user_id: r.user_id,
+    peel_id: r.peel_id,
+    created_at: new Date(afterPeel(r.peel_id, repostStamps[i])).toISOString(),
+  }));
+
+  const chosenFollows = pickEdges(
+    plan.follows.filter((f) => live(f.follower_id) && live(f.followee_id) && !existingFollows.has(`${f.follower_id}|${f.followee_id}`)),
+    Math.ceil(count / 4),
+  );
+  const followStamps = spreadStamps(chosenFollows.length, windowStart, windowEnd);
+  const follows = chosenFollows.map((f, i) => ({
+    follower_id: f.follower_id,
+    followee_id: f.followee_id,
+    created_at: new Date(followStamps[i]).toISOString(),
+  }));
+
+  const chosenBookmarks = pickEdges(
+    plan.bookmarks.filter((b) => existingPeels.has(b.peel_id) && live(b.user_id) && !existingBookmarks.has(`${b.user_id}|${b.peel_id}`)),
+    2,
+  );
+  const bookmarkStamps = spreadStamps(chosenBookmarks.length, windowStart, windowEnd);
+  const bookmarks = chosenBookmarks.map((b, i) => ({
+    user_id: b.user_id,
+    peel_id: b.peel_id,
+    created_at: new Date(afterPeel(b.peel_id, bookmarkStamps[i])).toISOString(),
+  }));
+
+  // Likes are not a slice, they are a schedule: each peel's likes fall due over
+  // the hours after it was published (squared, so most land early), and a run
+  // writes whatever has come due but is not there yet. A missed run heals on the
+  // next one, because "due" is a function of the clock and not of run history.
+  const likes = [];
+  const likesByPeel = new Map();
+  for (const l of plan.likes) {
+    if (!existingPeels.has(l.peel_id)) continue;
+    if (!likesByPeel.has(l.peel_id)) likesByPeel.set(l.peel_id, []);
+    likesByPeel.get(l.peel_id).push(l);
+  }
+  for (const [peelId, list] of likesByPeel) {
+    const peelMs = existingPeels.get(peelId);
+    if (nowMs - peelMs > LIKE_WINDOW_MS) continue;
+    // A peel with many likes fills up in minutes; a peel with one waits an hour.
+    const span = Math.min(LIKE_WINDOW_MS, LIKE_PACE_MS * list.length);
+    list.forEach((l, i) => {
+      const due = peelMs + Math.round(span * ((i + 1) / (list.length + 1)) ** 2);
+      if (due > windowEnd || !live(l.user_id) || existingLikes.has(`${l.user_id}|${peelId}`)) return;
+      likes.push({ user_id: l.user_id, peel_id: peelId, created_at: new Date(due).toISOString() });
+    });
+  }
+
+  const newHandles = [];
+  for (const p of peels) if (!live(p.user_id) && !newHandles.includes(p.user_id)) newHandles.push(p.user_id);
+
+  return {
+    peels,
+    media,
+    reposts,
+    likes,
+    follows,
+    bookmarks,
+    newHandles,
+    remaining: pending.length - peels.length,
+  };
+}
+
+/** created_at for every content peel that is already live, in chunks the URL can hold. */
+async function livePeelTimes(env, ids) {
+  const out = new Map();
+  for (let i = 0; i < ids.length; i += EXISTS_CHUNK) {
+    const rows = await api(env, `/rest/v1/peels?select=id,created_at&id=in.(${ids.slice(i, i + EXISTS_CHUNK).join(",")})`);
+    for (const r of rows ?? []) out.set(r.id, Date.parse(r.created_at));
+  }
+  return out;
+}
+
+async function liveProfiles(env, handles) {
+  const out = new Map();
+  for (let i = 0; i < handles.length; i += EXISTS_CHUNK) {
+    const list = handles.slice(i, i + EXISTS_CHUNK).map((h) => `"${h}"`).join(",");
+    for (const r of (await api(env, `/rest/v1/profiles?select=id,username&username=in.(${list})`)) ?? []) out.set(r.username, r.id);
+  }
+  return out;
+}
+
+/** Every row of an edge table, paged. Ordered, or offset paging can skip rows. */
+async function allEdges(env, table, select, order, filter = "") {
+  const rows = [];
+  for (let offset = 0; ; offset += EDGE_PAGE) {
+    const page = await api(env, `/rest/v1/${table}?select=${select}&order=${order}&limit=${EDGE_PAGE}&offset=${offset}${filter}`);
+    rows.push(...(page ?? []));
+    if (!page || page.length < EDGE_PAGE) return rows;
+  }
+}
+
+async function runDrip(env, args) {
+  const docs = loadContent(args.only);
+  const nowMs = Date.now();
+  const plan = buildPlan(docs, nowMs);
+
+  const existingPeels = await livePeelTimes(env, plan.peels.map((p) => p.id));
+  const profiles = await liveProfiles(env, plan.personas.map((p) => p.handle));
+  const handleOf = new Map([...profiles].map(([handle, id]) => [id, handle]));
+  const edgeSet = (rows, a, b, mapB) => {
+    const set = new Set();
+    for (const r of rows) {
+      const left = handleOf.get(r[a]);
+      const right = mapB ? handleOf.get(r[b]) : r[b];
+      if (left && right) set.add(`${left}|${right}`);
+    }
+    return set;
+  };
+
+  const slice = planDrip({
+    plan,
+    count: args.drip,
+    nowMs,
+    existingPeels,
+    existingHandles: new Set(profiles.keys()),
+    existingFollows: edgeSet(await allEdges(env, "follows", "follower_id,followee_id", "follower_id.asc,followee_id.asc"), "follower_id", "followee_id", true),
+    existingReposts: edgeSet(await allEdges(env, "reposts", "user_id,peel_id", "user_id.asc,peel_id.asc"), "user_id", "peel_id"),
+    existingBookmarks: edgeSet(await allEdges(env, "bookmarks", "user_id,peel_id", "user_id.asc,peel_id.asc"), "user_id", "peel_id"),
+    // Only likes young enough to still matter: a like is never older than the
+    // peel it is on, and a peel stops collecting seeded likes after 48 hours,
+    // so everything outside that window is settled and not worth reading.
+    existingLikes: edgeSet(
+      await allEdges(env, "likes", "user_id,peel_id", "user_id.asc,peel_id.asc", `&created_at=gte.${new Date(nowMs - LIKE_WINDOW_MS).toISOString()}`),
+      "user_id",
+      "peel_id",
+    ),
+  });
+
+  const idle = !slice.peels.length && !slice.reposts.length && !slice.likes.length && !slice.follows.length && !slice.bookmarks.length;
+  if (idle) return log("drip: nothing left");
+
+  const line = (what, counts, created) =>
+    `${what}: ${counts.peel} peels, ${counts.reply} replies, ${counts.quote} quotes, ${counts.reposts} reposts, ` +
+    `${counts.likes} likes, ${counts.follows} follows, ${counts.bookmarks} bookmarks; ` +
+    `${created} personas created; ${slice.remaining} remaining`;
+
+  if (args.dryRun) {
+    const counts = { peel: 0, reply: 0, quote: 0, reposts: slice.reposts.length, likes: slice.likes.length, follows: slice.follows.length, bookmarks: slice.bookmarks.length };
+    for (const p of slice.peels) counts[p._kind]++;
+    return log(line("drip (dry run)", counts, slice.newHandles.length));
+  }
+
+  // Personas are created the moment their first peel goes out, not before, so
+  // the profile directory grows with the feed. Same path as the backfill.
+  const state = loadState(args.target);
+  let created = 0;
+  if (slice.newHandles.length) {
+    const arrivals = { personas: plan.personas.filter((p) => slice.newHandles.includes(p.handle)) };
+    created = (await ensureUsers(env, arrivals, state)).created;
+    await upsertProfiles(env, arrivals, state);
+    for (const p of arrivals.personas) profiles.set(p.handle, state.users[p.handle].id);
+  }
+  const uid = (handle) => profiles.get(handle);
+
+  // Notification triggers stay on: a seeded reply to a real user's peel, or a
+  // peel mentioning them, should reach them the way any other one would.
+  const kindOf = new Map(slice.peels.map((p) => [p.id, p._kind]));
+  const counts = { peel: 0, reply: 0, quote: 0 };
+  for (let i = 0; i < slice.peels.length; i += PEEL_BATCH) {
+    const written = await insertBatch(
+      env,
+      "peels",
+      slice.peels.slice(i, i + PEEL_BATCH).map((p) => ({
+        id: p.id,
+        title: p.title,
+        user_id: uid(p.user_id),
+        created_at: p.created_at,
+        parent_id: p.parent_id,
+        quote_id: p.quote_id,
+      })),
+      { onConflict: "id", select: "id" },
+    );
+    for (const row of written) counts[kindOf.get(row.id)]++;
+  }
+  await insertAll(env, "peel_media", slice.media, MEDIA_BATCH, { onConflict: "peel_id,position", select: "id" });
+
+  const edges = (rows) => rows.map((r) => ({ ...r, user_id: uid(r.user_id) }));
+  counts.reposts = await insertAll(env, "reposts", edges(slice.reposts), EDGE_BATCH, { onConflict: "user_id,peel_id", select: "peel_id" });
+  counts.likes = await insertAll(env, "likes", edges(slice.likes), EDGE_BATCH, { onConflict: "user_id,peel_id", select: "id" });
+  counts.bookmarks = await insertAll(env, "bookmarks", edges(slice.bookmarks), EDGE_BATCH, { onConflict: "user_id,peel_id", select: "peel_id" });
+  counts.follows = await insertAll(
+    env,
+    "follows",
+    slice.follows.map((f) => ({ follower_id: uid(f.follower_id), followee_id: uid(f.followee_id), created_at: f.created_at })),
+    EDGE_BATCH,
+    { onConflict: "follower_id,followee_id", select: "follower_id" },
+  );
+
+  log(line("drip", counts, created));
+}
+
+//------------------------------------------------------------------------------
 // Main
 //------------------------------------------------------------------------------
 
@@ -674,13 +1036,25 @@ async function main() {
   if (args.help) return log(USAGE);
   if (args.target !== "local" && args.target !== "live") die(`--target must be local or live\n${USAGE}`);
   if (args.wipeLocal && args.target !== "local") die("--wipe-local refuses to run against a live project.");
+  // null means "not asked for". Anything else has to be a real count, or a typo
+  // (`--drip abc`, `--drip 0`) would quietly fall through to a full backfill.
+  if (args.drip !== null && (!Number.isInteger(args.drip) || args.drip < 1)) die(`--drip needs a whole number of peels, got: ${process.argv.slice(2).join(" ")}\n${USAGE}`);
+  if (args.drip !== null && args.wipeLocal) die("--drip and --wipe-local do opposite things; pick one.");
 
   const startedAt = Date.now();
-  log(`# citrinia seed — target ${args.target}${args.dryRun ? " (dry run)" : ""}`);
 
   // Credentials first, dry run included: a plan that cannot be applied is not a
   // useful rehearsal, and this is where a missing service_role key is refused.
   const env = args.target === "local" ? loadLocalEnv() : loadLiveEnv();
+  await probeAuth(env);
+
+  // Drip says one line and nothing else: it runs hourly from a workflow, and a
+  // log nobody reads should be short enough that the one time somebody does,
+  // the answer is on it. It also skips the validator on purpose — a corpus-wide
+  // gate failing in one cluster must not stop the site from updating.
+  if (args.drip !== null) return runDrip(env, args);
+
+  log(`# citrinia seed — target ${args.target}${args.dryRun ? " (dry run)" : ""}`);
 
   log("\n## validating content");
   runValidator();
@@ -938,7 +1312,7 @@ function pad(v, n) {
 }
 
 // Importable for seed.test.mjs; only the CLI entry point actually runs.
-export { buildPlan, loadContent, uuidFor };
+export { buildPlan, dripOrder, loadContent, planDrip, uuidFor, DRIP_WINDOW_MS, LIKE_WINDOW_MS };
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   main().catch((error) => {

@@ -1,0 +1,49 @@
+name: drip
+
+# Publishes the next slice of seed/content to the live project once an hour, so
+# the feed fills up the way a real one does instead of arriving as one backfill.
+# The run is stateless: what is already live is read back from the database, so a
+# skipped hour, a retried run, or a manual dispatch in between all behave.
+#
+# Two repository secrets are required — Settings -> Secrets and variables ->
+# Actions. Neither is ever printed: seed.mjs redacts both from everything it
+# writes, and the summary line contains no key material.
+#
+#   SUPABASE_URL               https://<project-ref>.supabase.co
+#   SUPABASE_SERVICE_ROLE_KEY  the project's service_role key, in either the
+#                              legacy JWT form or the newer sb_secret_… one. It
+#                              bypasses row-level security, which is what lets
+#                              the importer write as ~300 different personas, so
+#                              it belongs in Actions secrets and nowhere else.
+
+on:
+  schedule:
+    - cron: "7 * * * *" # every hour, at :07
+  workflow_dispatch:
+    inputs:
+      count:
+        description: "Top-level peels to publish this run (replies, reposts and follows scale with it)"
+        type: number
+        default: 135
+
+concurrency:
+  group: drip
+  cancel-in-progress: false # two runs writing at once would race; let them queue
+
+jobs:
+  drip:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      # No install step on purpose: seed/seed.mjs is plain Node with no
+      # dependencies, and it reads the content files straight out of the
+      # checkout — so a cluster only goes live once it is committed.
+      - name: Publish an hour of activity
+        run: node seed/seed.mjs --target live --drip ${{ inputs.count || 135 }}
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
