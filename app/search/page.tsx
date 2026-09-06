@@ -7,16 +7,17 @@ import { escapeRegex, fetchPeels } from "@/lib/peels";
 import { Avatar } from "@/components/avatar";
 import { Band } from "@/components/band";
 import { Column } from "@/components/column";
-import { EmptyState } from "@/components/empty-state";
 import { FeedShell } from "@/components/feed-shell";
 import { PeelList } from "@/components/peel-list";
 import { SearchForm } from "@/components/search-form";
+import { WhoToFollow } from "@/components/who-to-follow";
 import { bp, colors, fonts, shape } from "@/app/tokens.stylex";
 
 export const metadata: Metadata = { title: "Search" };
 
 const PEEL_LIMIT = 30;
 const PEOPLE_LIMIT = 10;
+const SUGGESTIONS = 8;
 
 /**
  * `q` is user text, not a pattern: escape the regex metacharacters, then wrap the
@@ -61,7 +62,8 @@ export default async function Search({ searchParams }: { searchParams: Promise<{
         <SearchForm q={q} />
 
         {q === "" ? (
-          <EmptyState title="Search" body="Find peels and people." />
+          /* Nothing to search for yet: offer people instead of an empty block. */
+          <WhoToFollow viewerId={user.id} n={SUGGESTIONS} />
         ) : (
           <>
             {people && people.length > 0 && (

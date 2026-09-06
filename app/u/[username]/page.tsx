@@ -1,14 +1,34 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
-import { fetchPeels } from "@/lib/peels";
 import { Band } from "@/components/band";
 import { Column } from "@/components/column";
 import { FeedShell } from "@/components/feed-shell";
 import { PeelList } from "@/components/peel-list";
 import { ProfileCard } from "@/components/profile-card";
+import { ProfileTabs, parseProfileTab, type ProfileTab } from "@/components/profile-tabs";
+import { ShowOlder } from "@/components/show-older";
+import { PAGE_SIZE, fetchLikedBy, fetchPeels, fetchRepliesBy } from "@/lib/peels";
+import { createClient } from "@/lib/supabase/server";
 
-type Props = { params: Promise<{ username: string }> };
+type Props = {
+  params: Promise<{ username: string }>;
+  searchParams: Promise<{ tab?: string; before?: string }>;
+};
+
+/** Title, and the copy for a tab that has nothing in it yet. */
+const EMPTY: Record<ProfileTab, { title: string; self: string; other: string }> = {
+  peels: { title: "No peels yet", self: "Tap + to peel first.", other: "Nothing peeled yet." },
+  replies: {
+    title: "No replies yet",
+    self: "Reply to a peel and it lands here.",
+    other: "Nothing to say so far.",
+  },
+  likes: {
+    title: "No likes yet",
+    self: "Tap the wedge on a peel you like.",
+    other: "Nothing liked yet.",
+  },
+};
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { username } = await params;
@@ -27,8 +47,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return data ? { title: `${data.name} (@${data.username})` } : { title: "Not found" };
 }
 
-export default async function ProfilePage({ params }: Props) {
+export default async function ProfilePage({ params, searchParams }: Props) {
   const { username } = await params;
+  const { tab: rawTab, before } = await searchParams;
+  const tab = parseProfileTab(rawTab);
+
   const supabase = await createClient();
   const {
     data: { user },
@@ -59,9 +82,21 @@ export default async function ProfilePage({ params }: Props) {
       .eq("follower_id", user.id)
       .eq("followee_id", profile.id)
       .maybeSingle(),
-    fetchPeels(supabase, user.id, { authorId: profile.id, parentId: null }),
+    tab === "replies"
+      ? fetchRepliesBy(supabase, user.id, profile.id, before)
+      : tab === "likes"
+        ? fetchLikedBy(supabase, user.id, profile.id, before)
+        : fetchPeels(supabase, user.id, {
+            authorId: profile.id,
+            parentId: null,
+            before,
+            limit: PAGE_SIZE,
+          }),
     supabase.from("profiles").select("username").eq("id", user.id).maybeSingle(),
   ]);
+
+  const older = peels.length === PAGE_SIZE ? await cursor(supabase, tab, profile.id, peels) : null;
+  const empty = EMPTY[tab];
 
   return (
     <FeedShell username={isSelf ? profile.username : (viewer.data?.username ?? "")}>
@@ -77,13 +112,49 @@ export default async function ProfilePage({ params }: Props) {
           isSelf={isSelf}
           isFollowing={follow.data !== null}
         />
+
+        <ProfileTabs username={profile.username} tab={tab} />
+
         <PeelList
           peels={peels}
           viewerId={user.id}
-          emptyTitle="No peels yet"
-          emptyBody={isSelf ? "Tap + to peel first." : "Nothing peeled yet."}
+          live={false}
+          // Past the first page an empty tab is the end of it, not an empty tab.
+          emptyTitle={before ? "That's all the peels." : empty.title}
+          emptyBody={
+            before ? "You've reached the end." : isSelf ? empty.self : empty.other
+          }
         />
+
+        {older && (
+          <ShowOlder
+            href={`/u/${encodeURIComponent(profile.username)}?tab=${tab}&before=${encodeURIComponent(older)}`}
+          />
+        )}
       </Column>
     </FeedShell>
   );
+}
+
+/**
+ * Where the next page starts. Peels and replies page on the peel's own clock, but
+ * Likes is ordered by when the like happened and the peels it returns do not carry
+ * that -- so read the last row's like back to get it.
+ */
+async function cursor(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  tab: ProfileTab,
+  profileId: string,
+  peels: PeelUnionAuthor[],
+): Promise<string | null> {
+  const last = peels[peels.length - 1];
+  if (tab !== "likes") return last.created_at;
+
+  const { data } = await supabase
+    .from("likes")
+    .select("created_at")
+    .eq("user_id", profileId)
+    .eq("peel_id", last.id)
+    .maybeSingle();
+  return data?.created_at ?? null;
 }

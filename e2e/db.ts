@@ -77,12 +77,86 @@ export async function ensureUsers(): Promise<void> {
   }
 }
 
-/** Post a peel as `user` over REST — the "someone else peeled" half of the realtime test. */
-export async function peelAs(user: UserKey, title: string): Promise<void> {
-  const session = await signIn(user);
-  await rest("peels", {
-    method: "POST",
-    token: session.access_token,
-    body: JSON.stringify({ title, user_id: session.user.id }),
+/** Post a peel as `user` over REST — the "someone else peeled" half of the realtime test.
+ *  Pass `parentId` to make it a reply. Returns the new peel's id. */
+export async function peelAs(user: UserKey, title: string, parentId?: string): Promise<string> {
+  const api = await restAs(user);
+  const [row] = await api.insert<{ id: string }>("peels", {
+    title,
+    user_id: api.id,
+    parent_id: parentId ?? null,
   });
+  return row.id;
+}
+
+/**
+ * A PostgREST client bound to one identity, for the writes a test has to make
+ * from outside the browser (another user acting while a page is open, or a bulk
+ * fixture too big to type into a composer).
+ */
+export type Rest = {
+  /** The signed-in user's id. Empty for the service role, which is nobody. */
+  id: string;
+  select<T>(path: string): Promise<T[]>;
+  insert<T>(table: string, rows: unknown): Promise<T[]>;
+  update(path: string, patch: unknown): Promise<void>;
+  remove(path: string): Promise<void>;
+};
+
+function client(token: string, id: string): Rest {
+  return {
+    id,
+    async select<T>(path: string): Promise<T[]> {
+      return (await (await rest(path, { token })).json()) as T[];
+    },
+    async insert<T>(table: string, rows: unknown): Promise<T[]> {
+      const response = await rest(table, {
+        method: "POST",
+        token,
+        headers: { Prefer: "return=representation" },
+        body: JSON.stringify(rows),
+      });
+      return (await response.json()) as T[];
+    },
+    async update(path: string, patch: unknown): Promise<void> {
+      await rest(path, { method: "PATCH", token, body: JSON.stringify(patch) });
+    },
+    async remove(path: string): Promise<void> {
+      await rest(path, { method: "DELETE", token });
+    },
+  };
+}
+
+/** Act as a real user, so RLS is exercised rather than bypassed. */
+export async function restAs(user: UserKey): Promise<Rest> {
+  const session = await signIn(user);
+  return client(session.access_token, session.user.id);
+}
+
+/** Act as the service role: fixture bulk-loading, and reading tables RLS hides. */
+export function restAsService(): Rest {
+  return client(localEnv().serviceRoleKey, "");
+}
+
+/** The objects one user has put in the `media` bucket, as `<uid>/<file>` paths. */
+export async function listMedia(userId: string): Promise<string[]> {
+  const { apiUrl, serviceRoleKey } = localEnv();
+  const response = await fetch(`${apiUrl}/storage/v1/object/list/media`, {
+    method: "POST",
+    headers: {
+      apikey: serviceRoleKey,
+      Authorization: `Bearer ${serviceRoleKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ prefix: `${userId}/`, limit: 100 }),
+  });
+  if (!response.ok) {
+    throw new Error(`Storage list -> ${response.status} ${await response.text()}`);
+  }
+  return ((await response.json()) as { name: string }[]).map((object) => `${userId}/${object.name}`);
+}
+
+/** The url Storage serves an object at — what supabase-js getPublicUrl() builds. */
+export function mediaUrl(path: string): string {
+  return `${localEnv().apiUrl}/storage/v1/object/public/media/${path}`;
 }

@@ -9,7 +9,7 @@ import { useId, useRef, useState } from "react";
 import { signOut } from "@/app/actions";
 import { bp, colors, fonts, shape } from "@/app/tokens.stylex";
 import { Avatar } from "./avatar";
-import { LogOutIcon, UserIcon } from "./icons";
+import { BookmarkIcon, LogOutIcon, UserIcon } from "./icons";
 import { ThemeSetting } from "./theme-setting";
 
 const MENU_WIDTH = 220;
@@ -58,6 +58,15 @@ export function AccountMenu({ profile }: { profile: Profile }) {
         >
           <UserIcon />
           Your peels
+        </Link>
+
+        <Link
+          href="/bookmarks"
+          onClick={() => menu.current?.hidePopover()}
+          {...stylex.props(styles.row)}
+        >
+          <BookmarkIcon />
+          Bookmarks
         </Link>
 
         <div {...stylex.props(styles.row, styles.themeRow)}>

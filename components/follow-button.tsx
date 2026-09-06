@@ -10,7 +10,14 @@ import { followUser, unfollowUser } from "@/app/actions";
 import { Button } from "./button";
 import { HelpText } from "./field";
 
-export function FollowButton({ profileId, isFollowing }: { profileId: string; isFollowing: boolean }) {
+type Props = {
+  profileId: string;
+  isFollowing: boolean;
+  /** In a list (who to follow), where the button is a row action rather than the page's one call to action. */
+  compact?: boolean;
+};
+
+export function FollowButton({ profileId, isFollowing, compact = false }: Props) {
   const router = useRouter();
   const [following, setFollowing] = useOptimistic(isFollowing);
   const [error, setError] = useState<string>();
@@ -31,7 +38,8 @@ export function FollowButton({ profileId, isFollowing }: { profileId: string; is
   return (
     <div {...stylex.props(styles.wrap)}>
       <Button
-        variant={following ? "secondary" : "primary"}
+        variant={following || compact ? "secondary" : "primary"}
+        size={compact ? "sm" : "md"}
         aria-pressed={following}
         onClick={toggle}
       >

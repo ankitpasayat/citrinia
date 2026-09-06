@@ -49,14 +49,16 @@ export default async function Thread({ params }: { params: Promise<{ id: string 
           Feed
         </Link>
 
-        {/* One card, no channel: the replies list below already refreshes the route. */}
-        <PeelList peels={[peel]} viewerId={user.id} live={false} />
+        {/* One card, no channel: the replies list below is the one that listens.
+            `embed` is what makes a YouTube link play here instead of linking here. */}
+        <PeelList peels={[peel]} viewerId={user.id} live={false} embed />
 
         <ReplyComposer parentId={peel.id} replyingTo={peel.author.username} />
 
         <PeelList
           peels={replies}
           viewerId={user.id}
+          live={{ parentId: id }}
           emptyTitle="No replies yet"
           emptyBody="Be the first."
         />

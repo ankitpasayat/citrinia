@@ -34,5 +34,14 @@ export default defineConfig({
       dependencies: ["mobile"],
       use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 800 } },
     },
+    {
+      // The social layer picks the narrative back up where the MVP left it, so it
+      // runs last: it fills the feed with enough peels to page, which is not the
+      // two-card feed the desktop check measures its column against.
+      name: "social",
+      testMatch: /social\.spec\.ts/,
+      dependencies: ["desktop"],
+      use: { ...devices["Desktop Chrome"], viewport: { width: 390, height: 844 } },
+    },
   ],
 });

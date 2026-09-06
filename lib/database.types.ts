@@ -9,6 +9,39 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      bookmarks: {
+        Row: {
+          created_at: string
+          peel_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          peel_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          peel_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookmarks_peel_id_fkey"
+            columns: ["peel_id"]
+            isOneToOne: false
+            referencedRelation: "peels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookmarks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       follows: {
         Row: {
           created_at: string
@@ -78,11 +111,105 @@ export type Database = {
           }
         ]
       }
+      notifications: {
+        Row: {
+          actor_id: string
+          created_at: string
+          id: number
+          peel_id: string | null
+          read_at: string | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          actor_id: string
+          created_at?: string
+          id?: number
+          peel_id?: string | null
+          read_at?: string | null
+          type: string
+          user_id: string
+        }
+        Update: {
+          actor_id?: string
+          created_at?: string
+          id?: number
+          peel_id?: string | null
+          read_at?: string | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_peel_id_fkey"
+            columns: ["peel_id"]
+            isOneToOne: false
+            referencedRelation: "peels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      peel_media: {
+        Row: {
+          alt: string
+          height: number | null
+          id: number
+          kind: string
+          peel_id: string
+          position: number
+          url: string
+          width: number | null
+        }
+        Insert: {
+          alt?: string
+          height?: number | null
+          id?: number
+          kind: string
+          peel_id: string
+          position?: number
+          url: string
+          width?: number | null
+        }
+        Update: {
+          alt?: string
+          height?: number | null
+          id?: number
+          kind?: string
+          peel_id?: string
+          position?: number
+          url?: string
+          width?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "peel_media_peel_id_fkey"
+            columns: ["peel_id"]
+            isOneToOne: false
+            referencedRelation: "peels"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       peels: {
         Row: {
           created_at: string
           id: string
           parent_id: string | null
+          quote_id: string | null
           title: string
           user_id: string
         }
@@ -90,6 +217,7 @@ export type Database = {
           created_at?: string
           id?: string
           parent_id?: string | null
+          quote_id?: string | null
           title: string
           user_id: string
         }
@@ -97,6 +225,7 @@ export type Database = {
           created_at?: string
           id?: string
           parent_id?: string | null
+          quote_id?: string | null
           title?: string
           user_id?: string
         }
@@ -104,6 +233,13 @@ export type Database = {
           {
             foreignKeyName: "peels_parent_id_fkey"
             columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "peels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "peels_quote_id_fkey"
+            columns: ["quote_id"]
             isOneToOne: false
             referencedRelation: "peels"
             referencedColumns: ["id"]
@@ -149,12 +285,62 @@ export type Database = {
           }
         ]
       }
+      reposts: {
+        Row: {
+          created_at: string
+          peel_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          peel_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          peel_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reposts_peel_id_fkey"
+            columns: ["peel_id"]
+            isOneToOne: false
+            referencedRelation: "peels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reposts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      home_timeline: {
+        Args: {
+          following_only?: boolean
+          before?: string | null
+          page_size?: number
+        }
+        Returns: {
+          peel_id: string
+          repost_by: string | null
+          sort_at: string
+        }[]
+      }
+      seed_triggers: {
+        Args: {
+          enabled: boolean
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

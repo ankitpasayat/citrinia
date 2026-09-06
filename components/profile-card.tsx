@@ -2,13 +2,14 @@
 // action that belongs to the viewer — follow someone else, or edit and log out
 // of your own. Server component; the two interactive bits are client children.
 import * as stylex from "@stylexjs/stylex";
+import Link from "next/link";
 import { signOut } from "@/app/actions";
 import { colors, fonts, shape } from "@/app/tokens.stylex";
 import { Avatar } from "./avatar";
-import { Button } from "./button";
+import { Button, buttonStyles } from "./button";
 import { EditProfileButton } from "./edit-profile-sheet";
 import { FollowButton } from "./follow-button";
-import { LogOutIcon } from "./icons";
+import { BookmarkIcon, LogOutIcon } from "./icons";
 
 export type ProfileCounts = { peels: number; followers: number; following: number };
 
@@ -50,6 +51,18 @@ export function ProfileCard({ profile, counts, isSelf, isFollowing }: Props) {
         {isSelf ? (
           <>
             <EditProfileButton profile={profile} />
+            {/* The only way to your bookmarks that is not buried in a menu. */}
+            <Link
+              href="/bookmarks"
+              {...stylex.props(
+                buttonStyles.base,
+                buttonStyles.variants.secondary,
+                buttonStyles.sizes.sm,
+              )}
+            >
+              <BookmarkIcon />
+              Bookmarks
+            </Link>
             <form action={signOut}>
               <Button type="submit" variant="tertiary" size="sm">
                 <LogOutIcon />

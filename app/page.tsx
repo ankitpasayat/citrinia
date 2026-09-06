@@ -11,13 +11,18 @@ import { SearchIcon } from "@/components/icons";
 import { PeelList } from "@/components/peel-list";
 import { LivePill } from "@/components/pill";
 import { TimelineToggle } from "@/components/timeline-toggle";
-import { fetchPeels } from "@/lib/peels";
+import { WhoToFollow } from "@/components/who-to-follow";
+import { fetchTimeline } from "@/lib/peels";
 import { createClient } from "@/lib/supabase/server";
 import { colors, fonts } from "./tokens.stylex";
 
 export const metadata: Metadata = { title: "Feed" };
 
-export default async function Home({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string; before?: string }>;
+}) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -28,21 +33,27 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ t
   // The signup trigger creates this row; without it there is no app to show.
   if (!profile) throw new Error("No profile for the signed-in user.");
 
-  const { tab } = await searchParams;
+  const { tab, before } = await searchParams;
   const following = tab === "following";
 
-  let peels;
-  if (following) {
-    const { data: follows } = await supabase
-      .from("follows")
-      .select("followee_id")
-      .eq("follower_id", user.id);
-    // Your own peels stay in the Following timeline, so it is never empty once you post.
-    const authorIds = [...(follows ?? []).map((row) => row.followee_id), user.id];
-    peels = await fetchPeels(supabase, user.id, { parentId: null, authorIds, limit: 50 });
-  } else {
-    peels = await fetchPeels(supabase, user.id, { parentId: null, limit: 50 });
-  }
+  // home_timeline merges peels and repeels onto one clock; your own peels are
+  // always in Following, so it is never empty once you post.
+  const [{ items, nextBefore }, follows] = await Promise.all([
+    fetchTimeline(supabase, user.id, { followingOnly: following, before }),
+    // Following a handful of people is not a full feed yet, so keep suggesting --
+    // an empty list is not the only time somebody needs them.
+    following
+      ? supabase
+          .from("follows")
+          .select("followee_id", { count: "exact", head: true })
+          .eq("follower_id", user.id)
+      : null,
+  ]);
+  const suggest = following && (follows?.count ?? 0) < 3;
+  const olderHref =
+    nextBefore === null
+      ? null
+      : `/?${following ? "tab=following&" : ""}before=${encodeURIComponent(nextBefore)}`;
 
   return (
     <FeedShell username={profile.username}>
@@ -67,10 +78,22 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ t
         <TimelineToggle tab={tab} />
 
         <PeelList
-          peels={peels}
+          peels={items}
           viewerId={user.id}
-          emptyBody={following ? "Follow people to fill this up." : "Tap + to peel first."}
+          live={{ parentId: null }}
+          // Past the first page an empty list is the end of the feed, not a first run.
+          emptyTitle={before ? "That's all the peels." : undefined}
+          emptyBody={
+            before
+              ? "You've reached the end."
+              : following
+                ? "Follow people to fill this up."
+                : "Tap + to peel first."
+          }
+          olderHref={olderHref}
         />
+
+        {suggest && <WhoToFollow viewerId={user.id} n={5} />}
       </Column>
     </FeedShell>
   );

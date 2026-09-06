@@ -4,6 +4,7 @@
 // that looks like a React/hydration complaint, fails the test that produced it
 // (asserted in fixture teardown, once the flows have finished).
 import { test as base, expect, type BrowserContext, type Page } from "@playwright/test";
+import { BASE_URL } from "../playwright.config.ts";
 import { signInContext } from "./auth.ts";
 import type { UserKey } from "./env.ts";
 
@@ -17,6 +18,19 @@ function avatarSvg(url: string): string {
   const fill = AVATAR_FILL[url.split("/").pop() ?? ""] ?? "#8C6A52";
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="${fill}"/><circle cx="32" cy="25" r="11" fill="#FFF1E6"/><circle cx="32" cy="57" r="18" fill="#FFF1E6"/></svg>`;
 }
+
+// The other two: a YouTube still and the player it links to. The assertions are
+// about the urls the app builds, not about YouTube, and a real embed would put
+// somebody else's console noise in `problems`.
+const YOUTUBE_STILL =
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 360"><rect width="480" height="360" fill="#3A2A22"/><circle cx="240" cy="180" r="54" fill="#FFF1E6"/><path d="M222 152l56 28-56 28z" fill="#3A2A22"/></svg>';
+const YOUTUBE_PLAYER =
+  '<!doctype html><meta charset="utf-8"><title>Stubbed player</title><body style="margin:0;background:#000"></body>';
+
+/** A picture on somebody else's CDN, which is what peel_media.url usually is. */
+export const REMOTE_IMAGE = "https://images.citrinia.test/orange-square.png";
+const REMOTE_IMAGE_BODY =
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="#D4551B"/></svg>';
 
 type Fixtures = {
   /** A fresh page, signed in as `user` — or signed out when called with nothing. */
@@ -46,6 +60,15 @@ export const test = base.extend<Fixtures>({
       await context.route("**://avatars.githubusercontent.com/**", (route) =>
         route.fulfill({ contentType: "image/svg+xml", body: avatarSvg(route.request().url()) }),
       );
+      await context.route("**://i.ytimg.com/**", (route) =>
+        route.fulfill({ contentType: "image/svg+xml", body: YOUTUBE_STILL }),
+      );
+      await context.route("**://www.youtube-nocookie.com/**", (route) =>
+        route.fulfill({ contentType: "text/html", body: YOUTUBE_PLAYER }),
+      );
+      await context.route("**://images.citrinia.test/**", (route) =>
+        route.fulfill({ contentType: "image/svg+xml", body: REMOTE_IMAGE_BODY }),
+      );
       if (user) await signInContext(context, user);
 
       const page = await context.newPage();
@@ -61,6 +84,49 @@ export const test = base.extend<Fixtures>({
     for (const context of contexts) await context.close();
   },
 });
+
+/** Fonts and the view transition settled, so a screenshot is the same every run.
+ *  The theme cross-fade in app/globals.css runs 0.7s, so wait past it. */
+export async function settle(page: Page): Promise<void> {
+  await page.evaluate(() => document.fonts.ready);
+  await page.waitForTimeout(900);
+}
+
+export async function shot(page: Page, name: string): Promise<void> {
+  await settle(page);
+  await page.screenshot({ path: `e2e/screenshots/${name}.png` });
+}
+
+/** The one card whose text contains `text`. */
+export function card(page: Page, text: string) {
+  return page.getByRole("article").filter({ hasText: text });
+}
+
+/**
+ * The feed's realtime channel actually listening.
+ *
+ * `subscribe()` returns long before the server has accepted the postgres_changes
+ * subscription — the client sends setAuth, joins, and only then is told
+ * "Subscribed to PostgreSQL" — and a row inserted inside that gap is never
+ * announced at all. Call this *before* navigating, await it after, and the
+ * "somebody peeled while you were reading" tests stop being a coin flip.
+ */
+export function subscribed(page: Page): Promise<void> {
+  return new Promise<void>((resolve) => {
+    page.on("websocket", (socket) => {
+      socket.on("framereceived", (frame) => {
+        if (frame.payload.toString().includes("Subscribed to PostgreSQL")) resolve();
+      });
+    });
+  });
+}
+
+/** A server action actually reaching the server: the app's own POST coming back. */
+export function actionWrite(page: Page) {
+  return page.waitForResponse(
+    (r) => r.request().method() === "POST" && r.url().startsWith(`${BASE_URL}/`),
+  );
+}
 
 export { expect };
 export type { Page };

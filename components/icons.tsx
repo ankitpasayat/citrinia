@@ -152,3 +152,45 @@ export function PlusIcon(p: IconProps) {
     </Svg>
   );
 }
+
+export function BellIcon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path {...stroke} d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4zM10 20a2 2 0 0 0 4 0" />
+    </Svg>
+  );
+}
+
+export function RepeatIcon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path {...stroke} d="M17 2l4 4-4 4M3 11V8a2 2 0 0 1 2-2h16M7 22l-4-4 4-4M21 13v3a2 2 0 0 1-2 2H3" />
+    </Svg>
+  );
+}
+
+export function BookmarkIcon({ filled, ...p }: IconProps & { filled?: boolean }) {
+  return (
+    <Svg {...p}>
+      <path {...stroke} fill={filled ? "currentColor" : "none"} d="M6 3h12v18l-6-4-6 4z" />
+    </Svg>
+  );
+}
+
+export function PlayIcon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path fill="currentColor" d="M8 5v14l11-7z" />
+    </Svg>
+  );
+}
+
+export function ImageIcon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <rect x="3" y="5" width="18" height="14" rx="2" {...stroke} />
+      <circle cx="8.5" cy="10" r="1.5" fill="currentColor" />
+      <path {...stroke} d="M21 16l-5-5-6 6-2-2-5 5" />
+    </Svg>
+  );
+}

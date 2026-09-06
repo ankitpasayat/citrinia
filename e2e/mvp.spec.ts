@@ -1,7 +1,7 @@
 // The signed-in MVP, driven end to end in a real browser against a local
 // Supabase stack. One narrative on one database, in order: what test 2 posts,
 // test 3 replies to and test 11 deletes.
-import { expect, test, type Page } from "./fixtures.ts";
+import { actionWrite, card, expect, shot, subscribed, test, type Page } from "./fixtures.ts";
 import { peelAs } from "./db.ts";
 
 const PEEL = "first peel from ada 🍊";
@@ -12,23 +12,6 @@ const BOB_PEEL = "bob peels in from the outside";
 const DANGER = "rgb(198, 40, 40)"; // colors.danger #C62828
 const DARK_GROUND = "rgb(42, 26, 18)"; // app/themes.ts darkTheme ground #2A1A12
 
-/** Fonts and the view transition settled, so a screenshot is the same every run.
- *  The theme cross-fade in app/globals.css runs 0.7s, so wait past it. */
-async function settle(page: Page): Promise<void> {
-  await page.evaluate(() => document.fonts.ready);
-  await page.waitForTimeout(900);
-}
-
-async function shot(page: Page, name: string): Promise<void> {
-  await settle(page);
-  await page.screenshot({ path: `e2e/screenshots/${name}.png` });
-}
-
-/** The one card whose text contains `text`. */
-function card(page: Page, text: string) {
-  return page.getByRole("article").filter({ hasText: text });
-}
-
 /**
  * The like write actually reaching Postgres. The chip paints the new state
  * before the round trip, so a reload or a closing context milliseconds later
@@ -38,13 +21,6 @@ function card(page: Page, text: string) {
 function likeWrite(page: Page, method: "POST" | "DELETE") {
   return page.waitForResponse(
     (r) => r.request().method() === method && r.url().includes("/rest/v1/likes") && r.status() < 400,
-  );
-}
-
-/** Same, for a server action: the app's own POST coming back. */
-function actionWrite(page: Page) {
-  return page.waitForResponse(
-    (r) => r.request().method() === "POST" && r.url().startsWith("http://127.0.0.1:3210/"),
   );
 }
 
@@ -116,7 +92,7 @@ test("3. ada replies in the thread, and the feed counts it", async ({ open }) =>
   await shot(page, "thread-mobile");
 
   await page.goto("/");
-  await expect(card(page, PEEL).getByRole("link", { name: "1 replies" })).toBeVisible();
+  await expect(card(page, PEEL).getByRole("link", { name: "1 reply" })).toBeVisible();
 });
 
 test("4. ada likes and unlikes her own peel", async ({ open }) => {
@@ -242,15 +218,26 @@ test("7. bob edits his profile, and the bio limit holds", async ({ open }) => {
   await expect(head.getByRole("paragraph").filter({ hasText: "peels and pith" })).toBeVisible();
 });
 
-test("8. someone else's peel arrives on an open feed, with no reload", async ({ open }) => {
+test("8. someone else's peel is announced on an open feed, with no reload", async ({ open }) => {
   const page = await open("ada");
+  const listening = subscribed(page);
   await page.goto("/");
   await expect(page.getByRole("article")).toHaveCount(1);
+  // A peel inserted before the channel has joined is never announced at all.
+  await listening;
 
   await peelAs("bob", BOB_PEEL);
 
-  await expect(card(page, BOB_PEEL)).toBeVisible({ timeout: 10_000 });
+  // The feed no longer reorders itself under the reader's thumb: the peel is
+  // announced, and arrives when the announcement is tapped.
+  const announcement = page.getByRole("button", { name: "1 new peel" });
+  await expect(announcement).toBeVisible({ timeout: 10_000 });
+  await expect(card(page, BOB_PEEL)).toHaveCount(0);
+
+  await announcement.click();
+  await expect(card(page, BOB_PEEL)).toBeVisible();
   await expect(page.getByRole("article")).toHaveCount(2);
+  await expect(announcement).toHaveCount(0);
 });
 
 test("9. the feed, on a phone", async ({ open }) => {

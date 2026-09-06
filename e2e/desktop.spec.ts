@@ -1,6 +1,6 @@
 // The same feed on a wide screen. Runs after the mobile narrative (see
 // `dependencies` in playwright.config.ts) against the state it leaves behind.
-import { expect, test } from "./fixtures.ts";
+import { expect, settle, test } from "./fixtures.ts";
 
 test("the feed keeps to a centred 520px column above the tablet breakpoint", async ({ open }) => {
   const page = await open("ada");
@@ -14,7 +14,6 @@ test("the feed keeps to a centred 520px column above the tablet breakpoint", asy
   const viewport = page.viewportSize()!;
   expect(Math.abs(box!.x + box!.width / 2 - viewport.width / 2)).toBeLessThan(2);
 
-  await page.evaluate(() => document.fonts.ready);
-  await page.waitForTimeout(400);
+  await settle(page);
   await page.screenshot({ path: "e2e/screenshots/feed-desktop.png" });
 });

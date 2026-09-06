@@ -58,18 +58,29 @@ pnpm verify:db   # applies the migrations to a throwaway Postgres in Docker and 
 
 ## End to end
 
-`pnpm e2e` drives the signed-in flows in a real browser with Playwright: post,
-reply, like, follow, search, edit profile, delete, theme and the live feed, as
-two users. GitHub OAuth cannot be completed headlessly, so the suite runs against
-a **local** Supabase stack and mints its sessions with the password grant
+`pnpm e2e` drives the signed-in flows in a real browser with Playwright, as two
+users, in one narrative on one database:
+
+- `e2e/mvp.spec.ts` — post, reply, like, follow, search, edit profile, delete,
+  theme, and a peel arriving on an open feed.
+- `e2e/desktop.spec.ts` — the same feed on a wide screen.
+- `e2e/social.spec.ts` — repeel, quote, bookmarks, notifications and the unread
+  badge, @mentions and #hashtags, YouTube links, the media picker, cursor
+  pagination, the "N new peels" announcement, and who to follow.
+
+GitHub OAuth cannot be completed headlessly, so the suite runs against a
+**local** Supabase stack and mints its sessions with the password grant
 (`e2e/auth.ts` writes the same cookie `@supabase/ssr` would). It seeds `ada` and
 `bob` and resets their data on every run, so it is repeatable.
 
 Docker has to be running. Three terminals, or three steps:
 
 ```bash
-# 1. The local stack. Applies supabase/migrations in order.
+# 1. The local stack. `start` restores its own cached snapshot, which does not
+#    include a migration added since it was last stopped -- so reset after it,
+#    which replays supabase/migrations in order and creates the media bucket.
 npx supabase start
+npx supabase db reset
 
 # 2. A production build wired to it. NEXT_PUBLIC_* values are inlined at build
 #    time, so the env has to be set for the build, not just for `next start`.
@@ -81,6 +92,16 @@ pnpm exec next start -p 3210     # port 3210, so `pnpm dev` can keep 3000
 # 3. The suite.
 pnpm e2e
 ```
+
+Global setup checks the schema before anything runs and says to reset if the
+`reposts`, `bookmarks`, `peel_media` or `notifications` tables — or the `media`
+Storage bucket — are not there yet.
+
+One thing the local stack cannot exercise: a file uploaded through the composer
+comes back from Storage as `http://127.0.0.1:54321/…`, and both `lib/media.ts`
+and the `peel_media_url_https` constraint require `https://`, so the peel is
+refused. The upload itself is covered end to end; the card it would produce is
+covered from an `https` url, the way the seed importer writes one.
 
 Screenshots land in `e2e/screenshots/` (gitignored) at both sizes. `npx supabase
 stop` tears the stack down; starting it again comes up with the data reset.

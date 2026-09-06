@@ -1,9 +1,11 @@
 "use client";
 
-// One peel. Avatar and name go to the profile, the text goes to the thread, and
-// the actions row sits underneath. Your own peels get a dots menu whose delete
-// asks once before it fires. Popovers live in the top layer with no anchor of
-// their own, so the menu is measured off its trigger when it opens.
+// One peel. Avatar and name go to the profile, the timestamp and the pictures go
+// to the thread, and the actions row sits underneath. The body is no longer one
+// big link -- it has @handles and #hashtags in it now, and an <a> cannot hold
+// another <a>. Your own peels get a dots menu whose delete asks once before it
+// fires. Popovers live in the top layer with no anchor of their own, so the menu
+// is measured off its trigger when it opens.
 import * as stylex from "@stylexjs/stylex";
 import Link from "next/link";
 import { startTransition, useId, useRef, useState } from "react";
@@ -11,9 +13,14 @@ import { deletePeel } from "@/app/actions";
 import { bp, colors, fonts, shape } from "@/app/tokens.stylex";
 import { formatRelative, fullTime } from "@/lib/relative-time";
 import { Avatar } from "./avatar";
+import { BookmarkButton } from "./bookmark-button";
 import { Button } from "./button";
-import { MoreIcon, ReplyIcon, TrashIcon } from "./icons";
+import { MoreIcon, RepeatIcon, ReplyIcon, TrashIcon } from "./icons";
 import { chipStyles, LikeChip } from "./like-chip";
+import { MediaGrid } from "./media-grid";
+import { QuoteCard } from "./quote-card";
+import { RepostButton } from "./repost-button";
+import { RichText } from "./rich-text";
 
 const MENU_WIDTH = 220;
 const GAP = 8;
@@ -21,13 +28,22 @@ const GAP = 8;
 export function PeelCard({
   peel,
   viewerId,
+  embed = false,
   onOptimisticLike,
   onOptimisticRemove,
+  onOptimisticRepost,
+  onOptimisticBookmark,
+  onQuote,
 }: {
   peel: PeelUnionAuthor;
   viewerId: string;
+  /** On the peel page: YouTube plays inline and the pictures stop linking here. */
+  embed?: boolean;
   onOptimisticLike: (next: PeelUnionAuthor) => void;
   onOptimisticRemove: (id: string) => void;
+  onOptimisticRepost: (next: PeelUnionAuthor) => void;
+  onOptimisticBookmark: (next: PeelUnionAuthor) => void;
+  onQuote: (peel: PeelUnionAuthor) => void;
 }) {
   const menuId = useId();
   const trigger = useRef<HTMLButtonElement>(null);
@@ -38,6 +54,7 @@ export function PeelCard({
   const author = peel.author;
   const profileHref = `/u/${author.username}`;
   const threadHref = `/p/${peel.id}`;
+  const reposter = peel.reposted_by;
 
   function onMenuToggle(event: React.ToggleEvent<HTMLDivElement>) {
     if (event.newState !== "open") {
@@ -73,6 +90,17 @@ export function PeelCard({
 
   return (
     <article {...stylex.props(styles.card)}>
+      {/* Why this peel is on your timeline at all: somebody put it back. */}
+      {reposter && (
+        <p {...stylex.props(styles.repeeled)}>
+          <RepeatIcon style={styles.repeeledIcon} />
+          Repeeled by{" "}
+          <Link href={`/u/${reposter.username}`} {...stylex.props(styles.repeeledName)}>
+            {reposter.name}
+          </Link>
+        </p>
+      )}
+
       {/* The name below is the accessible link to the same place; this one is decoration. */}
       <Link href={profileHref} tabIndex={-1} aria-hidden="true" {...stylex.props(styles.avatarLink)}>
         <Avatar src={author.avatar_url} name={author.name} />
@@ -85,40 +113,46 @@ export function PeelCard({
           </Link>
           <span {...stylex.props(styles.meta)}>@{author.username}</span>
           {/* Relative times are computed from the reader's clock, which is not the server's. */}
-          <time
-            dateTime={peel.created_at}
-            title={fullTime(peel.created_at)}
-            suppressHydrationWarning
-            {...stylex.props(styles.meta, styles.time)}
-          >
-            {formatRelative(peel.created_at)}
-          </time>
+          <Link href={threadHref} aria-label="Open this peel" {...stylex.props(styles.timeLink)}>
+            <time
+              dateTime={peel.created_at}
+              title={fullTime(peel.created_at)}
+              suppressHydrationWarning
+              {...stylex.props(styles.meta, styles.time)}
+            >
+              {formatRelative(peel.created_at)}
+            </time>
+          </Link>
         </div>
 
-        <Link href={threadHref} {...stylex.props(styles.textLink)}>
-          <p {...stylex.props(styles.text)}>{peel.title}</p>
-        </Link>
+        <RichText text={peel.title} />
+        <MediaGrid media={peel.media} href={threadHref} authorName={author.name} embed={embed} />
+        {peel.quote && <QuoteCard quote={peel.quote} />}
 
         <div {...stylex.props(styles.acts)}>
           <LikeChip peel={peel} onOptimisticLike={onOptimisticLike} />
           <Link
             href={threadHref}
-            aria-label={`${peel.replies} replies`}
+            aria-label={`${peel.replies} ${peel.replies === 1 ? "reply" : "replies"}`}
             {...stylex.props(chipStyles.base, styles.replyChip)}
           >
             <ReplyIcon style={styles.replyIcon} />
             <span {...stylex.props(styles.count)}>{peel.replies}</span>
           </Link>
+          <RepostButton
+            peel={peel}
+            viewerId={viewerId}
+            onOptimisticRepost={onOptimisticRepost}
+            onQuote={onQuote}
+          />
+
+          <span {...stylex.props(styles.push)}>
+            <BookmarkButton peel={peel} onOptimisticBookmark={onOptimisticBookmark} />
+          </span>
 
           {peel.user_id === viewerId && (
             <>
-              <Button
-                ref={trigger}
-                variant="icon"
-                aria-label="More"
-                popoverTarget={menuId}
-                style={styles.more}
-              >
+              <Button ref={trigger} variant="icon" aria-label="More" popoverTarget={menuId}>
                 <MoreIcon />
               </Button>
               <div
@@ -154,6 +188,28 @@ const styles = stylex.create({
     paddingBlock: 16,
     paddingInline: 16,
   },
+  repeeled: {
+    gridColumn: "1 / -1",
+    display: "flex",
+    alignItems: "center",
+    gap: 6,
+    margin: 0,
+    marginBottom: -4,
+    fontSize: "0.8125rem",
+    fontWeight: 700,
+    color: colors.muted,
+  },
+  repeeledIcon: { width: 15, height: 15 },
+  repeeledName: {
+    color: colors.muted,
+    fontWeight: 800,
+    textDecorationLine: { default: "none", [bp.hover]: { default: "none", ":hover": "underline" } },
+    outlineStyle: { default: "none", ":focus-visible": "solid" },
+    outlineWidth: 3,
+    outlineColor: colors.amber,
+    outlineOffset: 2,
+    borderRadius: 4,
+  },
   avatarLink: { display: "block", borderRadius: "50%", textDecorationLine: "none" },
   content: { minWidth: 0 },
   who: { display: "flex", alignItems: "baseline", gap: 6, flexWrap: "wrap" },
@@ -175,31 +231,22 @@ const styles = stylex.create({
     fontWeight: 700,
     color: colors.muted,
   },
-  time: { marginLeft: "auto", fontVariantNumeric: "tabular-nums" },
-  textLink: {
-    display: "block",
+  timeLink: {
+    marginLeft: "auto",
+    textDecorationLine: { default: "none", [bp.hover]: { default: "none", ":hover": "underline" } },
     color: "inherit",
-    textDecorationLine: "none",
     outlineStyle: { default: "none", ":focus-visible": "solid" },
     outlineWidth: 3,
     outlineColor: colors.amber,
     outlineOffset: 3,
-    borderRadius: 8,
+    borderRadius: 4,
   },
-  text: {
-    marginTop: 4,
-    marginBottom: 10,
-    fontSize: "0.9375rem",
-    fontWeight: 600,
-    lineHeight: 1.5,
-    whiteSpace: "pre-wrap",
-    overflowWrap: "anywhere",
-  },
+  time: { fontVariantNumeric: "tabular-nums" },
   acts: { display: "flex", alignItems: "center", gap: 6 },
   replyChip: { textDecorationLine: "none" },
   replyIcon: { width: 18, height: 18 },
   count: { fontVariantNumeric: "tabular-nums" },
-  more: { marginLeft: "auto" },
+  push: { marginLeft: "auto", display: "inline-flex" },
   menu: {
     position: "fixed",
     top: "auto",
