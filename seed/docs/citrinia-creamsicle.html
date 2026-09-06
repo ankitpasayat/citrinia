@@ -1,0 +1,614 @@
+<title>Citrinia Creamsicle</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shrikhand&family=Nunito:wght@600;700;800&family=Rubik:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --ground: #FFF1E6; --surface: #FFFAF5; --ink: #4A2C1A; --muted: #8C6A52;
+    --burnt: #D4551B; --amber: #F0A030; --must: #E8C547; --soft: #F7E0C0;
+    --apri: #FFC9A3; --aprid: #E8A876; --chipbg: #FFF1E6; --lip: #4A2C1A;
+    --danger: #C62828; --dangersoft: #FFE0DC; --onbtn: #FFF8EC;
+    --shadow: 0 6px 20px rgba(74,44,26,0.08); --shadow-lg: 0 10px 30px rgba(74,44,26,0.15);
+    --disp: "Shrikhand", "Cooper Black", "Arial Rounded MT Bold", serif;
+    --sans: "Nunito", "Segoe UI", Roboto, sans-serif;
+    --chrome: "Rubik", "Segoe UI", sans-serif;
+    --mono: ui-monospace, "Cascadia Mono", Menlo, Consolas, monospace;
+    --code-bg: #FFE7D6;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #2A1A12; --surface: #36251B; --ink: #FFF1E6; --muted: #D0B29E;
+      --burnt: #F0763A; --apri: #7A4A30; --aprid: #5C3622; --chipbg: #3F2B20; --lip: #1A0F0A;
+      --danger: #FF7B6B; --dangersoft: #4A211C;
+      --shadow: 0 6px 20px rgba(0,0,0,0.3); --shadow-lg: 0 10px 30px rgba(0,0,0,0.4);
+      --code-bg: #1F120C;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #2A1A12; --surface: #36251B; --ink: #FFF1E6; --muted: #D0B29E;
+    --burnt: #F0763A; --apri: #7A4A30; --aprid: #5C3622; --chipbg: #3F2B20; --lip: #1A0F0A;
+    --danger: #FF7B6B; --dangersoft: #4A211C;
+    --shadow: 0 6px 20px rgba(0,0,0,0.3); --shadow-lg: 0 10px 30px rgba(0,0,0,0.4);
+    --code-bg: #1F120C;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--ground); color: var(--ink); font: 600 15px/1.5 var(--sans); -webkit-font-smoothing: antialiased; }
+  button { font-family: inherit; cursor: pointer; }
+  button:focus-visible, a:focus-visible, textarea:focus-visible, input:focus-visible { outline: 3px solid var(--amber); outline-offset: 3px; }
+  .sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
+  code, pre { font-family: var(--mono); font-size: 13px; }
+  pre { background: var(--code-bg); border-radius: 18px; padding: 16px 18px; overflow-x: auto; line-height: 1.55; margin: 0; font-weight: 500; }
+
+  /* page chrome */
+  .top { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 24px; background: var(--ground); border-bottom: 1px solid var(--soft); }
+  :root[data-theme="dark"] .top, :root:not([data-theme="light"]) .top { border-color: rgba(255,255,255,0.08); }
+  .top .name { font: 400 22px/1 var(--disp); color: var(--burnt); }
+  .top .name small { font: 700 11px/1 var(--sans); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-left: 10px; }
+  .seg { display: inline-flex; background: var(--surface); border-radius: 999px; padding: 3px; gap: 2px; box-shadow: var(--shadow); }
+  .seg button { font: 800 11px/1 var(--sans); letter-spacing: 0.06em; text-transform: uppercase; background: transparent; color: var(--muted); border: 0; border-radius: 999px; padding: 8px 12px; }
+  .seg button[aria-pressed="true"] { background: var(--burnt); color: #FFF8EC; }
+  main { max-width: 1120px; margin: 0 auto; padding: 32px 24px 96px; }
+  section { margin-top: 64px; }
+  .eyebrow { font: 800 11px/1 var(--sans); letter-spacing: 0.12em; text-transform: uppercase; color: var(--burnt); margin: 0 0 10px; }
+  h1, h2, h3 { font-family: var(--disp); font-weight: 400; margin: 0; text-wrap: balance; letter-spacing: 0.005em; }
+  h1 { font-size: clamp(36px, 5.5vw, 58px); line-height: 1.05; color: var(--burnt); }
+  h2 { font-size: 30px; line-height: 1.1; color: var(--burnt); }
+  h3 { font-size: 20px; line-height: 1.2; }
+  .lede { font-size: 17px; max-width: 62ch; margin: 16px 0 0; }
+  .note { color: var(--muted); max-width: 66ch; margin: 8px 0 0; font-weight: 600; }
+  .note b { color: var(--ink); }
+  .intro { display: grid; grid-template-columns: 1.1fr 1fr; gap: 40px; align-items: center; }
+  @media (max-width: 800px) { .intro { grid-template-columns: 1fr; } }
+  .principles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 28px; }
+  @media (max-width: 800px) { .principles { grid-template-columns: 1fr; } }
+  .principle { background: var(--surface); border-radius: 24px; padding: 18px 20px; box-shadow: var(--shadow); }
+  .principle h3 { color: var(--burnt); margin-bottom: 6px; }
+  .principle p { margin: 0; color: var(--muted); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 20px; }
+  @media (max-width: 800px) { .grid2 { grid-template-columns: 1fr; } }
+  .row { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; margin-top: 16px; }
+  .label { font: 800 11px/1 var(--sans); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); width: 100%; margin-top: 8px; }
+  .example-tag { font: 800 11px/1 var(--sans); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; }
+  .spec { display: grid; grid-template-columns: 170px 1fr; gap: 8px 16px; margin-top: 16px; max-width: 760px; }
+  .spec dt { font-weight: 800; }
+  .spec dd { margin: 0; color: var(--muted); }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .dep { font: 500 13px/1 var(--mono); background: var(--code-bg); color: var(--ink); border-radius: 8px; padding: 6px 8px; }
+  .dep.add { background: var(--must); color: #4A2C1A; }
+  .decisions { display: grid; gap: 14px; margin-top: 20px; max-width: 760px; padding: 0; list-style: none; }
+  .decisions li { display: grid; grid-template-columns: 34px 1fr; gap: 12px; }
+  .decisions li::before { content: counter(d); counter-increment: d; font: 400 24px/1 var(--disp); color: var(--amber); }
+  .decisions { counter-reset: d; }
+  .decisions b { display: block; }
+  .decisions p { margin: 2px 0 0; color: var(--muted); }
+
+  /* palette */
+  .palettes { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 20px; }
+  @media (max-width: 800px) { .palettes { grid-template-columns: 1fr; } }
+  .palette { border-radius: 24px; overflow: hidden; box-shadow: var(--shadow); }
+  .palette header { padding: 12px 16px; font-weight: 800; display: flex; justify-content: space-between; }
+  .palette header span { font-weight: 700; font-size: 13px; opacity: 0.7; }
+  .swatches { display: grid; grid-template-columns: repeat(4, 1fr); }
+  .sw { padding: 12px; min-height: 88px; display: flex; flex-direction: column; justify-content: flex-end; gap: 2px; }
+  .sw b { font-size: 12px; font-weight: 800; }
+  .sw code { font-size: 11px; opacity: 0.85; }
+  .p-light { background: #FFF1E6; color: #4A2C1A; }
+  .p-dark { background: #2A1A12; color: #FFF1E6; }
+  .stripes { height: 40px; background: linear-gradient(90deg, #D4551B 0 25%, #F0A030 25% 50%, #E8C547 50% 75%, #F7E0C0 75%); }
+
+  /* type */
+  .type-row { display: grid; grid-template-columns: 110px 1fr; gap: 14px; align-items: baseline; padding: 10px 0; border-bottom: 2px solid var(--chipbg); }
+  .type-row small { font: 700 12px/1.3 var(--sans); color: var(--muted); }
+  .d { font-family: var(--disp); font-weight: 400; line-height: 1.05; color: var(--burnt); }
+
+  /* ===== components (the spec) ===== */
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; font: 400 16px/1 var(--disp); letter-spacing: 0.02em; color: var(--onbtn); text-shadow: 1px 1px 0 #4A2C1A; background: linear-gradient(#F0A030, #D4551B); border: 0; border-radius: 999px; padding: 12px 22px 13px; min-height: 44px; box-shadow: inset 0 2px 0 rgba(255,255,255,0.45), 0 4px 0 var(--lip); transition: transform 90ms ease, box-shadow 90ms ease, filter 90ms ease; user-select: none; text-decoration: none; white-space: nowrap; }
+  .btn:hover { filter: brightness(1.07); }
+  .btn:active, .btn.is-pressed { transform: translateY(4px); box-shadow: inset 0 2px 0 rgba(255,255,255,0.45), 0 0 0 var(--lip); }
+  .btn:disabled, .btn[aria-disabled="true"] { filter: saturate(0.4) brightness(1.05); opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: inset 0 2px 0 rgba(255,255,255,0.45), 0 4px 0 var(--lip); }
+  .btn.sec { background: linear-gradient(#FFE1C7, var(--apri)); color: var(--ink); text-shadow: none; box-shadow: inset 0 2px 0 rgba(255,255,255,0.6), 0 4px 0 var(--aprid); }
+  .btn.sec:active { box-shadow: inset 0 2px 0 rgba(255,255,255,0.6), 0 0 0 var(--aprid); }
+  :root[data-theme="dark"] .btn.sec, :root:not([data-theme="light"]) .btn.sec { background: linear-gradient(#8A5638, var(--apri)); }
+  .btn.ter { background: transparent; color: var(--ink); text-shadow: none; box-shadow: none; font: 800 15px/1 var(--sans); text-decoration: underline wavy var(--burnt); text-underline-offset: 5px; }
+  .btn.ter:hover { filter: none; color: var(--burnt); }
+  .btn.ter:active { transform: none; }
+  .btn.danger { background: linear-gradient(#FF8A7A, var(--danger)); }
+  .btn.sm { font-size: 14px; padding: 9px 16px 10px; min-height: 36px; }
+  .btn.lg { font-size: 19px; padding: 15px 28px 16px; min-height: 54px; }
+  .btn.fab { width: 60px; height: 60px; padding: 0; border-radius: 50%; font: 800 30px/1 var(--sans); text-shadow: none; }
+  .btn.icon { width: 36px; height: 36px; min-height: 36px; padding: 0; border-radius: 50%; background: transparent; color: var(--muted); box-shadow: none; text-shadow: none; }
+  .btn.icon:hover { background: var(--chipbg); color: var(--ink); filter: none; }
+  .btn.icon:active { transform: none; }
+  .btn svg { width: 18px; height: 18px; flex: none; }
+  .spinner { width: 16px; height: 16px; border: 3px solid rgba(255,248,236,0.35); border-top-color: #FFF8EC; border-radius: 50%; animation: spin 700ms linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .chip { display: inline-flex; align-items: center; gap: 6px; font: 800 13px/1 var(--sans); font-variant-numeric: tabular-nums; color: var(--ink); background: var(--chipbg); border: 0; border-radius: 999px; padding: 8px 12px 8px 10px; transition: background-color 120ms ease; }
+  .chip:hover { background: var(--apri); }
+  .chip svg { width: 18px; height: 18px; }
+  .chip .wedge { fill: transparent; stroke: currentColor; stroke-width: 2; transition: fill 120ms; }
+  .chip .segs { stroke: currentColor; stroke-width: 1.5; fill: none; }
+  .chip[aria-pressed="true"] { background: var(--must); color: #4A2C1A; }
+  .chip[aria-pressed="true"] .wedge { fill: #D4551B; }
+  .chip[aria-pressed="true"] .segs { stroke: #E8C547; }
+  .chip[aria-pressed="true"] svg { animation: pop 320ms cubic-bezier(.2,1.6,.4,1); }
+  @keyframes pop { 0% { transform: scale(0.7) rotate(-12deg); } 60% { transform: scale(1.25) rotate(6deg); } 100% { transform: none; } }
+  .pill { display: inline-flex; align-items: center; gap: 6px; font: 800 12px/1 var(--sans); letter-spacing: 0.04em; border-radius: 999px; padding: 7px 11px; background: var(--must); color: #4A2C1A; }
+  .pill.live .dot { width: 8px; height: 8px; border-radius: 50%; background: #D4551B; animation: pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: 0.35; } }
+  .pill.warn { background: var(--amber); }
+  .pill.over { background: var(--danger); color: #fff; }
+
+  .field { display: block; width: 100%; font: 600 16px/1.5 var(--sans); color: var(--ink); background: var(--surface); border: 0; border-radius: 18px; padding: 13px 16px; resize: none; }
+  .field::placeholder { color: var(--muted); }
+  .field:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--amber); }
+  .field[aria-invalid="true"] { box-shadow: inset 0 0 0 2px var(--danger); }
+  .field.on-surface { background: var(--ground); }
+  .help { font-size: 13px; color: var(--muted); margin-top: 6px; }
+  .help.err { color: var(--danger); font-weight: 800; }
+
+  .avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--amber); color: #4A2C1A; display: inline-grid; place-items: center; font: 800 14px/1 var(--sans); overflow: hidden; flex: none; }
+  .avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .avatar.lg { width: 84px; height: 84px; font-size: 28px; border: 4px solid var(--surface); box-shadow: var(--shadow); }
+  .avatar.sm { width: 30px; height: 30px; font-size: 11px; }
+  .avatar.ring { border: 3px solid #4A2C1A; }
+  .avatar-btn { border: 0; padding: 0; background: none; border-radius: 50%; }
+
+  .band { height: 84px; border-radius: 20px; background: linear-gradient(#D4551B 0 25%, #F0A030 25% 50%, #E8C547 50% 75%, #F7E0C0 75%); display: flex; align-items: center; justify-content: space-between; padding: 0 18px; box-shadow: var(--shadow); }
+  .band .wm { font: 400 32px/1 var(--disp); color: #FFF8EC; text-shadow: 2px 2px 0 #4A2C1A; letter-spacing: 0.01em; text-decoration: none; }
+  .band.slim { height: 12px; border-radius: 6px; padding: 0; }
+  .band .right { display: flex; align-items: center; gap: 10px; }
+
+  [popover].menu { position: fixed; inset: auto; margin: 0; min-width: 210px; padding: 8px; background: var(--surface); color: var(--ink); border: 0; border-radius: 20px; box-shadow: var(--shadow-lg); }
+  .menu .who { padding: 8px 10px 10px; border-bottom: 2px solid var(--chipbg); margin-bottom: 6px; }
+  .menu .who b { display: block; font: 400 18px/1.2 var(--disp); color: var(--burnt); }
+  .menu .who span { font-size: 13px; color: var(--muted); font-weight: 700; }
+  .menu button, .menu a { display: flex; width: 100%; align-items: center; gap: 10px; text-align: left; font: 800 14px/1 var(--sans); color: var(--ink); background: none; border: 0; border-radius: 12px; padding: 10px; text-decoration: none; }
+  .menu button:hover, .menu a:hover { background: var(--chipbg); }
+  .menu .dng { color: var(--danger); }
+  .menu svg { width: 18px; height: 18px; }
+
+  .card { background: var(--surface); border-radius: 24px; padding: 16px; box-shadow: var(--shadow); display: grid; grid-template-columns: 40px 1fr; gap: 12px; }
+  .card + .card { margin-top: 12px; }
+  .who { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+  .who b { font: 400 16px/1.2 var(--disp); color: var(--burnt); font-weight: 400; }
+  .who a { color: inherit; text-decoration: none; }
+  .who span, .who time { font-size: 13px; color: var(--muted); font-weight: 700; }
+  .who time { margin-left: auto; font-variant-numeric: tabular-nums; }
+  .card p { margin: 4px 0 10px; font-size: 15px; font-weight: 600; line-height: 1.5; overflow-wrap: anywhere; }
+  .card .acts { display: flex; align-items: center; gap: 6px; }
+  .card .acts .icon { margin-left: auto; }
+  .skel { background: linear-gradient(90deg, var(--chipbg) 0%, var(--surface) 50%, var(--chipbg) 100%); background-size: 200% 100%; animation: shimmer 1.4s linear infinite; border-radius: 8px; }
+  @keyframes shimmer { to { background-position: -200% 0; } }
+  .empty { text-align: center; padding: 48px 20px; display: grid; gap: 8px; justify-items: center; }
+  .empty h3 { font-size: 30px; color: var(--burnt); }
+  .empty p { margin: 0; color: var(--muted); }
+  .empty .blob { width: 96px; height: 96px; border-radius: 50%; background: linear-gradient(#F0A030, #D4551B); box-shadow: inset 0 6px 0 rgba(255,255,255,0.4), 0 6px 0 var(--lip); margin-bottom: 8px; }
+  .toast { display: inline-flex; align-items: center; gap: 12px; padding: 12px 14px 12px 16px; background: var(--surface); border-radius: 18px; box-shadow: var(--shadow-lg); font-weight: 700; border-left: 6px solid var(--danger); }
+
+  /* screens */
+  .frame { background: var(--ground); border-radius: 28px; overflow: hidden; box-shadow: var(--shadow-lg); position: relative; }
+  .frame-row { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 20px; align-items: start; }
+  @media (max-width: 900px) { .frame-row { grid-template-columns: 1fr; } }
+  .phone { position: relative; width: 430px; max-width: 100%; margin: 0 auto; padding: 16px 18px 100px; min-height: 640px; }
+  .greet { font-weight: 800; color: var(--muted); margin: 14px 0; }
+  .greet span { font: 400 22px/1 var(--disp); color: var(--burnt); }
+  .tabs { position: absolute; left: 18px; right: 18px; bottom: 18px; height: 64px; background: var(--surface); border-radius: 999px; box-shadow: var(--shadow-lg); display: grid; grid-template-columns: 1fr 76px 1fr; align-items: center; padding: 0 8px; }
+  .tabs a { text-align: center; font: 800 12px/1 var(--sans); color: var(--muted); text-decoration: none; display: grid; gap: 4px; justify-items: center; }
+  .tabs a.on { color: var(--burnt); }
+  .tabs a svg { width: 22px; height: 22px; }
+  .tabs .fab { margin: -36px auto 0; }
+  .sheet-wrap { padding: 16px 18px; display: grid; align-content: end; min-height: 640px; background: rgba(74,44,26,0.35); }
+  .sheet { background: var(--surface); border-radius: 28px 28px 0 0; padding: 12px 18px 18px; box-shadow: var(--shadow-lg); }
+  .handle { width: 64px; height: 8px; border-radius: 4px; background: linear-gradient(90deg, #D4551B 0 33%, #F0A030 33% 66%, #E8C547 66%); margin: 0 auto 14px; }
+  .sheet h4 { font: 400 24px/1.1 var(--disp); color: var(--burnt); margin: 0 0 10px; }
+  .sheet .foot { display: flex; align-items: center; justify-content: space-between; margin-top: 12px; }
+  .login { padding: 18px; min-height: 560px; width: 430px; max-width: 100%; margin: 0 auto; display: grid; align-content: start; gap: 18px; }
+  .login .slab { height: 220px; border-radius: 28px; background: linear-gradient(#D4551B 0 25%, #F0A030 25% 50%, #E8C547 50% 75%, #F7E0C0 75%); display: grid; place-items: center; box-shadow: var(--shadow); }
+  .login .slab .wm { font: 400 52px/1 var(--disp); color: #FFF8EC; text-shadow: 3px 3px 0 #4A2C1A; }
+  .login h2 { font-size: 30px; }
+  .profile-card { background: var(--surface); border-radius: 24px; padding: 20px; box-shadow: var(--shadow); display: grid; grid-template-columns: 84px 1fr; gap: 16px; align-items: center; margin: 14px 0; }
+  .profile-card h3 { font-size: 26px; color: var(--burnt); }
+  .profile-card .meta { color: var(--muted); font-size: 13px; font-weight: 700; display: flex; gap: 12px; flex-wrap: wrap; }
+  .profile-card .meta b { color: var(--ink); font-weight: 800; }
+  .profile-card .acts { grid-column: 1 / -1; display: flex; gap: 10px; }
+  .contrast { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-top: 14px; }
+  .contrast div { background: var(--surface); border-radius: 18px; padding: 14px; box-shadow: var(--shadow); font-size: 13px; }
+  .contrast b { display: block; font-size: 15px; }
+  .ok { color: #2F7A56; font-weight: 800; } .bad { color: var(--danger); font-weight: 800; }
+  .vps { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; margin-top: 16px; }
+  .vp { height: 700px; background: var(--ground); border-radius: 40px; box-shadow: var(--shadow-lg); overflow: hidden; position: relative; }
+  .vp .col { position: relative; height: 100%; padding: 16px 16px 100px; }
+  .vp .col.wide { width: 520px; margin: 0 auto; padding: 24px 0 100px; }
+  .vp .col.wide .tabs { left: 0; right: 0; }
+  .vp .chip { pointer-events: none; }
+  .vp .card + .card { margin-top: 12px; }
+  @media (prefers-reduced-motion: reduce) { .btn, .chip, .chip .wedge { transition: none; } .chip[aria-pressed="true"] svg, .pill.live .dot, .skel, .spinner { animation: none; } }
+</style>
+
+<svg class="sprite" aria-hidden="true">
+  <symbol id="i-wedge" viewBox="0 0 24 24"><path class="wedge" d="M3 8 A9 9 0 0 0 21 8 Z"/><path class="segs" d="M12 8 V17 M12 8 L16.5 15.8 M12 8 L7.5 15.8"/></symbol>
+  <symbol id="i-github" viewBox="0 0 24 24"><path fill="currentColor" d="M12 .5C5.7.5.5 5.7.5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.2.8-.6v-2c-3.2.7-3.9-1.4-3.9-1.4-.5-1.3-1.3-1.7-1.3-1.7-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.7 1.3 3.4 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.4-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.2 1.2a11 11 0 0 1 5.8 0c2.2-1.5 3.2-1.2 3.2-1.2.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.2c0 .3.2.7.8.6 4.6-1.5 7.9-5.8 7.9-10.9C23.5 5.7 18.3.5 12 .5z"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="2.2" fill="currentColor"/><circle cx="12" cy="12" r="2.2" fill="currentColor"/><circle cx="19" cy="12" r="2.2" fill="currentColor"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></symbol>
+  <symbol id="i-out" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" d="M10 4H5v16h5M14 8l5 4-5 4M19 12H9"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="2.2"/><path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" d="M4 20c1.5-4 5-5.5 8-5.5s6.5 1.5 8 5.5"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></symbol>
+</svg>
+
+<div class="top">
+  <span class="name">Citrinia <small>Creamsicle · spec v1</small></span>
+  <div class="seg" role="group" aria-label="Preview theme">
+    <button type="button" data-theme-pick="light" aria-pressed="false">Light</button>
+    <button type="button" data-theme-pick="dark" aria-pressed="false">Dark</button>
+    <button type="button" data-theme-pick="system" aria-pressed="true">System</button>
+  </div>
+</div>
+
+<main>
+  <div class="intro">
+    <div>
+      <p class="eyebrow">Creamsicle · the Citrinia design language</p>
+      <h1>Soft as sorbet, loud as a seventies sunset.</h1>
+      <p class="lede">Sorbet's borderless, rounded, phone-first structure with Tangerine Dream poured over it. Four stripes are the brand mark, Shrikhand does the shouting, everything you can press has a lip you sink onto, and nothing has an outline.</p>
+      <p class="note">This is the build spec. Every value maps to a token in <code>tokens.stylex.ts</code> at the bottom. Toggle the theme above to check dark.</p>
+    </div>
+    <div>
+      <div class="band"><span class="wm">Citrinia</span><span class="right"><span class="pill live"><span class="dot"></span>Live</span><span class="avatar ring">AP</span></span></div>
+      <div class="card" style="margin-top:14px"><span class="avatar">MO</span><div><div class="who"><b>Mara Okonjo</b><span>@marao</span><time>3h</time></div><p>is it weird that i want the like button to make a squirt noise. asking for a friend who is me.</p><div class="acts"><button class="chip like" aria-pressed="false"><svg><use href="#i-wedge"/></svg><span>12</span></button></div></div></div>
+    </div>
+  </div>
+  <div class="principles">
+    <div class="principle"><h3>Stripes are the logo</h3><p>Burnt, amber, mustard, cream, always in that order, always horizontal. They never change with the theme. The band, the sheet handle and the login slab are the only places they appear.</p></div>
+    <div class="principle"><h3>Lips, not outlines</h3><p>Nothing has a border. Surfaces are tonal and float on a soft shadow. Pressable things have a 4px lip underneath; pressing sinks the button onto it, so feedback is physical without a color change.</p></div>
+    <div class="principle"><h3>One column, thumbs first</h3><p>Phone is the source layout: edge to edge, tabs at the bottom, compose in a sheet. Tablet and desktop get the same column widened and centered on peach. The same CSS ships to the web, a PWA and a Capacitor shell.</p></div>
+  </div>
+
+  <section id="color">
+    <p class="eyebrow">Color</p>
+    <h2>Peach by day, cocoa by night</h2>
+    <p class="note">Dark mode is system preference only. The stripes, amber, mustard and the button gradient are constant; ground, surfaces, ink and the chip tint swap. Burnt orange lightens one step in dark so Shrikhand names still clear 4.5:1 on the cocoa surface.</p>
+    <div class="palettes">
+      <div class="palette p-light">
+        <div class="stripes"></div>
+        <header>Light <span>default and system-light</span></header>
+        <div class="swatches">
+          <div class="sw" style="background:#FFF1E6"><b>ground</b><code>#FFF1E6</code></div>
+          <div class="sw" style="background:#FFFAF5"><b>surface</b><code>#FFFAF5</code></div>
+          <div class="sw" style="background:#4A2C1A;color:#FFF1E6"><b>ink · lip</b><code>#4A2C1A</code></div>
+          <div class="sw" style="background:#8C6A52;color:#FFF1E6"><b>muted</b><code>#8C6A52</code></div>
+          <div class="sw" style="background:#D4551B;color:#FFF8EC"><b>burnt</b><code>#D4551B</code></div>
+          <div class="sw" style="background:#F0A030"><b>amber</b><code>#F0A030</code></div>
+          <div class="sw" style="background:#E8C547"><b>mustard</b><code>#E8C547</code></div>
+          <div class="sw" style="background:#F7E0C0"><b>soft</b><code>#F7E0C0</code></div>
+          <div class="sw" style="background:#FFC9A3"><b>apricot</b><code>#FFC9A3</code></div>
+          <div class="sw" style="background:#E8A876"><b>apricotLip</b><code>#E8A876</code></div>
+          <div class="sw" style="background:#C62828;color:#fff"><b>danger</b><code>#C62828</code></div>
+          <div class="sw" style="background:#FFE0DC"><b>dangerSoft</b><code>#FFE0DC</code></div>
+        </div>
+      </div>
+      <div class="palette p-dark">
+        <div class="stripes"></div>
+        <header>Dark <span>system-dark</span></header>
+        <div class="swatches">
+          <div class="sw" style="background:#2A1A12"><b>ground</b><code>#2A1A12</code></div>
+          <div class="sw" style="background:#36251B"><b>surface</b><code>#36251B</code></div>
+          <div class="sw" style="background:#FFF1E6;color:#4A2C1A"><b>ink</b><code>#FFF1E6</code></div>
+          <div class="sw" style="background:#D0B29E;color:#4A2C1A"><b>muted</b><code>#D0B29E</code></div>
+          <div class="sw" style="background:#F0763A;color:#2A1A12"><b>burnt</b><code>#F0763A</code></div>
+          <div class="sw" style="background:#1A0F0A"><b>lip</b><code>#1A0F0A</code></div>
+          <div class="sw" style="background:#3F2B20"><b>chip</b><code>#3F2B20</code></div>
+          <div class="sw" style="background:#7A4A30"><b>apricot</b><code>#7A4A30</code></div>
+          <div class="sw" style="background:#5C3622"><b>apricotLip</b><code>#5C3622</code></div>
+          <div class="sw" style="background:#FF7B6B;color:#2A1A12"><b>danger</b><code>#FF7B6B</code></div>
+          <div class="sw" style="background:#4A211C"><b>dangerSoft</b><code>#4A211C</code></div>
+          <div class="sw" style="background:#E8C547;color:#4A2C1A"><b>mustard</b><code>same</code></div>
+        </div>
+      </div>
+    </div>
+    <p class="note" style="margin-top:16px"><b>Contrast, measured.</b> Body and meta text clear AA on both grounds. The one exception is deliberate and yours to keep or drop:</p>
+    <div class="contrast">
+      <div><b>Ink on surface</b>light 12.9:1 · dark 11.2:1 <span class="ok">AA</span></div>
+      <div><b>Muted on surface</b>light 4.7:1 · dark 7.4:1 <span class="ok">AA</span></div>
+      <div><b>Burnt names on surface</b>light 4.6:1 · dark 5.1:1 <span class="ok">AA</span></div>
+      <div><b>Cream label on gradient button</b>2.0:1 at the amber top, 4.0:1 at the burnt bottom <span class="bad">below AA</span>. Readable thanks to the cocoa text shadow, but a checker will flag it. One-token swap to cocoa text on amber-to-tangerine passes everywhere (5.4 to 4.9:1). I am building the approved cream version.</div>
+    </div>
+  </section>
+
+  <section id="type">
+    <p class="eyebrow">Typography</p>
+    <h2>Shrikhand shouts, Nunito talks</h2>
+    <p class="note">Shrikhand is one fat italic weight, used for the wordmark, author names, sheet titles, the empty state and any big number. Nunito 600 to 800 carries everything else; its rounded terminals match. Both are self-hosted woff2 in <code>public/fonts</code> because StyleX's Babel config disables <code>next/font</code>. Counters and timestamps use tabular digits.</p>
+    <div class="grid2">
+      <div>
+        <div class="type-row"><small>wordmark / 52</small><div class="d" style="font-size:52px">Citrinia</div></div>
+        <div class="type-row"><small>title / 30</small><div class="d" style="font-size:30px">No peels yet</div></div>
+        <div class="type-row"><small>name / 16</small><div class="d" style="font-size:16px">Mara Okonjo</div></div>
+        <div class="type-row"><small>number / 40</small><div class="d" style="font-size:40px;font-variant-numeric:tabular-nums">128 <span style="font:700 14px var(--sans);color:var(--muted)">peels</span></div></div>
+      </div>
+      <div>
+        <div class="type-row"><small>peel / 15 · 600</small><div>the sheet slides up from the tabs. the stripe is the handle.</div></div>
+        <div class="type-row"><small>ui / 14 · 800</small><div style="font-weight:800;font-size:14px">Feed &nbsp; You &nbsp; Log out &nbsp; Delete peel</div></div>
+        <div class="type-row"><small>meta / 13 · 700</small><div style="font-size:13px;font-weight:700;color:var(--muted)">@marao · 3h · <span style="font-variant-numeric:tabular-nums">12:41</span></div></div>
+        <div class="type-row"><small>label / 11 · caps</small><div style="font:800 11px/1 var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--burnt)">Your peels</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="buttons">
+    <p class="eyebrow">Buttons</p>
+    <h2>Sink them</h2>
+    <p class="note">Primary is the amber-to-burnt gradient with a top gloss and a cocoa lip, label in Shrikhand. Secondary is apricot with an apricot lip. Tertiary is a Nunito word with a wavy burnt underline. Hover brightens 7%. Press moves the button down 4px onto its lip. Focus is a 3px amber ring, offset 3px.</p>
+    <div class="row">
+      <span class="label">Variants</span>
+      <button class="btn">Peel it</button>
+      <button class="btn sec"><svg><use href="#i-github"/></svg>Continue with GitHub</button>
+      <button class="btn ter">Cancel</button>
+      <button class="btn danger"><svg><use href="#i-trash"/></svg>Delete peel</button>
+      <button class="btn fab" aria-label="New peel">+</button>
+      <button class="btn icon" aria-label="More"><svg><use href="#i-more"/></svg></button>
+    </div>
+    <div class="row">
+      <span class="label">Sizes</span>
+      <button class="btn lg">Continue with GitHub</button>
+      <button class="btn">Peel it</button>
+      <button class="btn sm">Show</button>
+    </div>
+    <div class="row">
+      <span class="label">States (frozen; hover and press the ones above)</span>
+      <button class="btn is-pressed">Pressed</button>
+      <button class="btn" style="outline:3px solid var(--amber);outline-offset:3px">Focused</button>
+      <button class="btn" disabled>Disabled</button>
+      <button class="btn" aria-disabled="true"><span class="spinner" aria-hidden="true"></span>Peeling…</button>
+    </div>
+  </section>
+
+  <section id="forms">
+    <p class="eyebrow">Chips and fields</p>
+    <h2>Tap, type, count</h2>
+    <div class="grid2">
+      <div>
+        <p class="example-tag">Like chip · tap to toggle</p>
+        <div class="row" style="margin-top:0">
+          <button class="chip like" aria-pressed="false"><svg><use href="#i-wedge"/></svg><span>12</span></button>
+          <button class="chip like" aria-pressed="true"><svg><use href="#i-wedge"/></svg><span>13</span></button>
+          <button class="chip" disabled style="opacity:.5"><svg><use href="#i-wedge"/></svg><span>0</span></button>
+        </div>
+        <p class="note">Peach chip, apricot on hover, mustard when liked with the wedge filled burnt. The pop plays once on like, never on unlike. Digits are tabular so the count does not jitter.</p>
+        <p class="example-tag" style="margin-top:24px">Counter pill · 280 max</p>
+        <div class="row" style="margin-top:0">
+          <span class="pill">280 left</span>
+          <span class="pill warn">18 left</span>
+          <span class="pill over">12 over</span>
+          <span class="pill live"><span class="dot"></span>Live</span>
+        </div>
+        <p class="note">Mustard until 20 left, amber under 20, danger past 280 (button disables). The Live pill sits in the band while the realtime channel is open.</p>
+      </div>
+      <div>
+        <p class="example-tag">Fields</p>
+        <label class="label" for="f1" style="margin:0 0 6px">Default</label>
+        <input id="f1" class="field" placeholder="how are you peeling?">
+        <label class="label" for="f2" style="margin:16px 0 6px">Focused</label>
+        <input id="f2" class="field" value="the sheet slides up" style="box-shadow:inset 0 0 0 2px var(--amber)">
+        <label class="label" for="f3" style="margin:16px 0 6px">Invalid</label>
+        <textarea id="f3" class="field" rows="2" aria-invalid="true">ok so i have a lot to say about the like button and it is going to take more than two hundred and eighty characters to say it because first of all the wedge is a great icon and second of all i think it should make a noise and third of all what if it also vibrated</textarea>
+        <p class="help err">That's 12 over. A peel is 1 to 280 characters.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="components">
+    <p class="eyebrow">Components</p>
+    <h2>Feed pieces</h2>
+    <div class="grid2">
+      <div>
+        <p class="example-tag">Peel card · own peel with menu</p>
+        <article class="card"><span class="avatar" style="background:#E8C547">AP</span><div><div class="who"><b><a href="#screens">Ankit</a></b><span>@ankitpasayat</span><time datetime="2026-09-05T12:41:00Z" title="Sep 5, 2026, 12:41 PM">2m</time></div><p>first peel on the new build. it is 1974 and everything is soft.</p><div class="acts"><button class="chip like" aria-pressed="true"><svg><use href="#i-wedge"/></svg><span>3</span></button><button class="btn icon" aria-label="More" popovertarget="peel-menu"><svg><use href="#i-more"/></svg></button><div id="peel-menu" popover class="menu"><button class="dng" id="del-1"><svg><use href="#i-trash"/></svg>Delete peel</button></div></div></div></article>
+        <article class="card"><span class="avatar">MO</span><div><div class="who"><b><a href="#screens">Mara Okonjo</a></b><span>@marao</span><time>3h</time></div><p>is it weird that i want the like button to make a squirt noise. asking for a friend who is me.</p><div class="acts"><button class="chip like" aria-pressed="false"><svg><use href="#i-wedge"/></svg><span>12</span></button></div></div></article>
+        <p class="note">Names link to the profile. The dots button appears only on your own peels and opens a native <code>popover</code> menu. Delete asks once inside the menu, then removes the card optimistically. Timestamps are relative under 24h (2m, 3h), then a date; hover shows the full time.</p>
+      </div>
+      <div>
+        <p class="example-tag">Account menu · native popover</p>
+        <div class="row" style="margin-top:0">
+          <button class="avatar-btn" popovertarget="me-menu" aria-label="Account menu"><span class="avatar ring">AP</span></button>
+          <div id="me-menu" popover class="menu">
+            <div class="who"><b>Ankit</b><span>@ankitpasayat</span></div>
+            <a href="#screens"><svg><use href="#i-user"/></svg>Your peels</a>
+            <button><svg><use href="#i-out"/></svg>Log out</button>
+          </div>
+          <span class="avatar lg">MO</span>
+          <span class="avatar"><img alt="" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><rect width='40' height='40' fill='%23F0A030'/><circle cx='20' cy='15' r='7' fill='%23FFF8EC'/><ellipse cx='20' cy='34' rx='12' ry='9' fill='%23FFF8EC'/></svg>"></span>
+          <span class="avatar sm">LF</span>
+        </div>
+        <p class="note">Avatars use the GitHub picture; the fallback is initials on amber. The band avatar has a cocoa ring to read as a button.</p>
+        <p class="example-tag" style="margin-top:24px">Loading</p>
+        <div class="card"><span class="skel" style="width:40px;height:40px;border-radius:50%"></span><div style="display:grid;gap:8px"><span class="skel" style="width:40%;height:14px"></span><span class="skel" style="width:92%;height:14px"></span><span class="skel" style="width:70%;height:14px"></span></div></div>
+        <p class="example-tag" style="margin-top:24px">Error</p>
+        <div class="toast">Couldn't post that peel. Try again. <button class="btn sm">Retry</button></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="screens">
+    <p class="eyebrow">Screens</p>
+    <h2>Feed, sheet, login, you</h2>
+    <p class="note">Every signed-in screen is one column: the viewport on phones, 520px centered from 600px up (shown here at phone width). The tab bar is fixed to the bottom of the viewport inside that column; the compose button sits on it. The sheet is a native <code>dialog</code> anchored to the bottom, with the page dimmed behind it. Sample peels are examples.</p>
+    <div class="frame-row">
+      <div>
+        <p class="example-tag">Feed · /</p>
+        <div class="frame"><div class="phone">
+          <div class="band"><a class="wm" href="#screens">Citrinia</a><span class="right"><span class="pill live"><span class="dot"></span>Live</span><span class="avatar ring">AP</span></span></div>
+          <p class="greet">Hi Ankit, <span>how are you peeling?</span></p>
+          <article class="card"><span class="avatar">MO</span><div><div class="who"><b>Mara Okonjo</b><span>@marao</span><time>3h</time></div><p>is it weird that i want the like button to make a squirt noise. asking for a friend who is me.</p><div class="acts"><button class="chip like" aria-pressed="false"><svg><use href="#i-wedge"/></svg><span>12</span></button></div></div></article>
+          <article class="card"><span class="avatar" style="background:#E8C547">AP</span><div><div class="who"><b>Ankit</b><span>@ankitpasayat</span><time>5h</time></div><p>first peel on the new build. it is 1974 and everything is soft.</p><div class="acts"><button class="chip like" aria-pressed="true"><svg><use href="#i-wedge"/></svg><span>3</span></button><button class="btn icon" aria-label="More"><svg><use href="#i-more"/></svg></button></div></div></article>
+          <article class="card"><span class="avatar" style="background:#FFC9A3">LF</span><div><div class="who"><b>Lucas Ferreira</b><span>@lucasf</span><time>Sep 3</time></div><p>280 characters is exactly one orange's worth of thoughts. i checked.</p><div class="acts"><button class="chip like" aria-pressed="false"><svg><use href="#i-wedge"/></svg><span>40</span></button></div></div></article>
+          <div class="tabs"><a class="on" href="#screens"><svg><use href="#i-home"/></svg>Feed</a><button class="btn fab" aria-label="New peel">+</button><a href="#screens"><svg><use href="#i-user"/></svg>You</a></div>
+        </div></div>
+      </div>
+      <div>
+        <p class="example-tag">Compose sheet · after tapping +</p>
+        <div class="frame"><div class="sheet-wrap"><div class="sheet">
+          <div class="handle"></div>
+          <h4>New peel</h4>
+          <textarea id="demo-ta" class="field on-surface" rows="4" placeholder="how are you peeling?" aria-label="New peel">the sheet slides up from the tabs. the stripe is the handle.</textarea>
+          <div class="foot"><span class="pill" id="demo-pill">220 left</span><span style="display:flex;gap:10px"><button class="btn ter">Cancel</button><button class="btn" id="demo-post">Peel it</button></span></div>
+        </div></div></div>
+        <p class="note">Type in it: the pill counts down and changes color, and the button disables when empty or over. On post the sheet closes and the new peel appears at the top instantly, then the server confirms.</p>
+      </div>
+    </div>
+    <div class="frame-row">
+      <div>
+        <p class="example-tag">Login · /login</p>
+        <div class="frame"><div class="login">
+          <div class="slab"><span class="wm">Citrinia</span></div>
+          <h2>A tiny feed. Posts are peels.</h2>
+          <p class="note" style="margin:0">Sign in with GitHub. Your name and avatar come along; nothing else does.</p>
+          <button class="btn lg" style="justify-self:start"><svg><use href="#i-github"/></svg>Continue with GitHub</button>
+          <p class="help err" style="margin:0">Couldn't sign you in. GitHub sent us back without a session, try once more.</p>
+        </div></div>
+        <p class="note">The stripe slab is the hero; no illustration needed. The error line shows in place when the OAuth callback fails.</p>
+      </div>
+      <div>
+        <p class="example-tag">You · /u/ankitpasayat</p>
+        <div class="frame"><div class="phone">
+          <div class="band slim"></div>
+          <div class="profile-card">
+            <span class="avatar lg" style="background:#E8C547">AP</span>
+            <div><h3>Ankit</h3><div class="meta"><span>@ankitpasayat</span><span><b>128</b> peels</span><span><b>1,204</b> likes</span></div></div>
+            <div class="acts"><button class="btn sec sm"><svg><use href="#i-out"/></svg>Log out</button></div>
+          </div>
+          <article class="card"><span class="avatar" style="background:#E8C547">AP</span><div><div class="who"><b>Ankit</b><span>@ankitpasayat</span><time>5h</time></div><p>first peel on the new build. it is 1974 and everything is soft.</p><div class="acts"><button class="chip like" aria-pressed="true"><svg><use href="#i-wedge"/></svg><span>3</span></button><button class="btn icon" aria-label="More"><svg><use href="#i-more"/></svg></button></div></div></article>
+          <div class="empty"><div class="blob"></div><h3>No peels yet</h3><p>Tap + to peel first.</p></div>
+          <div class="tabs"><a href="#screens"><svg><use href="#i-home"/></svg>Feed</a><button class="btn fab" aria-label="New peel">+</button><a class="on" href="#screens"><svg><use href="#i-user"/></svg>You</a></div>
+        </div></div>
+        <p class="note">The band shrinks to a stripe on inner pages. Other people's profiles use the same layout without Log out. The empty state is shown here for reference; 404 uses the same block with "That peel got composted." and a Feed button.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="responsive">
+    <p class="eyebrow">Responsive and app-ready</p>
+    <h2>Phone, tablet, desktop, one CSS</h2>
+    <p class="note">The column is the unit. It is full-bleed on phones, 520px centered on tablets and desktops, and everything inside it is identical at every width, so wrapping the site in a PWA manifest or a Capacitor shell changes nothing visually. The three frames below are the real components at reduced scale.</p>
+    <div class="vps">
+      <div><p class="example-tag">Phone · 390</p><div class="vp" style="width:390px;zoom:.5"><div class="col"><div class="band"><span class="wm">Citrinia</span><span class="right"><span class="avatar ring">AP</span></span></div><p class="greet">Hi Ankit, <span>how are you peeling?</span></p><article class="card"><span class="avatar">MO</span><div><div class="who"><b>Mara Okonjo</b><span>@marao</span><time>3h</time></div><p>is it weird that i want the like button to make a squirt noise.</p><div class="acts"><span class="chip"><svg><use href="#i-wedge"/></svg>12</span></div></div></article><article class="card"><span class="avatar" style="background:#E8C547">AP</span><div><div class="who"><b>Ankit</b><span>@ankitpasayat</span><time>5h</time></div><p>first peel on the new build.</p><div class="acts"><span class="chip" aria-pressed="true"><svg><use href="#i-wedge"/></svg>3</span></div></div></article><div class="tabs"><a class="on"><svg><use href="#i-home"/></svg>Feed</a><span class="btn fab">+</span><a><svg><use href="#i-user"/></svg>You</a></div></div></div></div>
+      <div><p class="example-tag">Tablet · 820</p><div class="vp" style="width:820px;zoom:.38"><div class="col wide"><div class="band"><span class="wm">Citrinia</span><span class="right"><span class="avatar ring">AP</span></span></div><p class="greet">Hi Ankit, <span>how are you peeling?</span></p><article class="card"><span class="avatar">MO</span><div><div class="who"><b>Mara Okonjo</b><span>@marao</span><time>3h</time></div><p>is it weird that i want the like button to make a squirt noise. asking for a friend who is me.</p><div class="acts"><span class="chip"><svg><use href="#i-wedge"/></svg>12</span></div></div></article><article class="card"><span class="avatar" style="background:#E8C547">AP</span><div><div class="who"><b>Ankit</b><span>@ankitpasayat</span><time>5h</time></div><p>first peel on the new build. it is 1974 and everything is soft.</p><div class="acts"><span class="chip" aria-pressed="true"><svg><use href="#i-wedge"/></svg>3</span></div></div></article><div class="tabs"><a class="on"><svg><use href="#i-home"/></svg>Feed</a><span class="btn fab">+</span><a><svg><use href="#i-user"/></svg>You</a></div></div></div></div>
+      <div><p class="example-tag">Desktop · 1280</p><div class="vp" style="width:1280px;zoom:.25"><div class="col wide"><div class="band"><span class="wm">Citrinia</span><span class="right"><span class="avatar ring">AP</span></span></div><p class="greet">Hi Ankit, <span>how are you peeling?</span></p><article class="card"><span class="avatar">MO</span><div><div class="who"><b>Mara Okonjo</b><span>@marao</span><time>3h</time></div><p>is it weird that i want the like button to make a squirt noise. asking for a friend who is me.</p><div class="acts"><span class="chip"><svg><use href="#i-wedge"/></svg>12</span></div></div></article><article class="card"><span class="avatar" style="background:#E8C547">AP</span><div><div class="who"><b>Ankit</b><span>@ankitpasayat</span><time>5h</time></div><p>first peel on the new build. it is 1974 and everything is soft.</p><div class="acts"><span class="chip" aria-pressed="true"><svg><use href="#i-wedge"/></svg>3</span></div></div></article><div class="tabs"><a class="on"><svg><use href="#i-home"/></svg>Feed</a><span class="btn fab">+</span><a><svg><use href="#i-user"/></svg>You</a></div></div></div></div>
+    </div>
+    <dl class="spec">
+      <dt>Breakpoints</dt><dd>Under 600px: column is the viewport, 16px gutters. 600px and up: column 520px centered, 24px gutters. There is no third layout; desktop is tablet with more peach.</dd>
+      <dt>Safe areas</dt><dd>Viewport meta uses <code>viewport-fit=cover</code>. Band top padding and tab bar bottom offset add <code>env(safe-area-inset-top/bottom)</code>, so notches and home indicators never cover them in a PWA or Capacitor WebView.</dd>
+      <dt>Heights</dt><dd><code>100dvh</code>, never <code>100vh</code>, so the sheet and empty states size correctly when mobile browser chrome collapses.</dd>
+      <dt>Touch</dt><dd>Every target is at least 44px. Hover effects are wrapped in <code>@media (hover: hover)</code> so they do not stick on touch. Buttons set <code>touch-action: manipulation</code> and no tap highlight. The sheet uses <code>overscroll-behavior: contain</code>.</dd>
+      <dt>Type and spacing</dt><dd>Font sizes in rem, spacing in px, so a user's larger-text setting scales the words and not the layout.</dd>
+      <dt>PWA</dt><dd><code>app/manifest.ts</code> with name, standalone display, theme color burnt, background peach, the existing SVG icon. <code>theme-color</code> meta for both schemes. Installable from day one; a service worker is not in this MVP.</dd>
+      <dt>Capacitor</dt><dd>The app uses server components and server actions, so a Capacitor shell points at the hosted URL (<code>server.url</code> in the Capacitor config) rather than a static bundle. The CSS needs nothing extra for that.</dd>
+    </dl>
+  </section>
+
+  <section id="motion">
+    <p class="eyebrow">Motion</p>
+    <h2>Four moves</h2>
+    <dl class="spec">
+      <dt>Sink</dt><dd>Press moves a button down 4px and removes its lip. 90ms ease. Hover brightens 7%.</dd>
+      <dt>Pop</dt><dd>Wedge scales 0.7 to 1.25 to 1 with a small wobble, 320ms overshoot curve, only when liking.</dd>
+      <dt>Sheet</dt><dd>Slides up 200ms ease-out; backdrop fades in. Closes on Cancel, Escape, backdrop tap, or successful post.</dd>
+      <dt>Ambient</dt><dd>Live dot pulses at 2s. Skeleton shimmers at 1.4s.</dd>
+      <dt>Reduced motion</dt><dd>All of the above are disabled. Sink still applies instantly so pressing stays tactile.</dd>
+    </dl>
+  </section>
+
+  <section id="tokens">
+    <p class="eyebrow">Implementation</p>
+    <h2>How this becomes StyleX</h2>
+    <pre>// app/tokens.stylex.ts
+import * as stylex from '@stylexjs/stylex';
+const DARK = '@media (prefers-color-scheme: dark)';
+
+export const colors = stylex.defineVars({
+  ground:     { default: '#FFF1E6', [DARK]: '#2A1A12' },
+  surface:    { default: '#FFFAF5', [DARK]: '#36251B' },
+  ink:        { default: '#4A2C1A', [DARK]: '#FFF1E6' },
+  muted:      { default: '#8C6A52', [DARK]: '#D0B29E' },
+  burnt:      { default: '#D4551B', [DARK]: '#F0763A' },
+  amber:      '#F0A030',
+  mustard:    '#E8C547',
+  soft:       '#F7E0C0',
+  apricot:    { default: '#FFC9A3', [DARK]: '#7A4A30' },
+  apricotLip: { default: '#E8A876', [DARK]: '#5C3622' },
+  chip:       { default: '#FFF1E6', [DARK]: '#3F2B20' },
+  lip:        { default: '#4A2C1A', [DARK]: '#1A0F0A' },
+  onButton:   '#FFF8EC',
+  onStripe:   '#4A2C1A',
+  danger:     { default: '#C62828', [DARK]: '#FF7B6B' },
+  dangerSoft: { default: '#FFE0DC', [DARK]: '#4A211C' },
+  shadow:     { default: '0 6px 20px rgba(74,44,26,0.08)', [DARK]: '0 6px 20px rgba(0,0,0,0.3)' },
+  shadowLg:   { default: '0 10px 30px rgba(74,44,26,0.15)', [DARK]: '0 10px 30px rgba(0,0,0,0.4)' },
+});
+
+export const fonts = stylex.defineVars({
+  display: '"Shrikhand", "Cooper Black", "Arial Rounded MT Bold", serif',
+  body:    '"Nunito", "Segoe UI", Roboto, sans-serif',
+});
+
+export const shape = stylex.defineVars({
+  card: '24px', sheet: '28px', field: '18px', band: '20px', pill: '999px', lip: '4px',
+  column: '520px',
+});
+
+// Media queries as compile-time constants, usable as keys in stylex.create.
+export const bp = stylex.defineConsts({
+  tablet: '@media (min-width: 600px)',
+  hover:  '@media (hover: hover)',
+  reduce: '@media (prefers-reduced-motion: reduce)',
+});
+
+export const gradients = stylex.defineVars({
+  button:  'linear-gradient(#F0A030, #D4551B)',
+  stripes: 'linear-gradient(#D4551B 0 25%, #F0A030 25% 50%, #E8C547 50% 75%, #F7E0C0 75%)',
+  handle:  'linear-gradient(90deg, #D4551B 0 33%, #F0A030 33% 66%, #E8C547 66%)',
+});</pre>
+    <p class="note" style="margin-top:20px">Files: <code>babel.config.js</code> (next/babel + @stylexjs/babel-plugin), <code>postcss.config.js</code> (@stylexjs/postcss-plugin + autoprefixer), <code>app/globals.css</code> (@font-face, reset, <code>@stylex</code>). Components read tokens only; no literal colors outside the token file except the stripe and gradient constants above.</p>
+    <p class="note">Dependency changes:</p>
+    <div class="chips">
+      <span class="dep">− tailwindcss</span><span class="dep">− tailwindcss-animate</span><span class="dep">− tailwind-merge</span><span class="dep">− class-variance-authority</span><span class="dep">− clsx</span><span class="dep">− next-themes</span><span class="dep">− @radix-ui/react-avatar</span><span class="dep">− @radix-ui/react-dropdown-menu</span><span class="dep">− @radix-ui/react-icons</span><span class="dep">− @radix-ui/react-slot</span><span class="dep">− @radix-ui/react-switch</span>
+      <span class="dep add">+ @stylexjs/stylex</span><span class="dep add">+ @stylexjs/babel-plugin</span><span class="dep add">+ @stylexjs/postcss-plugin</span><span class="dep add">+ @stylexjs/eslint-plugin</span>
+    </div>
+  </section>
+
+  <section id="decisions">
+    <p class="eyebrow">Assumed, since three rounds went by without an answer</p>
+    <h2>What I'm building unless you say otherwise</h2>
+    <ol class="decisions">
+      <li><div><b>Features</b><p>GitHub login, feed, post, like, realtime, log out, plus delete own peel (new migration), relative timestamps, empty and error states, and a profile page at /u/username. The You tab you approved needs the profile page anyway. Feed stays login-gated.</p></div></li>
+      <li><div><b>Dark mode</b><p>System preference only. No toggle, next-themes removed.</p></div></li>
+      <li><div><b>Fonts</b><p>Shrikhand and Nunito, self-hosted woff2, OFL licensed.</p></div></li>
+      <li><div><b>Next.js</b><p>Stays on 15.5 with webpack. Upgrade to 16 later as its own change.</p></div></li>
+      <li><div><b>Git</b><p>I will not commit anything. Today's uncommitted Next 15 migration stays in the working tree alongside the redesign until you say how you want it split.</p></div></li>
+      <li><div><b>Voice</b><p>"Peel it", "No peels yet", "That peel got composted."</p></div></li>
+    </ol>
+  </section>
+</main>
+
+<script>
+  (function () {
+    var root = document.documentElement, picks = document.querySelectorAll('[data-theme-pick]');
+    function apply(v) { if (v === 'system') root.removeAttribute('data-theme'); else root.setAttribute('data-theme', v); picks.forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-theme-pick') === v)); }); try { localStorage.setItem('citrinia-creamsicle-theme', v); } catch (e) {} }
+    picks.forEach(function (b) { b.addEventListener('click', function () { apply(b.getAttribute('data-theme-pick')); }); });
+    var saved = null; try { saved = localStorage.getItem('citrinia-creamsicle-theme'); } catch (e) {}
+    if (saved === 'light' || saved === 'dark') apply(saved);
+
+    document.querySelectorAll('.like').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var on = b.getAttribute('aria-pressed') === 'true', s = b.querySelector('span'), n = parseInt(s.textContent, 10) + (on ? -1 : 1);
+        b.setAttribute('aria-pressed', String(!on)); s.textContent = n;
+      });
+    });
+    var ta = document.getElementById('demo-ta'), pill = document.getElementById('demo-pill'), post = document.getElementById('demo-post');
+    function upd() { var rem = 280 - ta.value.length; pill.textContent = rem < 0 ? (-rem) + ' over' : rem + ' left'; pill.className = 'pill' + (rem < 0 ? ' over' : rem < 20 ? ' warn' : ''); post.disabled = ta.value.trim().length === 0 || rem < 0; }
+    ta.addEventListener('input', upd); upd();
+    var del = document.getElementById('del-1'), armed = false;
+    if (del) del.addEventListener('click', function () { if (!armed) { armed = true; del.innerHTML = '<svg><use href="#i-trash"/></svg>Really delete? Tap again'; return; } del.closest('[popover]').hidePopover(); del.closest('.card').remove(); });
+  })();
+</script>

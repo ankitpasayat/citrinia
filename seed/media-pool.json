@@ -1,0 +1,5296 @@
+{
+ "items": [
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/3/32/Street_scene_in_Bangalore_%28c._1910%29.JPG",
+   "alt": "Street scene in Bangalore.",
+   "tags": [
+    "india",
+    "bengaluru",
+    "city"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5b/A_Street_Scene_in_India%2C_Outside_the_Wesleyan_Girls_School%2C_Bangalore_%28January_1869%2C_p.7%2C_New_III%29_-_Copy.jpg/960px-A_Street_Scene_in_India%2C_Outside_the_Wesleyan_Girls_School%2C_Bangalore_%28January_1869%2C_p.7%2C_New_III%29_-_Copy.jpg",
+   "alt": "A Street Scene in India, Outside the Wesleyan Girls School, Bangalore (January 1869, p.7, New III)",
+   "tags": [
+    "india",
+    "bengaluru",
+    "city"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Vidhana_Soudha_metro_station%2C_June_2016.jpg/960px-Vidhana_Soudha_metro_station%2C_June_2016.jpg",
+   "alt": "Vidhana Soudha station of Namma Metro, Bangalore, India.",
+   "tags": [
+    "india",
+    "bengaluru",
+    "architecture",
+    "politics"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/Vidhana_Soudha_LE.jpg/960px-Vidhana_Soudha_LE.jpg",
+   "alt": "Long Exposure shot of the Vidhana Soudha, the state legislature building of the Indian state of Karnataka in Bangalore.",
+   "tags": [
+    "india",
+    "bengaluru",
+    "architecture",
+    "politics"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/List_of_prohibited_objects_for_carriage_in_Namma_Metro%2C_Bangalore_%28Kengeri_Bus_Terminal_metro_station%2C_2024%29_13.jpg/960px-List_of_prohibited_objects_for_carriage_in_Namma_Metro%2C_Bangalore_%28Kengeri_Bus_Terminal_metro_station%2C_2024%29_13.jpg",
+   "alt": "List of prohibited objects for carriage in Namma Metro, Bangalore (Kengeri Bus Terminal metro station, 2024) 13.",
+   "tags": [
+    "india",
+    "bengaluru",
+    "transit"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/Escalator_speed_display%2C_Namma_metro%2C_Bangalore_%282025%29.jpg/960px-Escalator_speed_display%2C_Namma_metro%2C_Bangalore_%282025%29.jpg",
+   "alt": "Escalator speed display, Namma metro, Bangalore (2025)",
+   "tags": [
+    "india",
+    "bengaluru",
+    "transit"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ef/Lalbagh_Botanical_Garden_in_Bangalore_2024.jpg/960px-Lalbagh_Botanical_Garden_in_Bangalore_2024.jpg",
+   "alt": "Lalbagh Botanical garden in Bengaluru, Karnataka and some of the various trees, plants and spots in it. Taken in 2024.",
+   "tags": [
+    "india",
+    "bengaluru",
+    "nature"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/Lalbagh_Botanical_Garden_in_Bangalore_2024_2.jpg/960px-Lalbagh_Botanical_Garden_in_Bangalore_2024_2.jpg",
+   "alt": "Lalbagh Botanical garden in Bengaluru, Karnataka and some of the various trees, plants and spots in it. Taken in 2024.",
+   "tags": [
+    "india",
+    "bengaluru",
+    "nature"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/Bangalore_City_railway_station_%2814064761083%29.jpg/960px-Bangalore_City_railway_station_%2814064761083%29.jpg",
+   "alt": "Bangalore City Railway station/Basaveshwara Terminus is located across the Kempegowda Bus Station in Bangalore,Karnataka, India.",
+   "tags": [
+    "india",
+    "bengaluru",
+    "trains"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/Rain_clouds_over_Bangalore_City_railway_station_JEG2344.JPG/960px-Rain_clouds_over_Bangalore_City_railway_station_JEG2344.JPG",
+   "alt": "Rain clouds over Bangalore City railway station.",
+   "tags": [
+    "india",
+    "bengaluru",
+    "trains"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/9/99/Cubbon_Park%2C_Bangalore_%281890%29._Curzon_Collection%27s_%27Souvenir_of_Mysore_Album%27.jpg",
+   "alt": "Cubbon Park, Bangalore (1890). Curzon Collection's 'Souvenir of Mysore Album'.",
+   "tags": [
+    "india",
+    "bengaluru",
+    "nature"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/Stage-2-cubbon_park-bangalore-India.jpg/960px-Stage-2-cubbon_park-bangalore-India.jpg",
+   "alt": "Stage in cubbon park.",
+   "tags": [
+    "india",
+    "bengaluru",
+    "nature"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d2/Chennai_train_station.jpg/960px-Chennai_train_station.jpg",
+   "alt": "The central train station in Chennai, Tamil Nadu state, India.",
+   "tags": [
+    "india",
+    "chennai",
+    "city"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/41/Marina_Beach_in_Chennai.jpg/960px-Marina_Beach_in_Chennai.jpg",
+   "alt": "Pigeons fly over the Marina beach in Chennai in the morning.",
+   "tags": [
+    "india",
+    "chennai",
+    "coast"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/Fish_Fry_Marina_Beach_Chennai.jpg/960px-Fish_Fry_Marina_Beach_Chennai.jpg",
+   "alt": "Fish fry shop at Marina Beach Chennai.",
+   "tags": [
+    "india",
+    "chennai",
+    "coast"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fe/Chennai_Central_Railway_Station.jpg/960px-Chennai_Central_Railway_Station.jpg",
+   "alt": "Chennai (city and state capital of Tamil Nadu, India)",
+   "tags": [
+    "india",
+    "chennai",
+    "trains"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/Chennai_Central_Puratchi_Thalaivar_Dr._M.G._Ramachandran_Central_Railway_Station.jpg/960px-Chennai_Central_Puratchi_Thalaivar_Dr._M.G._Ramachandran_Central_Railway_Station.jpg",
+   "alt": "Chennai Central Puratchi Thalaivar Dr. M.",
+   "tags": [
+    "india",
+    "chennai",
+    "trains"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9f/MylaporeKapaleeshwararTemple.jpg/960px-MylaporeKapaleeshwararTemple.jpg",
+   "alt": "Kapaleeshwarar temple in Mylapore, Chennai. Arulmigu Kapaleeswarar Temple, Chennai.",
+   "tags": [
+    "india",
+    "chennai",
+    "temple",
+    "architecture"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/Mylapore_Kapaleeshwarar_temple_facade.jpg/960px-Mylapore_Kapaleeshwarar_temple_facade.jpg",
+   "alt": "The main east enterance of the Mylapore Kapaleeshwarar temple.",
+   "tags": [
+    "india",
+    "chennai",
+    "temple",
+    "architecture"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7a/AG-DMS_metro_station_Chennai_Tamil_Nadu_India.jpg/960px-AG-DMS_metro_station_Chennai_Tamil_Nadu_India.jpg",
+   "alt": "One of the Entrances, AG-DMS metro station, Chennai, Tamil Nadu, India.",
+   "tags": [
+    "india",
+    "chennai",
+    "transit"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d1/Central_Metro_Station_Chennai.jpg/960px-Central_Metro_Station_Chennai.jpg",
+   "alt": "Central Metro Station Chennai in April 2022.",
+   "tags": [
+    "india",
+    "chennai",
+    "transit"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/50/St._Thomas_Cathedral_Basilica%2C_Chennai_-_Santhome_Church.jpg/960px-St._Thomas_Cathedral_Basilica%2C_Chennai_-_Santhome_Church.jpg",
+   "alt": "Front view of the Santhome Basilica Church better know as Santhome Church in Chennai, India.",
+   "tags": [
+    "india",
+    "chennai",
+    "church",
+    "architecture"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/aa/Santhome_Basilica.jpg/960px-Santhome_Basilica.jpg",
+   "alt": "Front view of the Santhome Basilica in Chennai.",
+   "tags": [
+    "india",
+    "chennai",
+    "church",
+    "architecture"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/71/Charminar_Hyderabad_1.jpg/960px-Charminar_Hyderabad_1.jpg",
+   "alt": "Charminar at Hyderabad, India.",
+   "tags": [
+    "india",
+    "hyderabad",
+    "architecture"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Charminar_Hyderabad_111.jpg/960px-Charminar_Hyderabad_111.jpg",
+   "alt": "The Charminar in Hyderabad, India.",
+   "tags": [
+    "india",
+    "hyderabad",
+    "architecture"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/da/Documention_of_Hussain_Sagar_Lake%2C_Hyderabad_06.jpg/960px-Documention_of_Hussain_Sagar_Lake%2C_Hyderabad_06.jpg",
+   "alt": "Hussain Sagar lake in Hyderabad.",
+   "tags": [
+    "india",
+    "hyderabad",
+    "city"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Hussain_Sagar%2C_Hyderabad_2.jpg/960px-Hussain_Sagar%2C_Hyderabad_2.jpg",
+   "alt": "Hussain Sagar is a heart-shaped lake in Hyderabad, Telangana, India, built by Ibrahim Quli Qutb Shah in 1563. It is spread across an area of 5.",
+   "tags": [
+    "india",
+    "hyderabad",
+    "city"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/59/Golconda_Fort_002_-_Baradari.jpg/960px-Golconda_Fort_002_-_Baradari.jpg",
+   "alt": "The Balahisar Baradari on the top of Golconda Fort, India.",
+   "tags": [
+    "india",
+    "hyderabad",
+    "history",
+    "architecture"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c4/Chandelier_of_Chowmahalla_Palace%2C_Hyderabad_-_askmeaks.jpg/960px-Chandelier_of_Chowmahalla_Palace%2C_Hyderabad_-_askmeaks.jpg",
+   "alt": "A chandelier at Hydrabad museum waiting to get lit.",
+   "tags": [
+    "india",
+    "hyderabad",
+    "architecture"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Chowmahalla_Palace%2C_Charminar%2C_Hyderabad%2C_India_%288402544559%29.jpg/960px-Chowmahalla_Palace%2C_Charminar%2C_Hyderabad%2C_India_%288402544559%29.jpg",
+   "alt": "Chowmahalla Palace, Charminar, Hyderabad, India.",
+   "tags": [
+    "india",
+    "hyderabad",
+    "architecture"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/ff/Chhatrapati_Shivaji_Maharaj_Terminus_-_Mumbai_-_Maharashtra_-_IMG_0703.jpg/960px-Chhatrapati_Shivaji_Maharaj_Terminus_-_Mumbai_-_Maharashtra_-_IMG_0703.jpg",
+   "alt": "This terminus - starting point of the Mumbai-Thane Railway Route in 1853 - was the then called Bori Bunder, later renamed to Victoria Terminus and again renamed to Chhatrapati Shivaji Maharaj Te…",
+   "tags": [
+    "india",
+    "mumbai",
+    "trains",
+    "architecture"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/Mumbai_-_Chhatrapati_Shivaji_Terminus_Frontside_-_1.jpg/960px-Mumbai_-_Chhatrapati_Shivaji_Terminus_Frontside_-_1.jpg",
+   "alt": "Mumbai - Chhatrapati Shivaji Terminus Frontside.",
+   "tags": [
+    "india",
+    "mumbai",
+    "trains",
+    "architecture"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/16/Lascar_Mumbai_Suburban_Railway_system_%284558983576%29.jpg/960px-Lascar_Mumbai_Suburban_Railway_system_%284558983576%29.jpg",
+   "alt": "The Mumbai Suburban Railway system, part of the public transportation system of Mumbai, is provided for by the state-run Indian Railways' two zonal Western Railways and Central Railways.",
+   "tags": [
+    "india",
+    "mumbai",
+    "trains",
+    "commute"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/Suburban_train_of_mumbai_inside_view.jpg/960px-Suburban_train_of_mumbai_inside_view.jpg",
+   "alt": "Suburban train of mumbai inside view.",
+   "tags": [
+    "india",
+    "mumbai",
+    "trains",
+    "commute"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/74/Mumbai_03-2016_27_skyline_at_Marine_Drive.jpg/960px-Mumbai_03-2016_27_skyline_at_Marine_Drive.jpg",
+   "alt": "View from Malabar Hill to Marine Drive in Mumbai, India.",
+   "tags": [
+    "india",
+    "mumbai",
+    "city"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/Mumbai_03-2016_46_evening_at_Marine_Drive.jpg/960px-Mumbai_03-2016_46_evening_at_Marine_Drive.jpg",
+   "alt": "Evening at Marine Drive in Mumbai, India.",
+   "tags": [
+    "india",
+    "mumbai",
+    "city"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Mumbai_03-2016_30_Gateway_of_India.jpg/960px-Mumbai_03-2016_30_Gateway_of_India.jpg",
+   "alt": "The Gateway of India in Mumbai, India.",
+   "tags": [
+    "india",
+    "mumbai",
+    "architecture"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/Mumbai_03-2016_31_Gateway_of_India.jpg/960px-Mumbai_03-2016_31_Gateway_of_India.jpg",
+   "alt": "The Gateway of India in Mumbai, India.",
+   "tags": [
+    "india",
+    "mumbai",
+    "architecture"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/Ragda_pattice.JPG/960px-Ragda_pattice.JPG",
+   "alt": "Pattice of popular Indian fast food \"Ragda Pattice\" being prepared at a street vendor's stall in Powai, Mumbai.",
+   "tags": [
+    "india",
+    "mumbai",
+    "food",
+    "street"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Egg_bhurji_with_pav_%28bread%29.jpg/960px-Egg_bhurji_with_pav_%28bread%29.jpg",
+   "alt": "Fresh egg bhurji served with pav (bread) at a local stall in mumbai. india's daily driver.",
+   "tags": [
+    "india",
+    "mumbai",
+    "food",
+    "street"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d4/Mumbai_03-2016_11_Haji_Ali_Dargah.jpg/960px-Mumbai_03-2016_11_Haji_Ali_Dargah.jpg",
+   "alt": "Haji Ali Dargah Mosque in Mumbai, India.",
+   "tags": [
+    "india",
+    "mumbai",
+    "dargah",
+    "architecture"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/Mumbai_03-2016_12_Haji_Ali_Dargah.jpg/960px-Mumbai_03-2016_12_Haji_Ali_Dargah.jpg",
+   "alt": "Haji Ali Dargah Mosque in Mumbai, India.",
+   "tags": [
+    "india",
+    "mumbai",
+    "dargah",
+    "architecture"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/Dhobi-Ghat-Mumbai.JPG/960px-Dhobi-Ghat-Mumbai.JPG",
+   "alt": "Dhobi Ghat at Mahalaxmi in Mumbai.",
+   "tags": [
+    "india",
+    "mumbai",
+    "work",
+    "city"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/69/Dhobi_ghat_Mumbai.jpg/960px-Dhobi_ghat_Mumbai.jpg",
+   "alt": "Dhobhis (Washermen) washing clothes at Dhobhi Ghat, Mahalaxmi, Mumbai.",
+   "tags": [
+    "india",
+    "mumbai",
+    "work",
+    "city"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/Information_board_about_Shaniwar_Wada%2C_Pune.jpg/960px-Information_board_about_Shaniwar_Wada%2C_Pune.jpg",
+   "alt": "An information board about Shaniwar Wada in Pune.",
+   "tags": [
+    "india",
+    "pune",
+    "history",
+    "architecture"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f5/Family_Tree_of_Peshwas_at_Shaniwar_Wada%2C_Pune.jpg/960px-Family_Tree_of_Peshwas_at_Shaniwar_Wada%2C_Pune.jpg",
+   "alt": "The family tree of the Peshwas displayed at Shaniwar Wada, Pune.",
+   "tags": [
+    "india",
+    "pune",
+    "history",
+    "architecture"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d2/A_Street_in_Pune_by_Aman_Deshmukh.JPG/960px-A_Street_in_Pune_by_Aman_Deshmukh.JPG",
+   "alt": "Photograph taken for Wikipedia Takes Pune on 7th October, 2012.",
+   "tags": [
+    "india",
+    "pune",
+    "city"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/77/Jama_Masjid%2C_Delhi.jpg/960px-Jama_Masjid%2C_Delhi.jpg",
+   "alt": "Jama Masjid, Jama Mosque, Delhi India.",
+   "tags": [
+    "india",
+    "delhi",
+    "mosque",
+    "architecture"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/70/Jama_Masjid_in_Delhi_02.jpg/960px-Jama_Masjid_in_Delhi_02.jpg",
+   "alt": "Jami' Masjid, also known as a Jama Masjid situated in Delhi, India.",
+   "tags": [
+    "india",
+    "delhi",
+    "mosque",
+    "architecture"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/e/e7/Chandni_Chowk%2C_Delhi%2C_1858.jpg",
+   "alt": "Chandni Chowk, Delhi.",
+   "tags": [
+    "india",
+    "delhi",
+    "market",
+    "street"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/Delhi%2C_Chandni_Chowk_%282108804336%29.jpg/960px-Delhi%2C_Chandni_Chowk_%282108804336%29.jpg",
+   "alt": "Delhi, Chandni Chowk the yellow building on the very left is State Bank of India (SBI) Chandni Chowk branch. indie 061.",
+   "tags": [
+    "india",
+    "delhi",
+    "market",
+    "street"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d2/Tomb_of_Humayun%2C_Delhi.jpg/960px-Tomb_of_Humayun%2C_Delhi.jpg",
+   "alt": "Tomb of Humayun, Delhi, India. Western façade as viewed from the main entrance.",
+   "tags": [
+    "india",
+    "delhi",
+    "architecture",
+    "history"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/45/Intricate_window_at_Humayun%27s_Tomb%2C_Delhi.jpg/960px-Intricate_window_at_Humayun%27s_Tomb%2C_Delhi.jpg",
+   "alt": "Intricate window at Humayun's Tomb, Delhi.",
+   "tags": [
+    "india",
+    "delhi",
+    "architecture",
+    "history"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/da/Delhi_metro_six_coach_train_panoramic_view.jpg/960px-Delhi_metro_six_coach_train_panoramic_view.jpg",
+   "alt": "A panoramic photograph of one of the new 6 coach trains being added to the Delhi Metro.",
+   "tags": [
+    "india",
+    "delhi",
+    "transit"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d0/Delhi_Metro_train_red_line_at_Shaheed_Sthal_metro_station.jpg/960px-Delhi_Metro_train_red_line_at_Shaheed_Sthal_metro_station.jpg",
+   "alt": "Delhi Metro train red line at Shaheed Sthal metro station.",
+   "tags": [
+    "india",
+    "delhi",
+    "transit"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c0/Qutb_Minar_2011.jpg/960px-Qutb_Minar_2011.jpg",
+   "alt": "Qutb Minar, Delhi, India.",
+   "tags": [
+    "india",
+    "delhi",
+    "architecture",
+    "history"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b2/Inside_of_Azan_Tower_at_Qutb_Minar_Complex.jpg/960px-Inside_of_Azan_Tower_at_Qutb_Minar_Complex.jpg",
+   "alt": "Inside view of the Azan Tower at Qutb Minar Complex.",
+   "tags": [
+    "india",
+    "delhi",
+    "architecture",
+    "history"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/55/Delhi_Connaught_Place.jpg/960px-Delhi_Connaught_Place.jpg",
+   "alt": "Connaught Place, Delhi, India.",
+   "tags": [
+    "india",
+    "delhi",
+    "city"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/Connaught_Place%2C_New_Delhi_2.jpg/960px-Connaught_Place%2C_New_Delhi_2.jpg",
+   "alt": "Connaught Place, New Delhi.",
+   "tags": [
+    "india",
+    "delhi",
+    "city"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/68/Howrah_Bridge_Kolkata_Photography_01.jpg/960px-Howrah_Bridge_Kolkata_Photography_01.jpg",
+   "alt": "Hanging bridge over Ganga River, Kolkata, Howrah Bridge.",
+   "tags": [
+    "india",
+    "kolkata",
+    "bridge",
+    "city"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Howrah_Bridge_Kolkata_Photography_02.jpg/960px-Howrah_Bridge_Kolkata_Photography_02.jpg",
+   "alt": "Hanging bridge over Ganga River, Kolkata, Howrah Bridge.",
+   "tags": [
+    "india",
+    "kolkata",
+    "bridge",
+    "city"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/Dalhousie_Kolkata_Tram_%289%29.jpg/960px-Dalhousie_Kolkata_Tram_%289%29.jpg",
+   "alt": "Dalhousie Kolkata Tram.",
+   "tags": [
+    "india",
+    "kolkata",
+    "transit"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/34/Tram_pointsman_Kolkata.jpg/960px-Tram_pointsman_Kolkata.jpg",
+   "alt": "Due to closure of most junctions and terminus, there are very fiew pointsman remained.",
+   "tags": [
+    "india",
+    "kolkata",
+    "transit"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Pavilion_at_the_Victoria_Memorial%2C_Kolkata_01.jpg/960px-Pavilion_at_the_Victoria_Memorial%2C_Kolkata_01.jpg",
+   "alt": "A pavilion at the Victoria Memorial, Kolkata, India.",
+   "tags": [
+    "india",
+    "kolkata",
+    "architecture",
+    "history"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Pavilion_at_the_Victoria_Memorial%2C_Kolkata_02.jpg/960px-Pavilion_at_the_Victoria_Memorial%2C_Kolkata_02.jpg",
+   "alt": "A pavilion at the Victoria Memorial, Kolkata, India.",
+   "tags": [
+    "india",
+    "kolkata",
+    "architecture",
+    "history"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/41/Making_of_Durga_Idol_in_Kumartuli%2C_Kolkata.jpg/960px-Making_of_Durga_Idol_in_Kumartuli%2C_Kolkata.jpg",
+   "alt": "Making of Durga Idol in Kumartuli, Kolkata.",
+   "tags": [
+    "india",
+    "kolkata",
+    "festival",
+    "craft"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/Making_of_Durga_idol_in_Kumartuli_02.jpg/960px-Making_of_Durga_idol_in_Kumartuli_02.jpg",
+   "alt": "Making of Durga idol at Kumartuli in Kolkata, West Bengal.",
+   "tags": [
+    "india",
+    "kolkata",
+    "festival",
+    "craft"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fc/DurgaPuja2018_-_Pandal_of_Ultadanga_Pallyshree_in_Kolkata_03.jpg/960px-DurgaPuja2018_-_Pandal_of_Ultadanga_Pallyshree_in_Kolkata_03.jpg",
+   "alt": "This photo has been taken during Durga Puja in the year 2018 in Kolkata.",
+   "tags": [
+    "india",
+    "kolkata",
+    "festival"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bc/DurgaPuja2018_-_Pandal_of_Jagat_Mukherjee_Park_in_Kolkata_13.jpg/960px-DurgaPuja2018_-_Pandal_of_Jagat_Mukherjee_Park_in_Kolkata_13.jpg",
+   "alt": "This photo has been taken during Durga Puja in the year 2018 in Kolkata.",
+   "tags": [
+    "india",
+    "kolkata",
+    "festival"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/02/Old_second-hand_books_being_sold_by_a_shopkeeper_at_the_College_Street_in_Kolkata%2C_West_Bengal.jpg/960px-Old_second-hand_books_being_sold_by_a_shopkeeper_at_the_College_Street_in_Kolkata%2C_West_Bengal.jpg",
+   "alt": "Old second-hand books being sold by a shopkeeper at the College Street in Kolkata, West Bengal. Photo taken by Yogabrata Chakraborty, June 8, 2022.",
+   "tags": [
+    "india",
+    "kolkata",
+    "books",
+    "street"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e2/Adalaj_Stepwell_first_floor_views.jpg/960px-Adalaj_Stepwell_first_floor_views.jpg",
+   "alt": "Views from the first floor of the Adalaj Stepwell in Gujarat.",
+   "tags": [
+    "india",
+    "ahmedabad",
+    "architecture",
+    "water"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/7/7f/Adalaj_Stepwell_front_view.jpg",
+   "alt": "Front view of the Adalaj Stepwell in Gujarat.",
+   "tags": [
+    "india",
+    "ahmedabad",
+    "architecture",
+    "water"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/32/Sabarmati_Ashram_-_Ahmedabad_-_Gujarat_-_DSC001.jpg/960px-Sabarmati_Ashram_-_Ahmedabad_-_Gujarat_-_DSC001.jpg",
+   "alt": "Sabarmati Ashram (also known as Gandhi Ashram, Harijan Ashram, or Satyagraha Ashram) is located in the Sabarmati suburb of Ahmedabad, Gujarat, adjoining the Ashram Road, on the banks of the Rive…",
+   "tags": [
+    "india",
+    "ahmedabad",
+    "history"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f7/Sabarmati_Ashram_-_Ahmedabad_-_Gujarat_-_DSC002.jpg/960px-Sabarmati_Ashram_-_Ahmedabad_-_Gujarat_-_DSC002.jpg",
+   "alt": "Sabarmati Ashram (also known as Gandhi Ashram, Harijan Ashram, or Satyagraha Ashram) is located in the Sabarmati suburb of Ahmedabad, Gujarat, adjoining the Ashram Road, on the banks of the Rive…",
+   "tags": [
+    "india",
+    "ahmedabad",
+    "history"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/31/Sidi_Saiyyed_Mosque%2C_Ahmedabad.jpg/960px-Sidi_Saiyyed_Mosque%2C_Ahmedabad.jpg",
+   "alt": "Sidi Saiyyed Mosque, Ahmedabad, India.",
+   "tags": [
+    "india",
+    "ahmedabad",
+    "mosque",
+    "architecture"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6a/Ahmedabad_-_Sidi_Saiyyed_Mosque_1.jpg/960px-Ahmedabad_-_Sidi_Saiyyed_Mosque_1.jpg",
+   "alt": "Ahmedabad Sidi Saiyyed Mosque.",
+   "tags": [
+    "india",
+    "ahmedabad",
+    "mosque",
+    "architecture"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Jaipur_03-2016_25_Hawa_Mahal_Road_at_the_City_Palace.jpg/960px-Jaipur_03-2016_25_Hawa_Mahal_Road_at_the_City_Palace.jpg",
+   "alt": "Hawa Mahal Road at the City Palace in Jaipur, India.",
+   "tags": [
+    "india",
+    "jaipur",
+    "architecture"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d8/Jaipur_03-2016_26_Hawa_Mahal_Road_at_the_City_Palace.jpg/960px-Jaipur_03-2016_26_Hawa_Mahal_Road_at_the_City_Palace.jpg",
+   "alt": "Hawa Mahal Road at the City Palace in Jaipur, India.",
+   "tags": [
+    "india",
+    "jaipur",
+    "architecture"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b2/Amber_Fort-Jaipur-India0010.JPG/960px-Amber_Fort-Jaipur-India0010.JPG",
+   "alt": "Amber Fort, Jaipur, India. It is also known as Amer Fort.",
+   "tags": [
+    "india",
+    "jaipur",
+    "history",
+    "architecture"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f7/Jaipur_03-2016_02_Amber_Fort.jpg/960px-Jaipur_03-2016_02_Amber_Fort.jpg",
+   "alt": "Amber Fort in Jaipur, India.",
+   "tags": [
+    "india",
+    "jaipur",
+    "history",
+    "architecture"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/Jaipur_Jantar_Mantar_panorama_2011.jpg/960px-Jaipur_Jantar_Mantar_panorama_2011.jpg",
+   "alt": "Panorama of Jantar Mantar, Jaipur, India.",
+   "tags": [
+    "india",
+    "jaipur",
+    "science",
+    "history"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/Libra_zodiac_sign%2C_Jantar_Mantar%2C_Jaipur%2C_India.jpg/960px-Libra_zodiac_sign%2C_Jantar_Mantar%2C_Jaipur%2C_India.jpg",
+   "alt": "Libra zodiac sign, Jantar Mantar, Jaipur, India. 18th century CE.",
+   "tags": [
+    "india",
+    "jaipur",
+    "science",
+    "history"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f0/Bara_Imambara_Lucknow.jpg/960px-Bara_Imambara_Lucknow.jpg",
+   "alt": "Bara Imambara, Lucknow, India.",
+   "tags": [
+    "india",
+    "lucknow",
+    "architecture",
+    "history"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Bara_Imambara_lucknow_up.jpg/960px-Bara_Imambara_lucknow_up.jpg",
+   "alt": "The Bara Imambara in Lucknow, Uttar Pradesh.",
+   "tags": [
+    "india",
+    "lucknow",
+    "architecture",
+    "history"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/81/-Rumi_Darwaza%2C_Lucknow%2C_India-_MET_DP72038.jpg/960px--Rumi_Darwaza%2C_Lucknow%2C_India-_MET_DP72038.jpg",
+   "alt": "Rumi Darwaza, Lucknow, India.",
+   "tags": [
+    "india",
+    "lucknow",
+    "architecture"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c4/Rumi_Darwaza%2C_Lucknow.jpg/960px-Rumi_Darwaza%2C_Lucknow.jpg",
+   "alt": "The Rumi Darwaza gateway in Lucknow.",
+   "tags": [
+    "india",
+    "lucknow",
+    "architecture"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Chinese_fishingnet_kochi.jpg/960px-Chinese_fishingnet_kochi.jpg",
+   "alt": "Chinese fishing nets found in fort cochin kerala.",
+   "tags": [
+    "india",
+    "kochi",
+    "coast",
+    "work"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/16/Kochi_chinese_fishing-net-20080215-01a.jpg/960px-Kochi_chinese_fishing-net-20080215-01a.jpg",
+   "alt": "Chinese fishing net near Kochi.",
+   "tags": [
+    "india",
+    "kochi",
+    "coast",
+    "work"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/Fort_Kochi_Beachside.jpg/960px-Fort_Kochi_Beachside.jpg",
+   "alt": "The beachside at Fort Kochi, Kerala.",
+   "tags": [
+    "india",
+    "kochi",
+    "city"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fd/Fort_Kochi_-_St._Francis_Church.jpg/960px-Fort_Kochi_-_St._Francis_Church.jpg",
+   "alt": "Fort Kochi, Kerala - Frontside of St. Francis Church.",
+   "tags": [
+    "india",
+    "kochi",
+    "city"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Kerala_backwaters%2C_Houseboats%2C_India.jpg/960px-Kerala_backwaters%2C_Houseboats%2C_India.jpg",
+   "alt": "The Kerala backwaters are a network of lagoons, lakes, interconnected canals and rivers, lying parallel to the Arabian Sea coast of Kerala in southern India. Kerala backwaters, South India.",
+   "tags": [
+    "india",
+    "kerala",
+    "water",
+    "nature"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/70/Kerala_backwaters%2C_Houseboats_2%2C_India.jpg/960px-Kerala_backwaters%2C_Houseboats_2%2C_India.jpg",
+   "alt": "The Kerala backwaters are a network of lagoons, lakes, interconnected canals and rivers, lying parallel to the Arabian Sea coast of Kerala in southern India. Kerala backwaters, South India.",
+   "tags": [
+    "india",
+    "kerala",
+    "water",
+    "nature"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/dc/Kamakhya_Temple%2C_Guwahati.jpg/960px-Kamakhya_Temple%2C_Guwahati.jpg",
+   "alt": "Kamakhya Temple Guwahati.",
+   "tags": [
+    "india",
+    "guwahati",
+    "temple"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/95/Ganesha_at_Kamakhya_Temple%2C_Guwahati.jpg/960px-Ganesha_at_Kamakhya_Temple%2C_Guwahati.jpg",
+   "alt": "Ganesha at Kamakhya Temple, Guwahati.",
+   "tags": [
+    "india",
+    "guwahati",
+    "temple"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Bank_of_Brahmaputra_river-Guwahati_2.jpg/960px-Bank_of_Brahmaputra_river-Guwahati_2.jpg",
+   "alt": "Bank of Brahmaputra River in Guwahati.",
+   "tags": [
+    "india",
+    "guwahati",
+    "river"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Bank_of_Brahmaputra_river-Guwahati_1.jpg/960px-Bank_of_Brahmaputra_river-Guwahati_1.jpg",
+   "alt": "Bank of Brahmaputra River in Guwahati.",
+   "tags": [
+    "india",
+    "guwahati",
+    "river"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Shillong_Town%2C_Meghalaya.jpg/960px-Shillong_Town%2C_Meghalaya.jpg",
+   "alt": "Shillong Town, Meghalaya.",
+   "tags": [
+    "india",
+    "shillong",
+    "city",
+    "northeast"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d9/Nohkalikai_falls%2Cshillong%2Cmeghalaya.jpeg/960px-Nohkalikai_falls%2Cshillong%2Cmeghalaya.jpeg",
+   "alt": "Nohkalikai Falls near Shillong, Meghalaya.",
+   "tags": [
+    "india",
+    "shillong",
+    "city",
+    "northeast"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Living_Root_Bridge%2C_Meghalaya%2C_India.jpg/960px-Living_Root_Bridge%2C_Meghalaya%2C_India.jpg",
+   "alt": "Living Root Bridge, near Mawlynnong village, Meghalaya, India.",
+   "tags": [
+    "india",
+    "meghalaya",
+    "nature",
+    "northeast"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/99/Living_root_bridges_of_Nongriat_village_in_East_Khasi_Hills_district%2C_Meghalaya_JEG7387.jpg/960px-Living_root_bridges_of_Nongriat_village_in_East_Khasi_Hills_district%2C_Meghalaya_JEG7387.jpg",
+   "alt": "Double Decker Living root bridges of Nongriat village in East Khasi Hills district, Meghalaya_8.",
+   "tags": [
+    "india",
+    "meghalaya",
+    "nature",
+    "northeast"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bb/Lingaraja_Temple_01.jpg/960px-Lingaraja_Temple_01.jpg",
+   "alt": "Lingaraja Temple, Bhubaneswar, India.",
+   "tags": [
+    "india",
+    "bhubaneswar",
+    "temple",
+    "architecture"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6a/Lingaraja_Temple_02.jpg/960px-Lingaraja_Temple_02.jpg",
+   "alt": "Lingaraja Temple, Bhubaneswar, India.",
+   "tags": [
+    "india",
+    "bhubaneswar",
+    "temple",
+    "architecture"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b3/Stone_wheel_engraved_in_the_13th_century_built_Konark_Sun_Temple_in_Orissa%2C_India.jpg/960px-Stone_wheel_engraved_in_the_13th_century_built_Konark_Sun_Temple_in_Orissa%2C_India.jpg",
+   "alt": "This is a wheel engraved in the 13th century built Konark Sun Temple in Orissa, India. The temple is designed as a chariot consisting of 24 such wheels.",
+   "tags": [
+    "india",
+    "odisha",
+    "temple",
+    "history"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Sun_Temple_Main_Structure%2C_Konark%2C_Orissa.jpg/960px-Sun_Temple_Main_Structure%2C_Konark%2C_Orissa.jpg",
+   "alt": "Konark Sun Temple is a 13th century Sun Temple (also known as the Black Pagoda), at Konark, in Orissa.",
+   "tags": [
+    "india",
+    "odisha",
+    "temple",
+    "history"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/Jagannath_Temple%2C_Puri_02.jpg/960px-Jagannath_Temple%2C_Puri_02.jpg",
+   "alt": "Statue of Jaya-Vijaya at the entrance of Jagannath Temple, Puri, India.",
+   "tags": [
+    "india",
+    "odisha",
+    "temple"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e2/Jagannath_Temple%2C_Puri_03.jpg/960px-Jagannath_Temple%2C_Puri_03.jpg",
+   "alt": "Sculpture at the entrance of Jagannath Temple, Puri, India.",
+   "tags": [
+    "india",
+    "odisha",
+    "temple"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/Chandigarh_Capitol_Complex_-_Le_Corbusier_-_Hall_of_Shadows_ramp.jpg/960px-Chandigarh_Capitol_Complex_-_Le_Corbusier_-_Hall_of_Shadows_ramp.jpg",
+   "alt": "Ramp to the plaza to reach the Hall of Shadows.",
+   "tags": [
+    "india",
+    "chandigarh",
+    "architecture"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d1/Chandigarh_Capitol_Complex_-_Le_Corbusier_-_secretariat_-_roof_terrace.jpg/960px-Chandigarh_Capitol_Complex_-_Le_Corbusier_-_secretariat_-_roof_terrace.jpg",
+   "alt": "Chandigarh Capitol Complex Le Corbusier secretariat roof terrace.",
+   "tags": [
+    "india",
+    "chandigarh",
+    "architecture"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/Chandigarh_Rock_Garden_4.jpg/960px-Chandigarh_Rock_Garden_4.jpg",
+   "alt": "Taken in the Nek Chand Rock Garden in Chandigarh.",
+   "tags": [
+    "india",
+    "chandigarh",
+    "art"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Rock_Garden%2C_Chandigarh_96.jpg/960px-Rock_Garden%2C_Chandigarh_96.jpg",
+   "alt": "Rock Garden, Chandigarh.",
+   "tags": [
+    "india",
+    "chandigarh",
+    "art"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Rajwada_Palace%2C_Indore.jpg/960px-Rajwada_Palace%2C_Indore.jpg",
+   "alt": "Rajwada Palace in Indore, India.",
+   "tags": [
+    "india",
+    "indore",
+    "architecture"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/92/Rajwada_Indore_Diwali.jpg/960px-Rajwada_Indore_Diwali.jpg",
+   "alt": "Rajwada Indore during Diwali in 2014.",
+   "tags": [
+    "india",
+    "indore",
+    "architecture"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d6/Nilgiri_Mountain_Railway_on_Bridge%2C_May_2010.JPG/960px-Nilgiri_Mountain_Railway_on_Bridge%2C_May_2010.JPG",
+   "alt": "Nilgiri Mountain Railway on Bridge, May 2010.",
+   "tags": [
+    "india",
+    "coimbatore",
+    "trains",
+    "hills"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/72/Nilgiri_Mountain_Railway.jpg/960px-Nilgiri_Mountain_Railway.jpg",
+   "alt": "A view of the Nilgiri Mountain Railway, including the bridge and a tea plantation. Taken near Runneymede railway station.",
+   "tags": [
+    "india",
+    "coimbatore",
+    "trains",
+    "hills"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Basilica_of_Bom_Jesus_8_%28Old_Goa%29.jpg/960px-Basilica_of_Bom_Jesus_8_%28Old_Goa%29.jpg",
+   "alt": "Basilica of Bom Jesus (Old Goa)",
+   "tags": [
+    "india",
+    "goa",
+    "church",
+    "architecture"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b3/Liturgical_vestments_in_the_vestry_of_Basilica_of_Bom_Jesus%2C_Goa.jpg/960px-Liturgical_vestments_in_the_vestry_of_Basilica_of_Bom_Jesus%2C_Goa.jpg",
+   "alt": "Located in the Basilica de Bom Jesus, Old Goa, India.",
+   "tags": [
+    "india",
+    "goa",
+    "church",
+    "architecture"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b3/Mandrem_Beach_and_Mandrem_River%2C_Mandrem%2C_Goa%2C_India.jpg/960px-Mandrem_Beach_and_Mandrem_River%2C_Mandrem%2C_Goa%2C_India.jpg",
+   "alt": "Mandrem Beach behind the Mandrem River in North Goa is a quiet and peaceful white sand beach with clear water. Mandrem, Goa, India.",
+   "tags": [
+    "india",
+    "goa",
+    "coast"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/The_Terekhol_River_and_Querim_Beach%2C_panoramic_view%2C_Goa%2C_India.jpg/960px-The_Terekhol_River_and_Querim_Beach%2C_panoramic_view%2C_Goa%2C_India.jpg",
+   "alt": "The Terekhol River forms the boundary between Maharashtra state and Goa state. It rises in the Western Ghats and flows to meet the Arabian Sea.",
+   "tags": [
+    "india",
+    "goa",
+    "coast"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/41/Sikh_pilgrim_at_the_Golden_Temple_%28Harmandir_Sahib%29_in_Amritsar%2C_India.jpg/960px-Sikh_pilgrim_at_the_Golden_Temple_%28Harmandir_Sahib%29_in_Amritsar%2C_India.jpg",
+   "alt": "Sikh pilgrim at the Harmandir Sahib (Golden Temple) in Amritsar, India. The man has just had a ritual bath.",
+   "tags": [
+    "india",
+    "amritsar",
+    "gurdwara",
+    "architecture"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/Golden_Temple%2C_Amritsar_01.jpg/960px-Golden_Temple%2C_Amritsar_01.jpg",
+   "alt": "Golden Temple (Sri Harmandir Sahib), Amritsar, India.",
+   "tags": [
+    "india",
+    "amritsar",
+    "gurdwara",
+    "architecture"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/43/Vande_Bharat_Express_train.jpg/960px-Vande_Bharat_Express_train.jpg",
+   "alt": "Anand Vihar - Dehradun Vande Bharat Express at Anand Vihar Terminal.",
+   "tags": [
+    "india",
+    "trains",
+    "transit"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/31/Specially_Designed_Mini_Vande_Bharat_Express_train.jpg/960px-Specially_Designed_Mini_Vande_Bharat_Express_train.jpg",
+   "alt": "Specially Designed Mini Vande Bharat Express train at Kashmir.",
+   "tags": [
+    "india",
+    "trains",
+    "transit"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/Darjeeling_Himalayan_Railway%2Ctoy_train_%281%29.jpg/960px-Darjeeling_Himalayan_Railway%2Ctoy_train_%281%29.jpg",
+   "alt": "The Darjeeling Himalayan Railway, also known as the Toy Train, is a 2 ft narrow-gauge railway based on zig zag and loop-line technology.",
+   "tags": [
+    "india",
+    "trains",
+    "hills"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/be/Darjeeling_Himalayan_Railway%2Ctoy_train_%282%29.jpg/960px-Darjeeling_Himalayan_Railway%2Ctoy_train_%282%29.jpg",
+   "alt": "The Darjeeling Himalayan Railway, also known as the Toy Train, is a 2 ft narrow-gauge railway based on zig zag and loop-line technology.",
+   "tags": [
+    "india",
+    "trains",
+    "hills"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3d/Indian_Railways_WAP-4_class_electric_locomotive..JPG/960px-Indian_Railways_WAP-4_class_electric_locomotive..JPG",
+   "alt": "Indian Railways WAP-4 class electric locomotive is currently the most widely used loco for passenger services.",
+   "tags": [
+    "india",
+    "trains"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/78/INDIAN_RAILWAYS_WAP-4_ELECTRIC_LOCOMOTIVE.JPG/960px-INDIAN_RAILWAYS_WAP-4_ELECTRIC_LOCOMOTIVE.JPG",
+   "alt": "WAP-4 belonging to Royapuram Electric Shed hauls train number 12644 Swarna Jayanti Express.",
+   "tags": [
+    "india",
+    "trains"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/50/WDM2B-16609_Agra_Fort_%283%29.JPG/960px-WDM2B-16609_Agra_Fort_%283%29.JPG",
+   "alt": "An Indian Railways class WDM-2B diesel-electric locomotive at Agra Fort.",
+   "tags": [
+    "india",
+    "trains",
+    "commute"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Konkan_railway_bridge.jpg/960px-Konkan_railway_bridge.jpg",
+   "alt": "The Konkan railway bridge across the Zuari river in Goa, India.",
+   "tags": [
+    "india",
+    "trains",
+    "coast"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3d/A-tunnel-in-Konkan-Railway-at-Byndoor-Karnataka.JPG/960px-A-tunnel-in-Konkan-Railway-at-Byndoor-Karnataka.JPG",
+   "alt": "Tunnel No 91 of Konkan Railway at Byndoor, Karnataka.",
+   "tags": [
+    "india",
+    "trains",
+    "coast"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/43/Masala_dosa_01.jpg/960px-Masala_dosa_01.jpg",
+   "alt": "Masala dosa or masale dose is a variation of the popular South Indian food dosa, which has its origins in Tuluva Mangalorean cuisine.",
+   "tags": [
+    "india",
+    "food",
+    "southindia"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Idli_Sambar_Chutney_in_Madras.JPG/960px-Idli_Sambar_Chutney_in_Madras.JPG",
+   "alt": "Idli with Sambar and Chutney as served in a restaurent in Saidapet, Chennai.",
+   "tags": [
+    "india",
+    "food",
+    "southindia"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/Sambar_Idli_-_Mini_idlis_floating_in_sambar_as_served_in_Tamil_nadu.JPG/960px-Sambar_Idli_-_Mini_idlis_floating_in_sambar_as_served_in_Tamil_nadu.JPG",
+   "alt": "Sambar Idli - Mini idlis floating in sambar as served in Tamil nadu.",
+   "tags": [
+    "india",
+    "food",
+    "southindia"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Hyderabadi_Chicken_Biryani.jpg/960px-Hyderabadi_Chicken_Biryani.jpg",
+   "alt": "Hyderabadi Chicken Biryani.",
+   "tags": [
+    "india",
+    "hyderabad",
+    "food"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d1/Hyderabadi_Biryani.jpg/960px-Hyderabadi_Biryani.jpg",
+   "alt": "The city of Hyderabad is known throughout India for its Biryani - rice with meat (traditionally mutton) and various spices.",
+   "tags": [
+    "india",
+    "hyderabad",
+    "food"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/6/63/Vada_Pav.jpg",
+   "alt": "Vada pav or other wise called as Indian Burger. Made of Potatoes and spices.",
+   "tags": [
+    "india",
+    "mumbai",
+    "food",
+    "street"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Vada_Pav-Indian_street_food.JPG/960px-Vada_Pav-Indian_street_food.JPG",
+   "alt": "Vada Pav is a very appetizing and delicious dish.It is most preferred in Mumbai.",
+   "tags": [
+    "india",
+    "mumbai",
+    "food",
+    "street"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/A_Thali%2C_famous_South_Indian_meal_served_on_a_banana_leaf.jpg/960px-A_Thali%2C_famous_South_Indian_meal_served_on_a_banana_leaf.jpg",
+   "alt": "A Thali, famous South Indian meal served on a banana leaf.",
+   "tags": [
+    "india",
+    "food"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/96/%279%27_A_Thali%2C_meal_served_in_India.jpg/960px-%279%27_A_Thali%2C_meal_served_in_India.jpg",
+   "alt": "In many parts of India, a meal is served as a collage of various dishes. It typically includes rice and/or bread, veggies, sour and sweet soups/chutney, yoghurt/curd dish and other items.",
+   "tags": [
+    "india",
+    "food"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/0/04/Chai_walli_-_Old_woman_at_a_Tea_Stall_on_a_highway_in_Pauri%2C_Uttrakhand%2C_India.jpg",
+   "alt": "A chai walli at a tea stall on a highway in Pauri, Uttarakhand, India.",
+   "tags": [
+    "india",
+    "food",
+    "street"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/d/de/Street_sweets_mithai_shop_in_Goa%2C_India.jpg",
+   "alt": "Indian sweet shop in Panaji, Goa.",
+   "tags": [
+    "india",
+    "food",
+    "sweets"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Golgappa_Pani_Puri_India.jpg/960px-Golgappa_Pani_Puri_India.jpg",
+   "alt": "These are mini puri bread, filled with potato-based mix and filled with a sweet sour sauce just before eating. A popular street food, snack food dish, particularly on festive occasions.",
+   "tags": [
+    "india",
+    "food",
+    "street"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/77/Golgappa_for_pani_puri.JPG/960px-Golgappa_for_pani_puri.JPG",
+   "alt": "Golgappa for pani puri.",
+   "tags": [
+    "india",
+    "food",
+    "street"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/South_Indian_Filter_Coffee.jpg/960px-South_Indian_Filter_Coffee.jpg",
+   "alt": "South Indian Filter Coffee.",
+   "tags": [
+    "india",
+    "food",
+    "chennai"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/26/South_Indian_filter_coffee.JPG/960px-South_Indian_filter_coffee.JPG",
+   "alt": "Most south Indians start the day with this filter coffee.",
+   "tags": [
+    "india",
+    "food",
+    "chennai"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Rosogolla_-_Bengali%27s_all_time_favorite_sweets_%28%E0%A6%AC%E0%A6%BE%E0%A6%99%E0%A7%8D%E0%A6%97%E0%A6%BE%E0%A6%B2%E0%A6%BF%E0%A6%B0_%E0%A6%B8%E0%A6%B0%E0%A7%8D%E0%A6%AC%E0%A6%95%E0%A6%BE%E0%A6%B2%E0%A7%87%E0%A6%B0_%E0%A6%B8%E0%A6%AC%E0%A6%A5%E0%A7%87%E0%A6%95%E0%A7%87_%E0%A6%AA%E0%A7%8D%E0%A6%B0%E0%A6%BF%E0%A6%AF%E0%A6%BC_%E0%A6%AE%E0%A6%BF%E0%A6%B7%E0%A7%8D%E0%A6%9F%E0%A6%BF_-_%E0%A6%B0%E0%A6%B8%E0%A6%97%E0%A7%8B%E0%A6%B2%E0%A7%8D%E0%A6%B2%E0%A6%BE%29.jpg/960px-thumbnail.jpg",
+   "alt": "A teaspoon of desserts taken from the most famous bengali sweet \"Rosogolla\".",
+   "tags": [
+    "india",
+    "kolkata",
+    "food",
+    "sweets"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/Bengali_sweets.jpg/960px-Bengali_sweets.jpg",
+   "alt": "Rosogolla, kala jamun, mango malai, chanar cake.",
+   "tags": [
+    "india",
+    "kolkata",
+    "food",
+    "sweets"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1e/Sadya-Aluva-Kerala-IMG_20210320_204532.jpg/960px-Sadya-Aluva-Kerala-IMG_20210320_204532.jpg",
+   "alt": "Sadhya is a feast of Kerala origin, consisting of a variety of traditional vegetarian dishes usually served on a banana leaf in Kerala as lunch.",
+   "tags": [
+    "india",
+    "kerala",
+    "food",
+    "festival"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Sadya-Aluva-Kerala-IMG_20210320_204506.jpg/960px-Sadya-Aluva-Kerala-IMG_20210320_204506.jpg",
+   "alt": "Sadhya is a feast of Kerala origin, consisting of a variety of traditional vegetarian dishes usually served on a banana leaf in Kerala as lunch.",
+   "tags": [
+    "india",
+    "kerala",
+    "food",
+    "festival"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Litti_chokha_of_bihar.jpg/960px-Litti_chokha_of_bihar.jpg",
+   "alt": "Famous litti chokha of Bihar.",
+   "tags": [
+    "india",
+    "food",
+    "bihar"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Litti-chokha.jpg/960px-Litti-chokha.jpg",
+   "alt": "This delicacy of Bihar is called 'litti-chokha'. Generally it is eaten in the winter season because the spices used in delicacy keeps the body warm.",
+   "tags": [
+    "india",
+    "food",
+    "bihar"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Gujarati_Thali_%28Dish%29_With_Papad%2CChhas_%28Butter-Milk%29%2CAam_Rass_%28Mango_Juice%29_And_Water.jpg/960px-Gujarati_Thali_%28Dish%29_With_Papad%2CChhas_%28Butter-Milk%29%2CAam_Rass_%28Mango_Juice%29_And_Water.jpg",
+   "alt": "This is a 'Gujarati Thali' or 'Gujarati Dish'.",
+   "tags": [
+    "india",
+    "ahmedabad",
+    "food"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/8/86/Marwadi_Gujarati_Thali.jpg",
+   "alt": "Marwadi Gujarati Thali.",
+   "tags": [
+    "india",
+    "ahmedabad",
+    "food"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Market_Day_at_the_Lungleh_Bazaar%2C_with_Mizo_Villagers%E2%80%99_Vegetable_Stands_alongside_Shops_Run_by_a_Hindu_and_a_Muslim%2C_1914.jpg/960px-Market_Day_at_the_Lungleh_Bazaar%2C_with_Mizo_Villagers%E2%80%99_Vegetable_Stands_alongside_Shops_Run_by_a_Hindu_and_a_Muslim%2C_1914.jpg",
+   "alt": "Market Day at the Lungleh Bazaar, with Mizo Villagers’ Vegetable Stands alongside Shops Run by a Hindu and a Muslim, 1914.",
+   "tags": [
+    "india",
+    "market",
+    "food"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/Spice_market-India.jpg/960px-Spice_market-India.jpg",
+   "alt": "Spice market India.",
+   "tags": [
+    "india",
+    "market",
+    "food"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/New_Market_spice_shops.jpg/960px-New_Market_spice_shops.jpg",
+   "alt": "Tea, spices and masala mixtures to buy in the spice-selling part of Kolkata's sprawling New Market.",
+   "tags": [
+    "india",
+    "market",
+    "food"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/ff/Flowerseller_in_Madurai_market.jpg/960px-Flowerseller_in_Madurai_market.jpg",
+   "alt": "A flower vendor in the marketplace at Madurai, Tamil Nadu, India.",
+   "tags": [
+    "india",
+    "market",
+    "festival"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/Flower_Market.JPG/960px-Flower_Market.JPG",
+   "alt": "Mattuthavani integrated flower market in Madurai.",
+   "tags": [
+    "india",
+    "market",
+    "festival"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/Madurai_Meenakshi_temple_2.jpg/960px-Madurai_Meenakshi_temple_2.jpg",
+   "alt": "Gopuram of the Meenakshi Amman Temple at Madurai.",
+   "tags": [
+    "india",
+    "temple",
+    "architecture"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b3/Meenakshi_Temple%2C_Shiva%2C_Meenakshi%2C_Parvati%2C_Madurai%2C_India.jpg/960px-Meenakshi_Temple%2C_Shiva%2C_Meenakshi%2C_Parvati%2C_Madurai%2C_India.jpg",
+   "alt": "Hanuman style Shiva with one of his wives, Meenakshi, Parvati. Meenakshi Temple.",
+   "tags": [
+    "india",
+    "temple",
+    "architecture"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/28/Brihadisvara_Temple%2C_Thanjavur%2C_Tamil_Nadu%2C_India_%282010%29_025.jpg/960px-Brihadisvara_Temple%2C_Thanjavur%2C_Tamil_Nadu%2C_India_%282010%29_025.jpg",
+   "alt": "Brihadisvara Temple, Thanjavur, Tamil Nadu, India.",
+   "tags": [
+    "india",
+    "temple",
+    "history",
+    "architecture"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/da/Brihadisvara_Temple%2C_Thanjavur%2C_Tamil_Nadu%2C_India_%282010%29_023.jpg/960px-Brihadisvara_Temple%2C_Thanjavur%2C_Tamil_Nadu%2C_India_%282010%29_023.jpg",
+   "alt": "Brihadisvara Temple, Thanjavur, Tamil Nadu, India.",
+   "tags": [
+    "india",
+    "temple",
+    "history",
+    "architecture"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Khajuraho_India%2C_Kandariya_Mahadev_Temple%2C_Vishnu_Sculpture.jpg/960px-Khajuraho_India%2C_Kandariya_Mahadev_Temple%2C_Vishnu_Sculpture.jpg",
+   "alt": "Khajuraho India, Kandariya Mahadev Temple, Vishnu Sculpture. This sculpture is located on the outer wall of Kandariya Mahadev Temple(Khajuraho India).",
+   "tags": [
+    "india",
+    "temple",
+    "art",
+    "history"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ef/Khajuraho_India%2C_Kandariya_Mahadev_Temple_Sculpture.JPG/960px-Khajuraho_India%2C_Kandariya_Mahadev_Temple_Sculpture.JPG",
+   "alt": "Khajuraho India, Kandariya Mahadev Temple. Sculpture is located inside the sactum.",
+   "tags": [
+    "india",
+    "temple",
+    "art",
+    "history"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Stupa_3%2C_Sanchi_02.jpg/960px-Stupa_3%2C_Sanchi_02.jpg",
+   "alt": "Stupa 3, Sanchi, India.",
+   "tags": [
+    "india",
+    "buddhism",
+    "history",
+    "architecture"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7f/Stupa_1%2C_Sanchi_02.jpg/960px-Stupa_1%2C_Sanchi_02.jpg",
+   "alt": "West torana, Stupa 1, Sanchi, India.",
+   "tags": [
+    "india",
+    "buddhism",
+    "history",
+    "architecture"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Ajanta_Caves%2C_Painting_1.JPG/960px-Ajanta_Caves%2C_Painting_1.JPG",
+   "alt": "A wall painting in the Ajanta Caves, Maharashtra.",
+   "tags": [
+    "india",
+    "art",
+    "history",
+    "buddhism"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/74/Ajanta_Caves%2C_Painting_2.JPG/960px-Ajanta_Caves%2C_Painting_2.JPG",
+   "alt": "A painted panel in the Ajanta Caves, Maharashtra.",
+   "tags": [
+    "india",
+    "art",
+    "history",
+    "buddhism"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/74/Ellora_Caves%2C_India%2C_Pillars_at_Kailasa_Temple.jpg/960px-Ellora_Caves%2C_India%2C_Pillars_at_Kailasa_Temple.jpg",
+   "alt": "Kailasa temple is a megalith carved out of one single basalt rock. Its construction is attributed to king Krishna I (c.",
+   "tags": [
+    "india",
+    "temple",
+    "history",
+    "architecture"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Ellora_Caves%2C_India%2C_Pillars_at_Kailasa_Temple_2.jpg/960px-Ellora_Caves%2C_India%2C_Pillars_at_Kailasa_Temple_2.jpg",
+   "alt": "Ellora Caves, Aurangabad, Maharashtra, India. 600–1000 CE.",
+   "tags": [
+    "india",
+    "temple",
+    "history",
+    "architecture"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/El_Taj_Mahal-Agra_India0023.JPG/960px-El_Taj_Mahal-Agra_India0023.JPG",
+   "alt": "Taj Mahal, Agra, India.",
+   "tags": [
+    "india",
+    "architecture",
+    "history"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/68/Taj_Mahal%2C_Agra%2C_India.jpg/960px-Taj_Mahal%2C_Agra%2C_India.jpg",
+   "alt": "Taj Mahal, Agra, India, south face.",
+   "tags": [
+    "india",
+    "architecture",
+    "history"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Eden_Gardens_Cricket_Stadium%2C_Kolkata.jpg/960px-Eden_Gardens_Cricket_Stadium%2C_Kolkata.jpg",
+   "alt": "Eden Gardens (Bengali: ইডেন গার্ডেন্স) is a cricket ground in Kolkata, India established in 1864.",
+   "tags": [
+    "india",
+    "cricket",
+    "kolkata",
+    "stadium"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9b/Eden_Gardens_Kolkata.jpg/960px-Eden_Gardens_Kolkata.jpg",
+   "alt": "The Eden Gardens stadium just before the beginning of the Indian Premier League match between the Kolkata Knight Riders and the Chennai Super Kings, on the 18th of May, 2008.",
+   "tags": [
+    "india",
+    "cricket",
+    "kolkata",
+    "stadium"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Chinnaswamystadium.jpg/960px-Chinnaswamystadium.jpg",
+   "alt": "M. Chinnaswamy Stadium, Bangalore, at the first ball of India second innings in the October 2004 Test.",
+   "tags": [
+    "india",
+    "cricket",
+    "bengaluru",
+    "stadium"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Street_cricket_in_the_garwal_-_batting.JPG/960px-Street_cricket_in_the_garwal_-_batting.JPG",
+   "alt": "Street cricket in the garwal - batting.",
+   "tags": [
+    "india",
+    "cricket",
+    "street"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/39/Street_cricket_in_the_gharwal_-_bowling.JPG/960px-Street_cricket_in_the_gharwal_-_bowling.JPG",
+   "alt": "Street cricket in the gharwal - bowling.",
+   "tags": [
+    "india",
+    "cricket",
+    "street"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/PSLV-C44_at_First_Launch_Pad_SDSC_SHAR_Sriharikota_01.jpg/960px-PSLV-C44_at_First_Launch_Pad_SDSC_SHAR_Sriharikota_01.jpg",
+   "alt": "PSLV-C44/Microsat-R at First Launch Pad SDSC SHAR Sriharikota during launch rehearsal. First launch of PSLV-DL variant.",
+   "tags": [
+    "india",
+    "isro",
+    "space",
+    "science"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/PSLV-C44_at_First_Launch_Pad_SDSC_SHAR_Sriharikota_02.jpg/960px-PSLV-C44_at_First_Launch_Pad_SDSC_SHAR_Sriharikota_02.jpg",
+   "alt": "PSLV-C44/Microsat-R at First Launch Pad SDSC SHAR Sriharikota during launch rehearsal.",
+   "tags": [
+    "india",
+    "isro",
+    "space",
+    "science"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/be/ISRO-SCRE-1-Spacecraft-1.jpg/960px-ISRO-SCRE-1-Spacecraft-1.jpg",
+   "alt": "From the public display held at kanakakunnu Palace at trivandrum on April 29th. This is ISROs Space Capsule recovered from the sea.",
+   "tags": [
+    "india",
+    "isro",
+    "space",
+    "science"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/e/ee/Giant_Metrewave_Radio_Telescope%2C_Pune%2C_Maharashtra%2C_India.jpg",
+   "alt": "One of the dishes of the Giant Metrewave Radio Telescope (GMRT) near Pune, Maharashtra, India. Picture was taken on 2005-08-07 by Sven Lafebre.",
+   "tags": [
+    "india",
+    "science",
+    "astronomy",
+    "pune"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/Remote_view_of_5_GMRT_radio_telescopes_on_the_way_to_GMRT_campus.jpg/960px-Remote_view_of_5_GMRT_radio_telescopes_on_the_way_to_GMRT_campus.jpg",
+   "alt": "Remote view of 5 GMRT radio telescopes on the way to GMRT campus as seen while moving towards GMRT campus.",
+   "tags": [
+    "india",
+    "science",
+    "astronomy",
+    "pune"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/Main_Building%2C_Indian_Institute_of_Science%2C_Bangalore%2C_Karnataka%2C_India_%282017%29.jpg/960px-Main_Building%2C_Indian_Institute_of_Science%2C_Bangalore%2C_Karnataka%2C_India_%282017%29.jpg",
+   "alt": "Main Building, Indian Institute of Science, Bangalore.",
+   "tags": [
+    "india",
+    "science",
+    "bengaluru",
+    "education"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/India_-_Matheran_-_19_-_Monsoon_rains_%282798645283%29.jpg/960px-India_-_Matheran_-_19_-_Monsoon_rains_%282798645283%29.jpg",
+   "alt": "Upon reaching Matheran itself, the rains really opened up. The parking lot getting drenched withing people taking cover where they could.",
+   "tags": [
+    "india",
+    "monsoon",
+    "weather"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/India_-_Matheran_-_18_-_Monsoon_rains_%282799493740%29.jpg/960px-India_-_Matheran_-_18_-_Monsoon_rains_%282799493740%29.jpg",
+   "alt": "Upon reaching Matheran itself, the rains really opened up. \"This hard, it'll only last 15 minutes.",
+   "tags": [
+    "india",
+    "monsoon",
+    "weather"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/be/Paddy_field_India.jpg/960px-Paddy_field_India.jpg",
+   "alt": "Photo of a paddy field in India.",
+   "tags": [
+    "india",
+    "agriculture",
+    "monsoon",
+    "nature"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1f/Ploughing_paddy_field_with_oxen%2C_Umaria_district%2C_MP%2C_India.jpg/960px-Ploughing_paddy_field_with_oxen%2C_Umaria_district%2C_MP%2C_India.jpg",
+   "alt": "Ploughing of a paddy field with oxen, Umaria district, Madhya Pradesh, India.",
+   "tags": [
+    "india",
+    "agriculture",
+    "monsoon",
+    "nature"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/4/4a/The_Ghats_of_Holy_Ganges_in_Varanasi%2C_India.jpg",
+   "alt": "The festival of lights, or \"Dev Deepavali\" is the festival to observe Sri Gurunanak Dev's Birthday. All the ghats are enlighted by earthen pot lamps!",
+   "tags": [
+    "india",
+    "varanasi",
+    "river",
+    "ritual"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/Bathing_ghats%2C_Ganges%2C_Varanasi%2C_October_2000_%2823121567501%29.jpg/960px-Bathing_ghats%2C_Ganges%2C_Varanasi%2C_October_2000_%2823121567501%29.jpg",
+   "alt": "Bathing ghats, Ganges, Varanasi, October.",
+   "tags": [
+    "india",
+    "varanasi",
+    "river",
+    "ritual"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Ganga_Aarti%2C_Rishikesh.jpg/960px-Ganga_Aarti%2C_Rishikesh.jpg",
+   "alt": "Ganga Aarti, Parmarth niketan, Rishikesh.",
+   "tags": [
+    "india",
+    "river",
+    "ritual"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/Ganga_Aarti_Rishikesh.jpg/960px-Ganga_Aarti_Rishikesh.jpg",
+   "alt": "Ganga Aarti Rishikesh.",
+   "tags": [
+    "india",
+    "river",
+    "ritual"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Assam_tea_garden_view.jpeg/960px-Assam_tea_garden_view.jpeg",
+   "alt": "A scenic view of a tea garden in Assam, India.",
+   "tags": [
+    "india",
+    "assam",
+    "tea",
+    "agriculture"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Tea_garden_of_Assam.jpg/960px-Tea_garden_of_Assam.jpg",
+   "alt": "Tea garden of Assam, Assam Tea.",
+   "tags": [
+    "india",
+    "assam",
+    "tea",
+    "agriculture"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/45/Tea_plantation_Darjeeling.JPG/960px-Tea_plantation_Darjeeling.JPG",
+   "alt": "Mist at a tea garden at Darjeeling.",
+   "tags": [
+    "india",
+    "tea",
+    "hills",
+    "agriculture"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Darjeeling_tea_plantation_2.jpg/960px-Darjeeling_tea_plantation_2.jpg",
+   "alt": "View of a tea garden in Darjeeling.",
+   "tags": [
+    "india",
+    "tea",
+    "hills",
+    "agriculture"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/25/Tea_Estate_Munnar_Kerala_India.jpg/960px-Tea_Estate_Munnar_Kerala_India.jpg",
+   "alt": "Tea plantations in the eastern Kannan Devan Hills village of Kerala. Taken from State Highway 18.",
+   "tags": [
+    "india",
+    "kerala",
+    "tea",
+    "hills"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/61/Tea_Estate_Munnar.jpg/960px-Tea_Estate_Munnar.jpg",
+   "alt": "Tea estate near Munnar in Kerala, India.",
+   "tags": [
+    "india",
+    "kerala",
+    "tea",
+    "hills"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/Garden_at_Ramoji_Film_City%2C_Hyderabad.JPG/960px-Garden_at_Ramoji_Film_City%2C_Hyderabad.JPG",
+   "alt": "Garden at Ramoji Film City, Hyderabad, India.",
+   "tags": [
+    "india",
+    "film",
+    "hyderabad"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d1/Ramoji_Film_City.jpg/960px-Ramoji_Film_City.jpg",
+   "alt": "Ramoji Film City in Hyderabad.",
+   "tags": [
+    "india",
+    "film",
+    "hyderabad"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/Alka_Talkies_-_an_iconic_single_screen_cinema_in_Pune.jpg/960px-Alka_Talkies_-_an_iconic_single_screen_cinema_in_Pune.jpg",
+   "alt": "Alka Talkies is a single screen cinema in Pune located on Lal Bahadur Shastri Road. Alka chowk near the cinema is a prominent landmark in the city and named after it.",
+   "tags": [
+    "india",
+    "film",
+    "city"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/8/83/Devanagari_sign_of_Alankar_Cinema%2C_Pune.jpg",
+   "alt": "Alankar Cinema was a single screen cinema hall in Pune which has closed its doors.",
+   "tags": [
+    "india",
+    "film",
+    "city"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/f/fa/Veena_Saraswati_%28Mus%C3%A9es_de_Dahlem_Berlin%29_%283042092768%29.jpg",
+   "alt": "Detail of a Saraswati veena, a South Indian plucked string instrument, in a Berlin museum.",
+   "tags": [
+    "india",
+    "music",
+    "carnatic",
+    "instrument"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/72/Veena_Vina_string_musical_instrument_India.jpg/960px-Veena_Vina_string_musical_instrument_India.jpg",
+   "alt": "A Veena is an ancient string musical instrument of India. In the Hindu tradition, Saraswati is shown playing the Veena, as the goddess of music and knowledge.",
+   "tags": [
+    "india",
+    "music",
+    "carnatic",
+    "instrument"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Mridangam_transparent.png/960px-Mridangam_transparent.png",
+   "alt": "A mridangam, the double-headed barrel drum of Carnatic music.",
+   "tags": [
+    "india",
+    "music",
+    "carnatic",
+    "instrument"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9b/T_S_Nandakumar_With_Mridangam_135.jpg/960px-T_S_Nandakumar_With_Mridangam_135.jpg",
+   "alt": "A musician holding a mridangam, the double-headed drum of Carnatic music.",
+   "tags": [
+    "india",
+    "music",
+    "carnatic",
+    "instrument"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d2/The_tabla_is_a_percussion_instrument_-_a_pair_of_drums_used_in_traditional%2C_classical%2C_popular_and_folk_music.jpg/960px-The_tabla_is_a_percussion_instrument_-_a_pair_of_drums_used_in_traditional%2C_classical%2C_popular_and_folk_music.jpg",
+   "alt": "The tabla is a membranophone percussion instrument originating from the Indian subcontinent, consisting of a pair of drums, used in traditional, classical, popular and folk music.",
+   "tags": [
+    "india",
+    "music",
+    "hindustani",
+    "instrument"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/Tabla_HD.jpg/960px-Tabla_HD.jpg",
+   "alt": "The tabla is a South Asian membranophone percussion instrument (similar to bongos) consisting of a pair of small drums.",
+   "tags": [
+    "india",
+    "music",
+    "hindustani",
+    "instrument"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/43/Sitar_a_string_instrument.jpg/960px-Sitar_a_string_instrument.jpg",
+   "alt": "Sitar, Origin: 500 years ago, Region: North India, Material: Burmese Teak, Metal, Bottle guord. The name 'cethar' in Persian means three strings.",
+   "tags": [
+    "india",
+    "music",
+    "hindustani",
+    "instrument"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d0/Sitar3.jpg/960px-Sitar3.jpg",
+   "alt": "A sitar, the long-necked plucked string instrument of Hindustani music.",
+   "tags": [
+    "india",
+    "music",
+    "hindustani",
+    "instrument"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/5/52/Plucked_string_instruments_%285%29_Indian_string_instruments%2C_Sarod%2C_Sitar%2C_Iktara_-_Soinuenea.jpg",
+   "alt": "Indian plucked string instruments: a sarod, a sitar and an ektara.",
+   "tags": [
+    "india",
+    "music",
+    "hindustani",
+    "instrument"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/70/Sarod%2C_Mohan_Lal_Sharma_-_Ethnological_Museum%2C_Berlin_-_DSC01144.JPG/960px-Sarod%2C_Mohan_Lal_Sharma_-_Ethnological_Museum%2C_Berlin_-_DSC01144.JPG",
+   "alt": "Sarod, Mohan Lal Sharma Ethnological Museum, Berlin.",
+   "tags": [
+    "india",
+    "music",
+    "hindustani",
+    "instrument"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/A_Nadaswaram_Artist.JPG/960px-A_Nadaswaram_Artist.JPG",
+   "alt": "A Nadaswaram Artist.",
+   "tags": [
+    "india",
+    "music",
+    "carnatic",
+    "instrument"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/A_depiction_of_Nadaswaram_play_1.JPG/960px-A_depiction_of_Nadaswaram_play_1.JPG",
+   "alt": "A depiction of Nadaswaram play.",
+   "tags": [
+    "india",
+    "music",
+    "carnatic",
+    "instrument"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/96/Sk_Mahathi%2C_during_a_Carnatic_Music_concert_at_Kakkengad%2C_Kannur_%28132%29.jpg/960px-Sk_Mahathi%2C_during_a_Carnatic_Music_concert_at_Kakkengad%2C_Kannur_%28132%29.jpg",
+   "alt": "Carnatic Music concert at Kakkengad, Kannur by SK Mahathi accompanied on the violin by Ganaraj Karle and on the mridangam by Dr. V R Narayana Prasad.",
+   "tags": [
+    "india",
+    "music",
+    "carnatic"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/Sk_Mahathi%2C_during_a_Carnatic_Music_concert_at_Kakkengad%2C_Kannur_%28183%29.jpg/960px-Sk_Mahathi%2C_during_a_Carnatic_Music_concert_at_Kakkengad%2C_Kannur_%28183%29.jpg",
+   "alt": "Carnatic Music concert at Kakkengad, Kannur by SK Mahathi accompanied on the violin by Ganaraj Karle and on the mridangam by Dr. V R Narayana Prasad.",
+   "tags": [
+    "india",
+    "music",
+    "carnatic"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Balasaheb_Mirajkar_tunes_his_tanpura_for_a_concert_in_Sangli.jpg/960px-Balasaheb_Mirajkar_tunes_his_tanpura_for_a_concert_in_Sangli.jpg",
+   "alt": "Vocalist Sandeep Ranade performs Hindustani Classical music accompanied by Milind Kulkarni on harmonium and Nilesh Randive on tabla at Bhave Natya Mandir, Sangli in December 2012.",
+   "tags": [
+    "india",
+    "music",
+    "hindustani"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/Mukul_Kulkarni_in_concert%2C_Kolhapur%2C_Feb_2013.jpg/960px-Mukul_Kulkarni_in_concert%2C_Kolhapur%2C_Feb_2013.jpg",
+   "alt": "Mukul Kulkarni in concert, Kolhapur, February 2013.",
+   "tags": [
+    "india",
+    "music",
+    "hindustani"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/da/Festival_of_Colours%2C_HOLI.jpg/960px-Festival_of_Colours%2C_HOLI.jpg",
+   "alt": "Festival of Colours, HOLI.",
+   "tags": [
+    "india",
+    "festival",
+    "holi"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Holi_Festival_of_Colours%2C_the_festival_of_bonding%2C_the_festival_of_emotions._People_playing_with_colourful_water.jpg/960px-Holi_Festival_of_Colours%2C_the_festival_of_bonding%2C_the_festival_of_emotions._People_playing_with_colourful_water.jpg",
+   "alt": "Holi Festival of Colours, the festival of bonding, the festival of emotions. People playing with colourful water.",
+   "tags": [
+    "india",
+    "festival",
+    "holi"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Diyas_lamps_light_up_the_inside_of_homes%2C_just_like_outside%3B_Diwali_2011.jpg/960px-Diyas_lamps_light_up_the_inside_of_homes%2C_just_like_outside%3B_Diwali_2011.jpg",
+   "alt": "Diwali diyas lit inside a home; people pray before lighting the oil lamps.",
+   "tags": [
+    "india",
+    "festival",
+    "diwali"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/50/Diwali_Diyas_Lamps.jpg/960px-Diwali_Diyas_Lamps.jpg",
+   "alt": "Diyas for Divali Deepavali.",
+   "tags": [
+    "india",
+    "festival",
+    "diwali"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/Onam_Pookalam_Preparation_22.jpg/960px-Onam_Pookalam_Preparation_22.jpg",
+   "alt": "Onam Pookalam Preparation.",
+   "tags": [
+    "india",
+    "kerala",
+    "festival"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c9/Onam_-_Pookalam_Competition_in_St_Aloysius_College_05.jpg/960px-Onam_-_Pookalam_Competition_in_St_Aloysius_College_05.jpg",
+   "alt": "A pookalam flower carpet laid for an Onam week celebration.",
+   "tags": [
+    "india",
+    "kerala",
+    "festival"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f0/Pongal_Kolam_%2C_Kattur%2C_Trichy.jpg/960px-Pongal_Kolam_%2C_Kattur%2C_Trichy.jpg",
+   "alt": "This Kolam was put on 13/01/13 for Pongal in Kattur Trichy.",
+   "tags": [
+    "india",
+    "festival",
+    "chennai"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fc/Ganesh_Chaturthi_2021.jpg/960px-Ganesh_Chaturthi_2021.jpg",
+   "alt": "Ganesh Chaturthi Lalbaugh Ganesha.",
+   "tags": [
+    "india",
+    "festival",
+    "mumbai"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d8/Indian_Folk_Ganpati_Festival_Image_02.jpg/960px-Indian_Folk_Ganpati_Festival_Image_02.jpg",
+   "alt": "The Ganpati tradition in Mumbai where the idols of Lord Ganesha are deeply meaningful symbols of wisdom, compassion, and the removal of obstacles.",
+   "tags": [
+    "india",
+    "festival",
+    "mumbai"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/Bihu_dance_of_Assam.jpg/960px-Bihu_dance_of_Assam.jpg",
+   "alt": "Youths perform Bihu dance in Assam.",
+   "tags": [
+    "india",
+    "assam",
+    "festival",
+    "dance"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/Bihu_Dance%2C_Assam.jpg/960px-Bihu_Dance%2C_Assam.jpg",
+   "alt": "Bihu Dance, Assam.",
+   "tags": [
+    "india",
+    "assam",
+    "festival",
+    "dance"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/41/Auto_rickshaw_in_India%2C_February_2007.jpg/960px-Auto_rickshaw_in_India%2C_February_2007.jpg",
+   "alt": "Auto rickshaw between Agra and Vrindavan, India.",
+   "tags": [
+    "india",
+    "transit",
+    "street"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/d/d6/India_license_plate_of_an_Auto_Rickshaw_at_Nizampet.jpg",
+   "alt": "License plate of an Auto Rickshaw at Nizampet, Hyderabad.",
+   "tags": [
+    "india",
+    "transit",
+    "street"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/A_decorated_truck_in_India.jpg/960px-A_decorated_truck_in_India.jpg",
+   "alt": "A decorated truck in India.",
+   "tags": [
+    "india",
+    "art",
+    "street"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Decorated_truck_in_India.jpg/960px-Decorated_truck_in_India.jpg",
+   "alt": "A hand-painted decorated truck on the road from Delhi to Sidpur.",
+   "tags": [
+    "india",
+    "art",
+    "street"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c0/Rangoli%2Ckolam%2Cchennai%2CTamil_Nadu377.jpg/960px-Rangoli%2Ckolam%2Cchennai%2CTamil_Nadu377.jpg",
+   "alt": "A rangoli kolam drawn on the ground in Chennai, Tamil Nadu.",
+   "tags": [
+    "india",
+    "art",
+    "chennai",
+    "festival"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d2/Rangoli%2Ckolam%2Cchennai%2CTamil_Nadu378.jpg/960px-Rangoli%2Ckolam%2Cchennai%2CTamil_Nadu378.jpg",
+   "alt": "A coloured rangoli kolam drawn on the ground in Chennai, Tamil Nadu.",
+   "tags": [
+    "india",
+    "art",
+    "chennai",
+    "festival"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/Saree_Weaving_by_Handloom.jpg/960px-Saree_Weaving_by_Handloom.jpg",
+   "alt": "Pochampally Ikkat Handloom Woven Saree Weaving in Mothkur, Yadadri Bhuvanagiri district, Telangana State.",
+   "tags": [
+    "india",
+    "craft",
+    "work"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b4/Saree_Weaving_by_Handloom_2.jpg/960px-Saree_Weaving_by_Handloom_2.jpg",
+   "alt": "Pochampally Ikkat Handloom Woven Saree Weaving in Mothkur, Yadadri Bhuvanagiri district, Telangana State.",
+   "tags": [
+    "india",
+    "craft",
+    "work"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f1/Kanchipuram_silk_sareer.JPG/960px-Kanchipuram_silk_sareer.JPG",
+   "alt": "Silk sarees for sale at Kanchipuram.",
+   "tags": [
+    "india",
+    "craft",
+    "textile"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Silk_saree_on_the_making_at_Kanchipuram_%287642281054%29.jpg/960px-Silk_saree_on_the_making_at_Kanchipuram_%287642281054%29.jpg",
+   "alt": "Silk saree on the making at Kanchipuram.",
+   "tags": [
+    "india",
+    "craft",
+    "textile"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/03/Jadupatua_paintings_and_Madhubani_paintings.JPG/960px-Jadupatua_paintings_and_Madhubani_paintings.JPG",
+   "alt": "Jadupatua paintings (back), Madhubani paintings (foreground)",
+   "tags": [
+    "india",
+    "art",
+    "folk"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/Madhubani_Painting_Exhibition.jpg/960px-Madhubani_Painting_Exhibition.jpg",
+   "alt": "Madhubani Painting Exhibition at CBD Belapur Navi Mumbai.",
+   "tags": [
+    "india",
+    "art",
+    "folk"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fe/A_view_of_the_Nataraja%2C_Chola_period_bronze%2C_11th_century%2C_Government_Museum%2C_Chennai.jpg/960px-A_view_of_the_Nataraja%2C_Chola_period_bronze%2C_11th_century%2C_Government_Museum%2C_Chennai.jpg",
+   "alt": "Nataraja is the dancing Shiva Lord of dance in Hinduism.",
+   "tags": [
+    "india",
+    "art",
+    "history",
+    "temple"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f7/11th_century_Nataraja%2C_Chola_period_bronze%2C_Government_Museum%2C_Chennai.jpg/960px-11th_century_Nataraja%2C_Chola_period_bronze%2C_Government_Museum%2C_Chennai.jpg",
+   "alt": "Nataraja is the dancing Shiva Lord of dance in Hinduism.",
+   "tags": [
+    "india",
+    "art",
+    "history",
+    "temple"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/A_Warli_painting_by_Jivya_Soma_Mashe%2C_Thane_district.jpg/960px-A_Warli_painting_by_Jivya_Soma_Mashe%2C_Thane_district.jpg",
+   "alt": "Detail of a Warli painting by Jivya Soma Mashe of Thane district: tarpa dancers in a circle.",
+   "tags": [
+    "india",
+    "art",
+    "folk"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Warli_Paintings%2C_Mysore.jpg/960px-Warli_Paintings%2C_Mysore.jpg",
+   "alt": "Warli paintings on a wall at Fire Brigade Junction, Mysore, Karnataka.",
+   "tags": [
+    "india",
+    "art",
+    "folk"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/Pattachitra_from_Odisha_in_Subhas_Chandra_Bose%27s_parental_home%2C_Cuttack%2C_Odisha%2C_India.jpg/960px-Pattachitra_from_Odisha_in_Subhas_Chandra_Bose%27s_parental_home%2C_Cuttack%2C_Odisha%2C_India.jpg",
+   "alt": "Pattachitra from Odisha in Subhas Chandra Bose's parental home, Cuttack, Odisha, India. The painting depicts the complex of the Jagannatha Temple of Puri.",
+   "tags": [
+    "india",
+    "art",
+    "folk",
+    "odisha"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2b/Odisha_Pattachitra_DSCN1052_02.jpg/960px-Odisha_Pattachitra_DSCN1052_02.jpg",
+   "alt": "The paintings of Odisha can be divided into three categories from the point of view of medium, i.e.",
+   "tags": [
+    "india",
+    "art",
+    "folk",
+    "odisha"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/0/00/Woman_holding_a_sprinkler%2C_Mughal_School_of_Miniature_Paintings%2C_circa_1660_%28Shahjahan_Phase%29%2C_National_Museum%2C_New_Delhi.jpg",
+   "alt": "Woman holding a sprinkler, Mughal School of Miniature Paintings, circa 1660 (Shahjahan Phase), National Museum, New Delhi.",
+   "tags": [
+    "india",
+    "art",
+    "history"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/c/cb/Mosque_Scene%2C_Based_on_the_Persian_Manuscript_Tawarikh-i-Alfi%2C_History_of_the_thousand_years%2C_circa_1595_CE%2C_Mughal_Miniature_Painting._National_Museum%2C_Delhi.16th_century.jpg",
+   "alt": "Mosque Scene, Based on the Persian Manuscript Tawarikh-i-Alfi, History of the thousand years, circa 1595 CE, Mughal Miniature Painting. National Museum, Delhi.",
+   "tags": [
+    "india",
+    "art",
+    "history"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Kathakali_Performer.jpg/960px-Kathakali_Performer.jpg",
+   "alt": "A Kathakali artist performing Kathakali.",
+   "tags": [
+    "india",
+    "kerala",
+    "theatre",
+    "dance"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Bharatanatyam_and_kathakali_performer_sargam_SJCET.JPG/500px-Bharatanatyam_and_kathakali_performer_sargam_SJCET.JPG",
+   "alt": "A Bharatanatyam and Kathakali performer photographed after a performance.",
+   "tags": [
+    "india",
+    "kerala",
+    "theatre",
+    "dance"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/Bharatanatyam_dancer_munnar.jpg/960px-Bharatanatyam_dancer_munnar.jpg",
+   "alt": "Bharatanatyam dancer at a performance in Munnar, India.",
+   "tags": [
+    "india",
+    "dance",
+    "chennai"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/Bharatanatyam_dancer_amrutha_naresh_rao_1.jpg/960px-Bharatanatyam_dancer_amrutha_naresh_rao_1.jpg",
+   "alt": "A Bharatanatyam dancer performing at Seva Sadan, Malleswaram, Bangalore.",
+   "tags": [
+    "india",
+    "dance",
+    "chennai"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Tokyo_Big_Sight_at_Night.jpg/960px-Tokyo_Big_Sight_at_Night.jpg",
+   "alt": "Tokyo Big Sight and Ariake Passenger Terminal at night. Moon was moving.",
+   "tags": [
+    "global",
+    "tokyo",
+    "city"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Sultanahmet_ferry_on_the_Bosphorus_in_Istanbul%2C_Turkey_001.jpg/960px-Sultanahmet_ferry_on_the_Bosphorus_in_Istanbul%2C_Turkey_001.jpg",
+   "alt": "Sultanahmet ferry on the Bosphorus in Istanbul, Turkey.",
+   "tags": [
+    "global",
+    "istanbul",
+    "city",
+    "water"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/e/e7/2005_frooty_Lagos_Nigeria_12126357.jpg",
+   "alt": "A police officer in an orange jacket on a street in Lagos.",
+   "tags": [
+    "global",
+    "lagos",
+    "city",
+    "africa"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/Sao_Paulo_Skyline_Brazil.jpg/960px-Sao_Paulo_Skyline_Brazil.jpg",
+   "alt": "Sao Paulo Skyline Brazil.",
+   "tags": [
+    "global",
+    "saopaulo",
+    "city"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/Monumental_Flag%2C_Zocalo%2C_Mexico_20250907_p1.jpg/960px-Monumental_Flag%2C_Zocalo%2C_Mexico_20250907_p1.jpg",
+   "alt": "Mexican Flag at Zocalo, Mexico City.",
+   "tags": [
+    "global",
+    "mexicocity",
+    "city"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f5/David_Roberts_Cairo_street_scene.jpg/960px-David_Roberts_Cairo_street_scene.jpg",
+   "alt": "A nineteenth-century lithograph of a street scene in Cairo by David Roberts.",
+   "tags": [
+    "global",
+    "cairo",
+    "city",
+    "africa"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a3/193_-_Buenos_Aires_-_Puerto_Madero_-_Janvier_2010.jpg/960px-193_-_Buenos_Aires_-_Puerto_Madero_-_Janvier_2010.jpg",
+   "alt": "Panorama of Buenos Aires ' Puerto Madero district at sunset, one of the most successful recent waterfront renewal projects in the world.",
+   "tags": [
+    "global",
+    "buenosaires",
+    "city"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/Nairobi_City_Market_in_Kenya.jpg/960px-Nairobi_City_Market_in_Kenya.jpg",
+   "alt": "The exterior of Nairobi's City Market in Kenya, a historic marketplace.",
+   "tags": [
+    "global",
+    "nairobi",
+    "city",
+    "africa"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Trams_in_Lisbon_%28front%26back%29.jpg/960px-Trams_in_Lisbon_%28front%26back%29.jpg",
+   "alt": "Trams in Lisbon (front&back)",
+   "tags": [
+    "global",
+    "lisbon",
+    "transit",
+    "city"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/Amsterdam_canal_view_with_bicycles.jpg/960px-Amsterdam_canal_view_with_bicycles.jpg",
+   "alt": "Black and White canal view with two bicycles in Amsterdam.",
+   "tags": [
+    "global",
+    "amsterdam",
+    "city",
+    "cycling"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/db/Cycling_in_Faelledparken.jpg/960px-Cycling_in_Faelledparken.jpg",
+   "alt": "Cycling on the wide paths in Fælledparken in Copenhagen is a common sight and has been for many years. Because of this it was made legal in 2009.",
+   "tags": [
+    "global",
+    "copenhagen",
+    "cycling",
+    "city"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/0/0a/Station-metro-paris-entrance-guimard.jpg",
+   "alt": "Entrance to Paris Métro station in art nouveau style by Hector Guimard. Kléber.",
+   "tags": [
+    "global",
+    "paris",
+    "transit",
+    "design"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/99/Seoul_Station%2C_Seoul%2C_South_Korea_-_night_view_2023-03-31.jpg/960px-Seoul_Station%2C_Seoul%2C_South_Korea_-_night_view_2023-03-31.jpg",
+   "alt": "Seoul Station, Seoul, South Korea - night view 2023-03-31.",
+   "tags": [
+    "global",
+    "seoul",
+    "city",
+    "asia"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/16/The_Africa_Cafe%2C_Cape_Town_City_Centre_%2801%29.jpg/960px-The_Africa_Cafe%2C_Cape_Town_City_Centre_%2801%29.jpg",
+   "alt": "The Africa Cafe on Shortmarket Street in Cape Town city centre.",
+   "tags": [
+    "global",
+    "capetown",
+    "city",
+    "africa"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Ave_El_Dorado_Transmilenio_BOG_03_2018_7260.jpg/960px-Ave_El_Dorado_Transmilenio_BOG_03_2018_7260.jpg",
+   "alt": "TransMilenio articulated bus on Troncal Calle 26, Bogotá.",
+   "tags": [
+    "global",
+    "bogota",
+    "transit"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/57/Shinkansen_bullet_train_%286290162742%29.jpg/960px-Shinkansen_bullet_train_%286290162742%29.jpg",
+   "alt": "Shinkansen bullet train.",
+   "tags": [
+    "global",
+    "japan",
+    "trains",
+    "transit"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/be/London_Underground_platforms_at_Whitechapel_station%2C_August_2021_01.jpg/960px-London_Underground_platforms_at_Whitechapel_station%2C_August_2021_01.jpg",
+   "alt": "London Underground platforms at Whitechapel station.",
+   "tags": [
+    "global",
+    "london",
+    "transit"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/02/C_Class_Tram%2C_Melbourne_-_Jan_2008.jpg/960px-C_Class_Tram%2C_Melbourne_-_Jan_2008.jpg",
+   "alt": "C-class tram number 3017 at the St Vincent Plaza stop in East Melbourne.",
+   "tags": [
+    "global",
+    "melbourne",
+    "transit"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/Lord%27s_Cricket_Ground_Grand_Stand.jpg/960px-Lord%27s_Cricket_Ground_Grand_Stand.jpg",
+   "alt": "Grand Stand at Lord's Cricket Ground, London, England. Photographed during the MCC v Warwickshire match.",
+   "tags": [
+    "global",
+    "cricket",
+    "stadium",
+    "london"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/MCG_%28Melbourne_Cricket_Ground%29.jpg/960px-MCG_%28Melbourne_Cricket_Ground%29.jpg",
+   "alt": "MCG (Melbourne Cricket Ground)",
+   "tags": [
+    "global",
+    "cricket",
+    "stadium",
+    "australia"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/-2009-04-18_Camp_Nou_stadium%2C_Barcalona%2C_Spain_%281%29.JPG/960px--2009-04-18_Camp_Nou_stadium%2C_Barcalona%2C_Spain_%281%29.JPG",
+   "alt": "The view inside the Camp Nou which is the home stadium of FC Barcelona which is in the district of Les Corts in the city of Barcalona, Spain.",
+   "tags": [
+    "global",
+    "football",
+    "stadium"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Jan_Vermeer_-_The_Art_of_Painting_-_Google_Art_Project.jpg/960px-Jan_Vermeer_-_The_Art_of_Painting_-_Google_Art_Project.jpg",
+   "alt": "Johannes Vermeer painting, The Art of Painting (Die Malkunst).",
+   "tags": [
+    "global",
+    "art",
+    "painting",
+    "museum"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/c/ca/%27The_Great_Wave_off_Kanagawa%27_by_Hokusai%2C_Honolulu_Museum_of_Art.jpg",
+   "alt": "Fishermen in their skiffs with a wave about to crash down on them, Mt Fuji in the background.",
+   "tags": [
+    "global",
+    "art",
+    "printmaking",
+    "japan"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/Rembrandt_-_Clowes_self-portrait%2C_1629.png/960px-Rembrandt_-_Clowes_self-portrait%2C_1629.png",
+   "alt": "Rembrandt self-portrait of 1629, known as the Clowes self-portrait.",
+   "tags": [
+    "global",
+    "art",
+    "painting",
+    "museum"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/de/Vincent_van_Gogh_Starry_Night.jpg/960px-Vincent_van_Gogh_Starry_Night.jpg",
+   "alt": "Vincent van Gogh's painting Starry Night.",
+   "tags": [
+    "global",
+    "art",
+    "painting",
+    "museum"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/%28Barcelona%29_A_Rough_Sea_off_Brighton_or_Deal_-_William_Turner_in_Tate_Britain.jpg/960px-%28Barcelona%29_A_Rough_Sea_off_Brighton_or_Deal_-_William_Turner_in_Tate_Britain.jpg",
+   "alt": "(Barcelona) A Rough Sea off Brighton or Deal - William Turner in Tate Britain.",
+   "tags": [
+    "global",
+    "art",
+    "painting"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/aa/Pieter_Bruegel_The_Peasant_Dance.jpg/960px-Pieter_Bruegel_The_Peasant_Dance.jpg",
+   "alt": "Peter Brueghel the Elder: \"The Peasant Dance\".",
+   "tags": [
+    "global",
+    "art",
+    "painting",
+    "history"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Ukiyo-e_woodblock_print_by_Katsushika_Hokusai%2C_digitally_enhanced_by_rawpixel-com_2.jpg/960px-Ukiyo-e_woodblock_print_by_Katsushika_Hokusai%2C_digitally_enhanced_by_rawpixel-com_2.jpg",
+   "alt": "Sanka Hakuu by Katsushika Hokusai (1760-1849), meaning Shower below a summit, a traditional Japanese Ukyio-e style illustration of Mount Fuji.",
+   "tags": [
+    "global",
+    "art",
+    "printmaking",
+    "japan"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Paris_Mus%C3%A9e_du_Louvre_Cour_Puget_03a.jpg/960px-Paris_Mus%C3%A9e_du_Louvre_Cour_Puget_03a.jpg",
+   "alt": "Interior of the Louvre Museum in Paris, the Cour Puget sculpture court.",
+   "tags": [
+    "global",
+    "museum",
+    "paris",
+    "art"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/British_Museum_Great_Court_roof.jpg/960px-British_Museum_Great_Court_roof.jpg",
+   "alt": "The Great Court of the British Museum, with the new tessellated roof designed by Foster and Partners arching around the original, circular, Reading Room of the British Library.",
+   "tags": [
+    "global",
+    "museum",
+    "london"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ee/Amsterdam_-_Rijksmuseum_1885_-_The_Gallery_of_Honour_%281st_Floor%29_-_Interior_of_the_Church_of_St_Bavo_at_Haarlem_1636_by_Pieter_Jansz._Saenredam.png/960px-Amsterdam_-_Rijksmuseum_1885_-_The_Gallery_of_Honour_%281st_Floor%29_-_Interior_of_the_Church_of_St_Bavo_at_Haarlem_1636_by_Pieter_Jansz._Saenredam.png",
+   "alt": "The Gallery of Honour on the first floor of the Rijksmuseum in Amsterdam.",
+   "tags": [
+    "global",
+    "museum",
+    "amsterdam",
+    "art"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Yamaha_C7_Concert_Grand_Piano_%28mic_setting%29.jpg/960px-Yamaha_C7_Concert_Grand_Piano_%28mic_setting%29.jpg",
+   "alt": "Yamaha C7 Concert Grand Piano (mic setting) recording at Supernatural Sound Recording Studio.",
+   "tags": [
+    "global",
+    "music",
+    "instrument"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/54/Massimiliano_Rolff%2C_Jazz_Bass.jpg/960px-Massimiliano_Rolff%2C_Jazz_Bass.jpg",
+   "alt": "A jazz musician playing an upright double bass.",
+   "tags": [
+    "global",
+    "music",
+    "jazz",
+    "instrument"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Aisch_church_pipe_organ_17RM1000hdr.jpg/960px-Aisch_church_pipe_organ_17RM1000hdr.jpg",
+   "alt": "Pipe organ of the Catholic parish church St. Laurentius in Aisch (Adelsdorf)",
+   "tags": [
+    "global",
+    "music",
+    "instrument",
+    "architecture"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/Kora_%28African_lute_instrument%29.jpg/960px-Kora_%28African_lute_instrument%29.jpg",
+   "alt": "A kora; a harp-lute used by Mandingo peoples in West Africa.",
+   "tags": [
+    "global",
+    "music",
+    "instrument",
+    "africa"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/Damascus%2C_Syria%2C_Store%2C_Oud%2C_Arabic_musical_instruments%2C_and_more.jpg/960px-Damascus%2C_Syria%2C_Store%2C_Oud%2C_Arabic_musical_instruments%2C_and_more.jpg",
+   "alt": "Arabic oud is very similar to modern lutes. Damascus, Syria.",
+   "tags": [
+    "global",
+    "music",
+    "instrument"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/72/Gamelan_Orchestra_%286336847793%29.jpg/960px-Gamelan_Orchestra_%286336847793%29.jpg",
+   "alt": "A gamelan orchestra playing at a cremation ceremony on Kuta Beach, Bali.",
+   "tags": [
+    "global",
+    "music",
+    "instrument",
+    "asia"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/07R01.jpg/960px-07R01.jpg",
+   "alt": "Die photograph of an IF amplifier and demodulator integrated circuit from a Motorola GM350 transceiver.",
+   "tags": [
+    "global",
+    "chips",
+    "technology"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/Cray_2_Supercomputer_-_GPN-2000-001633.jpg/960px-Cray_2_Supercomputer_-_GPN-2000-001633.jpg",
+   "alt": "Cray 2 Supercomputer for the Numerical Aerodynamic Simulator at the NASA Ames Research Center, Mountain View California.",
+   "tags": [
+    "global",
+    "computing",
+    "history",
+    "technology"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c0/IBM_System360_Mainframe.jpg/960px-IBM_System360_Mainframe.jpg",
+   "alt": "IBM System/360 at the Computer History Museum.",
+   "tags": [
+    "global",
+    "computing",
+    "history"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/PDP-11_at_the_Computer_History_Museum.jpg/960px-PDP-11_at_the_Computer_History_Museum.jpg",
+   "alt": "PDP-11 at the Computer History Museum.",
+   "tags": [
+    "global",
+    "computing",
+    "history"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/Cern_datacenter.jpg/960px-Cern_datacenter.jpg",
+   "alt": "The CERN datacenter with World Wide Web and Mail servers. The rear of the equipment racks are exposed to the room, indicating cold aisle containment is being practiced.",
+   "tags": [
+    "global",
+    "computing",
+    "infrastructure"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Hummel_KG%2C_punched_card%2C_punched_VCFB.jpg/960px-Hummel_KG%2C_punched_card%2C_punched_VCFB.jpg",
+   "alt": "80-column punched card by Hummel KG. \"VCFB\" is punched into the card because it served as a retro-inspired entrance ticket to the 2014 Vintage Computing Festival Berlin (VCFB).",
+   "tags": [
+    "global",
+    "computing",
+    "history"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c0/Arthur_Burks%2C_with_a_section_of_the_ENIAC_computer.jpg/960px-Arthur_Burks%2C_with_a_section_of_the_ENIAC_computer.jpg",
+   "alt": "Arthur Burks, with a section of the ENIAC computer which he helped develop, on display at the College of Engineering at the University of Michigan in 1982.",
+   "tags": [
+    "global",
+    "computing",
+    "history"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/13/Apollo_Guidance_Computer_%28NASM%29.JPG/960px-Apollo_Guidance_Computer_%28NASM%29.JPG",
+   "alt": "DSKY unit of the Apollo Guidance Computer in the National Air and Space Museum (NASM) Smithsonian Institution in Washington, D.C.",
+   "tags": [
+    "global",
+    "computing",
+    "space",
+    "history"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Offshore_wind_farm_artificial_reef.jpg/960px-Offshore_wind_farm_artificial_reef.jpg",
+   "alt": "An offshore wind farm turbine foundation acting as an artificial reef and biofilter.",
+   "tags": [
+    "global",
+    "energy",
+    "climate"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b6/Solar_panels_at_Wyandotte_Power_Plant.jpg/960px-Solar_panels_at_Wyandotte_Power_Plant.jpg",
+   "alt": "Solar panels at Wyandotte Power Plant, Wyandotte, Michigan.",
+   "tags": [
+    "global",
+    "energy",
+    "climate"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Electricity_Transmission_Pylons%2C_south_of_Gwrhay_-_geograph.org.uk_-_4632698.jpg/960px-Electricity_Transmission_Pylons%2C_south_of_Gwrhay_-_geograph.org.uk_-_4632698.jpg",
+   "alt": "Electricity Transmission Pylons, south of Gwrhay.",
+   "tags": [
+    "global",
+    "energy",
+    "infrastructure"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/Common_kingfisher_in_flight.jpg/960px-Common_kingfisher_in_flight.jpg",
+   "alt": "Common kingfisher ( Alcedo atthis bengalensis ) at Taudaha Lake, Kirtipur. It is a resident bird in Nepal.",
+   "tags": [
+    "global",
+    "birds",
+    "nature"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f7/Flock_Greater_Flamingos_Pallikaranai_Chennai_Apr22_D72_23279.jpg/960px-Flock_Greater_Flamingos_Pallikaranai_Chennai_Apr22_D72_23279.jpg",
+   "alt": "Flock of adult and immature greater flamingos (Phoenicopterus roseus) wading in Pallikaranai Marsh, Sholinganallur, Chennai, Tamil Nadu, India.",
+   "tags": [
+    "global",
+    "birds",
+    "nature"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Sarus_crane_%28Grus_antigone%29.jpg/960px-Sarus_crane_%28Grus_antigone%29.jpg",
+   "alt": "Sarus crane ( Grus antigone ), Salai, UP, India.",
+   "tags": [
+    "india",
+    "birds",
+    "nature"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/96/Sarus_crane_%28Grus_antigone_antigone%29_feeding_juvenile_Lumbini.jpg/960px-Sarus_crane_%28Grus_antigone_antigone%29_feeding_juvenile_Lumbini.jpg",
+   "alt": "Sarus crane ( Grus antigone antigone ) feeding juvenile, Lumbini, Nepal.",
+   "tags": [
+    "india",
+    "birds",
+    "nature"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/0/06/Great_hornbill_%28Buceros_bicornis%29_flying.jpg",
+   "alt": "Great hornbill (Buceros bicornis) flying.",
+   "tags": [
+    "india",
+    "birds",
+    "nature",
+    "northeast"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/57/Great_Hornbill_Goa.jpg/960px-Great_Hornbill_Goa.jpg",
+   "alt": "A great hornbill in Goa, a large forest bird now endangered.",
+   "tags": [
+    "india",
+    "birds",
+    "nature",
+    "northeast"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/Feather_of_male_Pavo_cristatus_%28Indian_peafowl%29.jpg/960px-Feather_of_male_Pavo_cristatus_%28Indian_peafowl%29.jpg",
+   "alt": "Feather of male Pavo cristatus (Indian peafowl)",
+   "tags": [
+    "india",
+    "birds",
+    "nature"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/35/Portrait_of_an_Indian_peafowl.jpg/960px-Portrait_of_an_Indian_peafowl.jpg",
+   "alt": "Portrait of an Indian peafowl, Domaine de Pescheray.",
+   "tags": [
+    "india",
+    "birds",
+    "nature"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/Amazon-river-NASA.jpg/960px-Amazon-river-NASA.jpg",
+   "alt": "The Amazon river photographed from orbit by a NASA Space Shuttle crew.",
+   "tags": [
+    "global",
+    "river",
+    "nature",
+    "climate"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/Egypt%2C_Night_Cairo_and_river_Nile%2C_Zamalek_city_lights.jpg/960px-Egypt%2C_Night_Cairo_and_river_Nile%2C_Zamalek_city_lights.jpg",
+   "alt": "Cairo's Zamalek waterfront at midnight. Sparkling lights on the river Nile.",
+   "tags": [
+    "global",
+    "river",
+    "nature",
+    "africa"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/APOLLO_11_-_MOON_SURFACE_-_NARA_-_17450906.jpg/960px-APOLLO_11_-_MOON_SURFACE_-_NARA_-_17450906.jpg",
+   "alt": "A photograph of the lunar surface taken during the Apollo 11 mission.",
+   "tags": [
+    "global",
+    "space",
+    "history",
+    "science"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Hubble_ultra_deep_field.jpg/960px-Hubble_ultra_deep_field.jpg",
+   "alt": "The Hubble Ultra Deep Field, is an image of a small region of space in the constellation Fornax, composited from Hubble Space Telescope data accumulated over a period from September 3, 2003 thro…",
+   "tags": [
+    "global",
+    "space",
+    "astronomy",
+    "science"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/99/James_Webb_Space_Telescope_Mirror37.jpg/960px-James_Webb_Space_Telescope_Mirror37.jpg",
+   "alt": "A segment of the James Webb Space Telescope primary mirror during cryogenic testing.",
+   "tags": [
+    "global",
+    "space",
+    "astronomy",
+    "science"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/1/1d/Large_hadron_collider%27s_atlas_detector.png",
+   "alt": "A 3D Model of the atlas detector in the large hadron collider at CERN.",
+   "tags": [
+    "global",
+    "science",
+    "physics"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/Antarctica_research_station.png/960px-Antarctica_research_station.png",
+   "alt": "A map of Antarctica showing research stations and territorial claims.",
+   "tags": [
+    "global",
+    "science",
+    "climate"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/2-m_telescope_dome_%28Ond%C5%99ejov_observatory%29.jpg/960px-2-m_telescope_dome_%28Ond%C5%99ejov_observatory%29.jpg",
+   "alt": "The dome of the 2-m telescope at the Ondřejov observatory (Czech Republic).",
+   "tags": [
+    "global",
+    "astronomy",
+    "science"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/Fall_of_the_Berlin_Wall_1989%2C_people_walking.jpg/960px-Fall_of_the_Berlin_Wall_1989%2C_people_walking.jpg",
+   "alt": "Berlin 1989; picture taken soon after the fall of the Berlin Wall on November 9.",
+   "tags": [
+    "global",
+    "history",
+    "politics"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/06/Dorothea_Lange_1936.jpg/960px-Dorothea_Lange_1936.jpg",
+   "alt": "Dorothea Lange, Resettlement Administration photographer, in California. The car is a Ford Model V8 (more exactly, this one is Model 40).",
+   "tags": [
+    "global",
+    "history",
+    "photography"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ef/Immigrants_-_Ellis_Island_LCCN2001704437.jpg/960px-Immigrants_-_Ellis_Island_LCCN2001704437.jpg",
+   "alt": "Immigrants photographed at Ellis Island, New York.",
+   "tags": [
+    "global",
+    "history",
+    "migration"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Suffragette_parade_Mar._3%2C_1913.png/960px-Suffragette_parade_Mar._3%2C_1913.png",
+   "alt": "A suffragette parade in Washington, D.C. on 3 March 1913.",
+   "tags": [
+    "global",
+    "history",
+    "politics"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Shakespeare%27s_Globe_Theatre_2013.JPG/960px-Shakespeare%27s_Globe_Theatre_2013.JPG",
+   "alt": "Shakespeare Globe Theatre on Bankside, London.",
+   "tags": [
+    "global",
+    "theatre",
+    "london"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Theatre_of_Epidaurus%2C_091179.jpg/960px-Theatre_of_Epidaurus%2C_091179.jpg",
+   "alt": "Ancient theatre of Epidaurus.",
+   "tags": [
+    "global",
+    "theatre",
+    "history",
+    "greece"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/09/War_Memorial_Opera_House_auditorium_chandelier.jpg/960px-War_Memorial_Opera_House_auditorium_chandelier.jpg",
+   "alt": "Art Deco style metal chandelier — War Memorial Opera House, San Francisco, California.",
+   "tags": [
+    "global",
+    "theatre",
+    "music",
+    "architecture"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Tokyo_Kabuki-za-Theatre_1831.jpg/960px-Tokyo_Kabuki-za-Theatre_1831.jpg",
+   "alt": "The Kabuki-za theatre building in Tokyo.",
+   "tags": [
+    "global",
+    "theatre",
+    "japan"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/ff/Sliced_loaf_of_sourdough_bread.jpg/960px-Sliced_loaf_of_sourdough_bread.jpg",
+   "alt": "A sliced loaf of sourdough bread.",
+   "tags": [
+    "global",
+    "food",
+    "baking"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d6/Bowl%2C_Kodawari_Ramen%2C_Paris_002.jpg/960px-Bowl%2C_Kodawari_Ramen%2C_Paris_002.jpg",
+   "alt": "A bowl of ramen at a ramen shop in Saint-Germain-des-Pres, Paris.",
+   "tags": [
+    "global",
+    "food",
+    "japan"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/001_Tacos_de_carnitas%2C_carne_asada_y_al_pastor.jpg/960px-001_Tacos_de_carnitas%2C_carne_asada_y_al_pastor.jpg",
+   "alt": "Tacos of carnitas, carne asada and al pastor from a food truck.",
+   "tags": [
+    "global",
+    "food",
+    "mexico"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/be/Close-up_of_espresso_machine_with_two_brown_coffee_cups.jpg/960px-Close-up_of_espresso_machine_with_two_brown_coffee_cups.jpg",
+   "alt": "Close-up of Coffee Cups under an espresso machine.",
+   "tags": [
+    "global",
+    "food",
+    "coffee"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b4/ISS-37_Upsala_Glacier_Retreat_and_Patagonia_Icefield.jpg/960px-ISS-37_Upsala_Glacier_Retreat_and_Patagonia_Icefield.jpg",
+   "alt": "Upsala Glacier Retreat and Patagonia Icefield are featured in this image photographed by an Expedition 37 crew member on the International Space Station.",
+   "tags": [
+    "global",
+    "climate",
+    "nature"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/Landscape_view_of_wildfire_near_Highway_63_in_south_Fort_McMurray.jpg/960px-Landscape_view_of_wildfire_near_Highway_63_in_south_Fort_McMurray.jpg",
+   "alt": "Very large flames and heavy smoke surrounded congested Highway 63 South.",
+   "tags": [
+    "global",
+    "climate",
+    "nature"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/Flooded_street_with_traffic_in_Adelaide_1917%28GN01967%29.jpg/960px-Flooded_street_with_traffic_in_Adelaide_1917%28GN01967%29.jpg",
+   "alt": "A flooded street with traffic in Adelaide during the wet winter of 1917.",
+   "tags": [
+    "global",
+    "climate",
+    "city"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/Graz_University-Library_reading-room.jpg/960px-Graz_University-Library_reading-room.jpg",
+   "alt": "The main reading room of Graz University Library (19th century) on 2 Sep 2003. Picture taken and uploaded by Dr.",
+   "tags": [
+    "global",
+    "books",
+    "architecture",
+    "education"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6a/Hoe%27s_type_turtle.jpg/960px-Hoe%27s_type_turtle.jpg",
+   "alt": "A \"type turtle\" for Hoe's type-revolving machine, an early rotary printing press developed used in the mid-19th century.",
+   "tags": [
+    "global",
+    "design",
+    "history",
+    "books"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/Chess_board_with_pieces.jpg/960px-Chess_board_with_pieces.jpg",
+   "alt": "Wegiel chess board with pieces.",
+   "tags": [
+    "global",
+    "games",
+    "play"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/df/Moscow_Cathedral_Mosque_interior_01-2016_img1.jpg/960px-Moscow_Cathedral_Mosque_interior_01-2016_img1.jpg",
+   "alt": "Moscow Cathedral Mosque (new), interior.",
+   "tags": [
+    "global",
+    "mosque",
+    "architecture"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/7/71/Bartholomeus_van_Bassen_Interior_of_a_Gothic_Cathedral.jpg",
+   "alt": "The interior depicted is probably meant to represent the Cathedral of Antwerp. The shutters of the altarpiece on the left depict Saint Luke painting the Virgin.",
+   "tags": [
+    "global",
+    "church",
+    "architecture"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Praha_Spanish_Synagogue_Interior_01.jpg/960px-Praha_Spanish_Synagogue_Interior_01.jpg",
+   "alt": "Interior of the Spanish Synagogue in Prague.",
+   "tags": [
+    "global",
+    "architecture",
+    "religion"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/Himalaya_Nyingmapa_Buddhist_Monastery.jpg/960px-Himalaya_Nyingmapa_Buddhist_Monastery.jpg",
+   "alt": "Front view of the Himalaya Nyingmapa Buddhist Monastery in Manali, Himachal Pradesh, India.",
+   "tags": [
+    "global",
+    "buddhism",
+    "architecture",
+    "himalaya"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/71/Cuneiform_tablet_BM62788.jpg/960px-Cuneiform_tablet_BM62788.jpg",
+   "alt": "600-500BC cuneiform tablet with instructions for dyeing wool. Found in Sippar, Neo-babylonian period.",
+   "tags": [
+    "global",
+    "history",
+    "language",
+    "archaeology"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Nirgranthas_on_the_7th_Major_Pillar_Edict_of_Ashoka_3rd_century_BCE.jpg/960px-Nirgranthas_on_the_7th_Major_Pillar_Edict_of_Ashoka_3rd_century_BCE.jpg",
+   "alt": "Nirgranthas on the 7th Major Pillar Edict of Ashoka 3rd century BCE.",
+   "tags": [
+    "india",
+    "history",
+    "language",
+    "archaeology"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/28/Major_Pillar_Edicts_1-6_on_the_Allahabad_pillar_of_Ashoka.jpg/960px-Major_Pillar_Edicts_1-6_on_the_Allahabad_pillar_of_Ashoka.jpg",
+   "alt": "Major Pillar Edicts 1-6 on the Allahabad pillar of Ashoka.",
+   "tags": [
+    "india",
+    "history",
+    "language",
+    "archaeology"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/88/Vedas_palm_leaf_manuscript%2C_Tamil_Grantha_Script%2C_Sanskrit%2C_Tamil_Nadu.jpg/960px-Vedas_palm_leaf_manuscript%2C_Tamil_Grantha_Script%2C_Sanskrit%2C_Tamil_Nadu.jpg",
+   "alt": "The four layers of texts that make up the Vedas were composed between 1500 to 600 BCE. They are the oldest documented sacred literature of Hinduism.",
+   "tags": [
+    "india",
+    "books",
+    "history",
+    "language"
+   ]
+  },
+  {
+   "kind": "image",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/66/Palm-leaf_manuscript%2C_ancient_and_medieval_Tamil_literature_%28partly_Sangam_era%29%2C_Languages_in_the_manuscript_Tamil_Telugu_Sanskrit%2C_Scripts_Grantha_Telugu_Tamil%2C_Hindu_Shaivism_monastery%2C_UVSL_589.jpg/960px-thumbnail.jpg",
+   "alt": "A palm-leaf manuscript of ancient and medieval Tamil literature, a hundred folios long.",
+   "tags": [
+    "india",
+    "books",
+    "history",
+    "language"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=e58PohBowOY",
+   "alt": "Ranjani Gayatri - LIVE from Chicago (Full Concert)",
+   "tags": [
+    "music",
+    "carnatic",
+    "india",
+    "concert"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=6Vd9iWKRy-c",
+   "alt": "Carnatic Vocal Concert by Shri Ramakrishnan Murthy on 12.09.2021 at 06.00 p.m.",
+   "tags": [
+    "music",
+    "carnatic",
+    "india",
+    "concert"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=GaiZggT0SmY",
+   "alt": "Ranjani Gayatri | Bharat Sangeet Utsav",
+   "tags": [
+    "music",
+    "carnatic",
+    "india",
+    "concert"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=5sZcdwHLI1k",
+   "alt": "Sanjay Subrahmanyan, 1995 Full Concert- MIT, MA, USA",
+   "tags": [
+    "music",
+    "carnatic",
+    "india",
+    "concert"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=ycnVhYEtji4",
+   "alt": "Tiruvadi Sharanam Kambhoji (Live)",
+   "tags": [
+    "music",
+    "carnatic",
+    "india",
+    "concert"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=0hQHRCNwzBc",
+   "alt": "Mridangam Groove | Adi Talam Solo | Neyveli B. Venkatesh | Music of India",
+   "tags": [
+    "music",
+    "carnatic",
+    "india",
+    "instrument"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=U6cyXsQjzHY",
+   "alt": "Dr.Jayanthi Kumaresh - FULL CONCERT",
+   "tags": [
+    "music",
+    "carnatic",
+    "india",
+    "instrument"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=ed4SIvGjqNI",
+   "alt": "Divine Layakari | Raag Yaman | Ustad Shahid Parvez & Ojas Adhiya | Music of India",
+   "tags": [
+    "music",
+    "hindustani",
+    "india",
+    "instrument"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=nR5-eV5fV8w",
+   "alt": "Glorious Sitar Jhalla | Ustad Shahid Parvez | Raag Yaman | Music of India",
+   "tags": [
+    "music",
+    "hindustani",
+    "india",
+    "instrument"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=aCz4tvuA8iU",
+   "alt": "Ustad Amjad Ali Khan | Rain Ragas | Megh & Miyan ki Malhar | Sarod & Double Tabla | Music of India",
+   "tags": [
+    "music",
+    "hindustani",
+    "india",
+    "instrument"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=Dv5hdYNiPLU",
+   "alt": "Nobel Peace Prize Concert - Amjad Ali Khan, Amaan Ali Bangash and Ayaan Ali Bangash",
+   "tags": [
+    "music",
+    "hindustani",
+    "india",
+    "instrument"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=059QnVHmPxg",
+   "alt": "Raga - Teentaal Tabla - Solo Recital",
+   "tags": [
+    "music",
+    "hindustani",
+    "india",
+    "instrument"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=7qMR_MhJca0",
+   "alt": "Sublime Jugalbandi Dhrupad | Ustad Bahauddin Dagar & Pelva Naik | Raag Vardhani | Music of India",
+   "tags": [
+    "music",
+    "hindustani",
+    "india",
+    "concert"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=wdnq5YZHlK4",
+   "alt": "Shiva Shiva Shiva Shankara | Gundecha Brothers | Dhrupad | Idea Jalsa | Art and Artistes",
+   "tags": [
+    "music",
+    "hindustani",
+    "india",
+    "concert"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=4fofhTvBRr0",
+   "alt": "Sagar Wali Qawwali Live ​Performance 2024 Full Show At Studio Xo Gurgaon | Qawwali Night 2024",
+   "tags": [
+    "music",
+    "india",
+    "sufi",
+    "concert"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=6G0wPN01h2M",
+   "alt": "Kaun Kehta Hai || Shaam E Mehfil with Papon || Live in Mumbai || Jagjit Singh || Sahir Hoshiyarpuri",
+   "tags": [
+    "music",
+    "india",
+    "ghazal"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=c-j8y9bDU5w",
+   "alt": "Soulful Ghazal Medley Live | Hariharan, Pratibha Singh Baghel & More | Best of Jashn-e-Rekhta",
+   "tags": [
+    "music",
+    "india",
+    "ghazal"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=r4lyCv87FxY",
+   "alt": "Eso Shyamalo Sundoro | Rabindra Sangeet | Sampita Pramanik | Ankita Bhattacharyya |",
+   "tags": [
+    "music",
+    "india",
+    "bengali",
+    "kolkata"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=rs0gQ-3hbPQ",
+   "alt": "Muthumani Music Video - DOROTHY | Maestro Ilaiyaraaja | Karthik Subbaraj",
+   "tags": [
+    "music",
+    "film",
+    "india",
+    "tamil"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=PR2tE1nU2bQ",
+   "alt": "Title Scores of Maestro Ilaiyaraaja (Volume 1) | Ilaiyaraaja | Iconic Tamil Movie Background Scores",
+   "tags": [
+    "music",
+    "film",
+    "india",
+    "tamil"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=M7ebX_7ay6o",
+   "alt": "Urvashi Urvashi - A.R. Rahman Live in Chennai",
+   "tags": [
+    "music",
+    "film",
+    "india"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=3Gue1NyHYFQ",
+   "alt": "Songs of 2018 (Volume 01) | Tamil | Video Songs Jukebox",
+   "tags": [
+    "music",
+    "film",
+    "india",
+    "tamil"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=riUBONxLABg",
+   "alt": "Egirey Mabbulona Full Video Song | 4K | Happy Video Songs | Allu Arjun, Genelia | Yuvan Shankar Raja",
+   "tags": [
+    "music",
+    "film",
+    "india",
+    "telugu"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=GGTOqTZnMDA",
+   "alt": "മനോഹരമാം മലയാളം ഗാനങ്ങൾ | Beautiful Malayalam Songs | Gireesh Puthenchery | MG Sreekumar | Sujatha",
+   "tags": [
+    "music",
+    "film",
+    "india",
+    "malayalam"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=izbydia9jz4",
+   "alt": "Narivetta - Minnalvala Video Song | Tovino Thomas, Anuraj Manohar, Jakes Bejoy, Sid Sriram, Sithara",
+   "tags": [
+    "music",
+    "film",
+    "india",
+    "malayalam"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=3DIFmCCQuYU",
+   "alt": "Kajwa | #nickshinde | Nick Shinde | Srushti A | Harshavardhan W | Sonali Sonawane | Vijay Bhate",
+   "tags": [
+    "music",
+    "film",
+    "india",
+    "marathi"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=JLf2YK4Z_oc",
+   "alt": "Adhir Man full song Nilkanth Master | Pooja Sawant",
+   "tags": [
+    "music",
+    "film",
+    "india",
+    "marathi"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=zqd8iexm9oI",
+   "alt": "Sarwan Bhagat ✨ | Punjabi Song By Jaspal Singh🎙️On Tumbi 🪕",
+   "tags": [
+    "music",
+    "india",
+    "punjabi",
+    "folk"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=n7lwFNWm1a0",
+   "alt": "Neeli Meghamula lo dance | Abhirami | Bharathanatyam",
+   "tags": [
+    "dance",
+    "india",
+    "chennai",
+    "theatre"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=-tAmSrLGAYM",
+   "alt": "Odissi | Varsha Pallavi | Best of Indian Classical Dance",
+   "tags": [
+    "dance",
+    "india",
+    "odisha",
+    "theatre"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=GBbcYtkqVKQ",
+   "alt": "Kathakali Dance | Indian Classical Dance of Kerala | #kathakali #kerala #traditional #dance #vlog",
+   "tags": [
+    "theatre",
+    "india",
+    "kerala",
+    "dance"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=_DNBgVAk9GE",
+   "alt": "Narakasuravadham Kathakali Dance Drama Kerala",
+   "tags": [
+    "theatre",
+    "india",
+    "kerala",
+    "dance"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=sA-A1YwA8jA",
+   "alt": "BIHU ll FOLK DANCE OF ASSAM ll RATI DUPOROLE ll Dance by Minu,Ruma(Riya),Deepanita,Ritu,Gitika",
+   "tags": [
+    "dance",
+    "india",
+    "assam",
+    "festival"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=Y1J9_9-vNcU",
+   "alt": "India Claim Thrilling Win! | England v India - Day 5 Highlights | 2nd LV= Insurance Test 2021",
+   "tags": [
+    "cricket",
+    "sport",
+    "india",
+    "highlights"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=jSyPJVeH8Ps",
+   "alt": "VIVO IPL: Chennai Super Kings v Royal Challengers Bangalore",
+   "tags": [
+    "cricket",
+    "sport",
+    "india",
+    "highlights"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=nCBNNQzqkF4",
+   "alt": "Kohli, Gayle take RCB upto 2nd spot with thumping win over KXIP",
+   "tags": [
+    "cricket",
+    "sport",
+    "india",
+    "highlights"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=k3WwMmfETb4",
+   "alt": "Full Test Highlights! | England v Australia - Headingley Test | Third Specsavers Ashes Test 2019",
+   "tags": [
+    "cricket",
+    "sport",
+    "highlights",
+    "global"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=ptKLdFTZSCw",
+   "alt": "Australia v England 2025-26 | First Ashes Test | Day One",
+   "tags": [
+    "cricket",
+    "sport",
+    "highlights",
+    "global"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=SxdOUGdseq4",
+   "alt": "\"Simple Made Easy\" - Rich Hickey (2011)",
+   "tags": [
+    "technology",
+    "talk",
+    "software"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=LKtk3HCgTa8",
+   "alt": "\"Simple Made Easy\" - Rich Hickey (2011)",
+   "tags": [
+    "technology",
+    "talk",
+    "software"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=zXnXUH5AhKU",
+   "alt": "Strange Loop Chat with Felienne Hermans about \"The Programmer's Brain\"",
+   "tags": [
+    "technology",
+    "talk",
+    "software"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=jmRE5pXFi04",
+   "alt": "\"All of this has happened before, and it will all happen again.\" by Mark Allen",
+   "tags": [
+    "technology",
+    "talk",
+    "software"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=c_uTx1fHf4w",
+   "alt": "\"Saturday lightning talks\" - Nic Crouch, Daisy Leigh Brenecki (PyCon AU 2026)",
+   "tags": [
+    "technology",
+    "talk",
+    "software",
+    "python"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=m7TZB-3r5Xo",
+   "alt": "From Beginner to Pycon Speaker: How an idea becomes a conference Talk (Pycon Africa Livestream)",
+   "tags": [
+    "technology",
+    "talk",
+    "software",
+    "python"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=Y9clBHENy4Q",
+   "alt": "Programming's Greatest Mistakes • Mark Rendle • GOTO 2023",
+   "tags": [
+    "technology",
+    "talk",
+    "software"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=pSTOENRgt7g",
+   "alt": "Beyond Chat: Bringing Models to the Canvas • Lu Wilson • GOTO 2025",
+   "tags": [
+    "technology",
+    "talk",
+    "software"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=k9AAkbII3Pg",
+   "alt": "floy: Introduction to Postgres Query Planning",
+   "tags": [
+    "technology",
+    "talk",
+    "databases"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=wTg02tniO2A",
+   "alt": "Hacking the Query Planner, Again - Richard Guo: PGCon 2020",
+   "tags": [
+    "technology",
+    "talk",
+    "databases"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=kuQ2c_FAOIk",
+   "alt": "SIGGRAPH Asia 2021 – Technical Papers Trailer",
+   "tags": [
+    "technology",
+    "talk",
+    "graphics",
+    "science"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=k0QPeOXgcYE",
+   "alt": "ಮದುವೆ ಮನೆಯ ಮಸಾಲ ದೋಸೆ | Wedding Style Masala Dosa | Dosa Batter , Palya, Chutney Pudi, Red Chutney |",
+   "tags": [
+    "food",
+    "india",
+    "cooking",
+    "southindia"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=KXsSK-7ebmY",
+   "alt": "ಹೋಟೆಲ್ ರೀತಿಯ ಅದ್ಭುತ ರುಚಿಯ ಮಸಾಲ ದೋಸೆ ಸುಲಭವಾಗಿ ಮಾಡುವ ವಿಧಾನ !! Perfect Masala dosa Recipe in kannada |",
+   "tags": [
+    "food",
+    "india",
+    "cooking",
+    "southindia"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=mRNe05EADi0",
+   "alt": "Hyderabadi Chicken Dum Biryani | Street Foods Tv",
+   "tags": [
+    "food",
+    "india",
+    "cooking",
+    "hyderabad"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=v4FyiEH8gJM",
+   "alt": "WORLD FAMOUS HYDERABAD CHICKEN BIRYANI | Restaurant Style Biryani | Food Hungers",
+   "tags": [
+    "food",
+    "india",
+    "cooking",
+    "hyderabad"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=7Un6mV2YQ54",
+   "alt": "How To Bake Sourdough Like A Pro",
+   "tags": [
+    "food",
+    "cooking",
+    "baking",
+    "global"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=jJpIzr2sCDE",
+   "alt": "The Ultimate Homemade Sourdough Bread",
+   "tags": [
+    "food",
+    "cooking",
+    "baking",
+    "global"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=r3_tcQiyGG8",
+   "alt": "Cheap, Quick and Easy Shoyu Ramen Recipe",
+   "tags": [
+    "food",
+    "cooking",
+    "japan",
+    "global"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=7z1Ygygfquw",
+   "alt": "The Best Restaurant-Style Ramen At Home",
+   "tags": [
+    "food",
+    "cooking",
+    "japan",
+    "global"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=CX4KlUhJQV4",
+   "alt": "Chennai Food Tour | A FoodWalk covering iconic eateries of Chennai | MonkVlogs",
+   "tags": [
+    "food",
+    "india",
+    "chennai",
+    "citywalk"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=Ze42hH2GzHc",
+   "alt": "Tokyo, Japan 4K Walking Tour - Captions & Immersive Sound [4K Ultra HD/60fps]",
+   "tags": [
+    "citywalk",
+    "tokyo",
+    "global",
+    "city"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=28ZjrtD_iL0",
+   "alt": "Tokyo, Japan 4K HDR Walking Tour 🇯🇵 Day & Night Street Views in 60fps",
+   "tags": [
+    "citywalk",
+    "tokyo",
+    "global",
+    "city"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=DFQO7Zn-KM4",
+   "alt": "The REAL Mumbai, India | Walking Tour INDIA 4K Walk",
+   "tags": [
+    "citywalk",
+    "mumbai",
+    "india",
+    "city"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=Z7yB-jf2Fhc",
+   "alt": "Walking in Downtown Mumbai (मुंबई), India Walking Tour 4K",
+   "tags": [
+    "citywalk",
+    "mumbai",
+    "india",
+    "city"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=E_ymGh4lf3k",
+   "alt": "Esplanade - The Vibrant Heart of KOLKATA | India Walking Tour | 4K",
+   "tags": [
+    "citywalk",
+    "kolkata",
+    "india",
+    "city"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=Va5oQA7udVw",
+   "alt": "Let's Explore the Bustling CENTRAL KOLKATA around Park Street | Kolkata Walking Tour | India 4K",
+   "tags": [
+    "citywalk",
+    "kolkata",
+    "india",
+    "city"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=nnm6qsXOnEk",
+   "alt": "ISTANBUL Walking Tour | Turkey Walk Tour with Captions [4K/60fps]",
+   "tags": [
+    "citywalk",
+    "istanbul",
+    "global",
+    "city"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=npTBK0VmhxI",
+   "alt": "Istanbul, TURKEY 4K Walking Tour - Captions & Immersive Sound [4K Ultra HD/60fps]",
+   "tags": [
+    "citywalk",
+    "istanbul",
+    "global",
+    "city"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=vYqMUehWH-g",
+   "alt": "Varanasi Walking Tour | Evening walk Ganges Riverside and Ganga Aarti Varanasi | India 🇮🇳 [4K HDR]",
+   "tags": [
+    "citywalk",
+    "varanasi",
+    "india",
+    "city"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=i05WnydpUo0",
+   "alt": "Walking in Varanasi along Ganges River and Heart of the City | 4K HDR India Walking Tour",
+   "tags": [
+    "citywalk",
+    "varanasi",
+    "india",
+    "city"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=uHFJ9qhR0VM",
+   "alt": "George Duke Trio \"It's On\" Live at Java Jazz Festival 2010",
+   "tags": [
+    "music",
+    "jazz",
+    "concert",
+    "global"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=cIJnF8WMbt0",
+   "alt": "Jeff Hamilton Trio | Live At Jazz Port Townsend 2022",
+   "tags": [
+    "music",
+    "jazz",
+    "concert",
+    "global"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=ehYM_cg2DHI",
+   "alt": "John Coltrane Quartet My Favorite Things Live in Comblain-La-Tour 1965",
+   "tags": [
+    "music",
+    "jazz",
+    "global"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=jS9dscuKsGA",
+   "alt": "The Jazz at Lincoln Center Orchestra ft. Wynton Marsalis (Live) | JAZZ NIGHT IN AMERICA",
+   "tags": [
+    "music",
+    "jazz",
+    "concert",
+    "global"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=Px_yYmkO1kI",
+   "alt": "WDR Big Band Jazzclub - The Best of Test | Konzert",
+   "tags": [
+    "music",
+    "jazz",
+    "concert",
+    "global"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=FwDo7MdaxhA",
+   "alt": "Beethoven: Symphony No. 9 | Jordi Savall with Le Concert des Nations (complete symphony)",
+   "tags": [
+    "music",
+    "orchestral",
+    "concert",
+    "global"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=Rd0HnxWm5CY",
+   "alt": "Beethoven: Symphony No. 7 | Bernard Haitink & the Royal Concertgebouw Orchestra",
+   "tags": [
+    "music",
+    "orchestral",
+    "concert",
+    "global"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=MyPt0VAWyKM",
+   "alt": "BACH, Cello Suite No.1 in G major, BWV 1007 | 첼로 김진경 | Jin-Kyung Kim",
+   "tags": [
+    "music",
+    "orchestral",
+    "global"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=1prweT95Mo0",
+   "alt": "Yo-Yo Ma - Bach: Cello Suite No. 1 in G Major, Prélude (Official Video)",
+   "tags": [
+    "music",
+    "orchestral",
+    "global"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=vzbsVlG8ips",
+   "alt": "Mahler 2nd symphony brass choral Royal Concertgebouw Orchestra, D. Gatti",
+   "tags": [
+    "music",
+    "orchestral",
+    "concert",
+    "global"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=J0w0t4Qn6LY",
+   "alt": "Sibelius : Concerto pour violon (Hilary Hahn)",
+   "tags": [
+    "music",
+    "orchestral",
+    "concert",
+    "global"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=3u-unvYedx8",
+   "alt": "SIBELIUS Violin Concerto in D minor, Op. 47 - Ray Chen",
+   "tags": [
+    "music",
+    "orchestral",
+    "concert",
+    "global"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=bM3h0Gb2O20",
+   "alt": "Macbeth and Banquo meet the Witches | Macbeth (2013) | Act 1 Scene 3 | Shakespeare's Globe",
+   "tags": [
+    "theatre",
+    "london",
+    "global"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=dHk8BzYYWO0",
+   "alt": "Our Globe Theatre is ALIVE | Shakespeare's Globe",
+   "tags": [
+    "theatre",
+    "london",
+    "global"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=uzCeozqugCU",
+   "alt": "5 Shakespeare scenes to enjoy (Part II) | National Theatre",
+   "tags": [
+    "theatre",
+    "london",
+    "global"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=JhvUBnxiMg4",
+   "alt": "Life of Pi | 'Do you have a banana?' | National Theatre at Home",
+   "tags": [
+    "theatre",
+    "london",
+    "global"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=SlF_FqG7IUM",
+   "alt": "Physics says 'now' isn't real... so do your choices even matter? | Jo Marchant",
+   "tags": [
+    "science",
+    "talk",
+    "global"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=zNVQfWC_evg",
+   "alt": "Quantum Fields: The Real Building Blocks of the Universe - with David Tong",
+   "tags": [
+    "science",
+    "talk",
+    "global"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=WRibE2nt8wM",
+   "alt": "Lecture 1: Introduction to Individual Decision-Making",
+   "tags": [
+    "science",
+    "talk",
+    "education"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=Unzc731iCUY",
+   "alt": "How to Speak",
+   "tags": [
+    "science",
+    "talk",
+    "education"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=1bxDspa-Yu4",
+   "alt": "LIVE: ISRO launches GSLV-F17/EOS-05 Mission from Satish Dhawan Space Centre (SDSC- SHAR)",
+   "tags": [
+    "science",
+    "space",
+    "india",
+    "isro"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=zhFx2TtjUhI",
+   "alt": "The James Webb Space Telescope L-30 Briefings: Science Goals",
+   "tags": [
+    "science",
+    "space",
+    "astronomy",
+    "global"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=7nT7JGZMbtM",
+   "alt": "James Webb Space Telescope Launch — Official NASA Broadcast",
+   "tags": [
+    "science",
+    "space",
+    "astronomy",
+    "global"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=Ig91Z0-rBfo",
+   "alt": "Sona Jobarteh & Band: Kora Music from West Africa",
+   "tags": [
+    "music",
+    "africa",
+    "instrument",
+    "global"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=6PTTgbci4Kg",
+   "alt": "Derek Gripper & Ballaké Sissoko / Ancient Stone Quarry - Gümüşlük / July 23, 2023",
+   "tags": [
+    "music",
+    "africa",
+    "instrument",
+    "global"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=UEWCCSuHsuQ",
+   "alt": "Sound Tracker - Gamelan (Indonesia)",
+   "tags": [
+    "music",
+    "asia",
+    "instrument",
+    "global"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=x8ul2Pfj23M",
+   "alt": "Puspa Wiyat, premier performance of Darsono's new composition by Emory Javanese Gamelan Ensemble",
+   "tags": [
+    "music",
+    "asia",
+    "instrument",
+    "global"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=zEUGx6Cmmqc",
+   "alt": "Rafael Riqueni Flamenco Guitar Master - Sat, March 18, 2023",
+   "tags": [
+    "music",
+    "global",
+    "instrument"
+   ]
+  },
+  {
+   "kind": "youtube",
+   "url": "https://www.youtube.com/watch?v=OXWDijCxjxs",
+   "alt": "Paco De Lucía - Full Concert [IMPROVED AUDIO] | Live at North Sea Jazz Festival 2006",
+   "tags": [
+    "music",
+    "global",
+    "instrument"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/Qnw0nX5smKkAAAAM/xatu-pokemon.gif",
+   "alt": "A picture of a cartoon character with the words \" mhm mhm yes yes i agree \"",
+   "tags": [
+    "reaction-agree",
+    "reaction",
+    "cartoon"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/NYvaSHF2NrYAAAAM/cosmokramer-headnod.gif",
+   "alt": "A man with curly hair is smiling with the words\"true this\" written on his face.",
+   "tags": [
+    "reaction-agree",
+    "reaction",
+    "person"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/Kt_SwBR9UdIAAAAM/true-morgan-freeman.gif",
+   "alt": "A black and white photo of a man with the words true behind him.",
+   "tags": [
+    "reaction-agree",
+    "reaction",
+    "person"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/AaRwrxsVEUUAAAAM/horse-nodding.gif",
+   "alt": "A black horse behind a fence with the words\"yes pleqse\" on it.",
+   "tags": [
+    "reaction-agree",
+    "reaction",
+    "animal"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/GRp7kcuCGvgAAAAM/risada-risada-meme.gif",
+   "alt": "A man in a suit and tie is making a funny face.",
+   "tags": [
+    "reaction-laugh",
+    "reaction",
+    "person"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/7ElwdP_VuHYAAAAM/funny-jokes-laugh-very-funny-jokes.gif",
+   "alt": "A man is making a funny face with his tongue out and says lmfao!",
+   "tags": [
+    "reaction-laugh",
+    "reaction",
+    "person"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/Se-deMV899gAAAAM/baby-laughing-baby.gif",
+   "alt": "A baby wearing a yellow shirt with a smiley face on it is smiling.",
+   "tags": [
+    "reaction-laugh",
+    "reaction",
+    "cartoon"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/PnVBcIioJwgAAAAM/star-star-tamil-chat.gif",
+   "alt": "A baby wearing a varsity shirt sits on a bed.",
+   "tags": [
+    "reaction-laugh",
+    "reaction",
+    "child"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/ovo_afyudlUAAAAM/sealyx-naked-gun.gif",
+   "alt": "A crowd of people with their hands on their heads.",
+   "tags": [
+    "reaction-facepalm",
+    "reaction",
+    "crowd"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/5F6-OloAUzEAAAAM/aff-nao-ne.gif",
+   "alt": "A baby is covering his face with his hand.",
+   "tags": [
+    "reaction-facepalm",
+    "reaction",
+    "child"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/EJyxmF8Lvg4AAAAM/facepalm.gif",
+   "alt": "A black and white drawing of a person with their hand on their face.",
+   "tags": [
+    "reaction-facepalm",
+    "reaction",
+    "cartoon"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/xtAZaFp0rv0AAAAM/facepalm-conan-o%27brien.gif",
+   "alt": "A man in a suit and tie is sitting at a desk covering his face with his hand.",
+   "tags": [
+    "reaction-facepalm",
+    "reaction",
+    "person"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/xjX_iaTUROYAAAAM/bravo-applause.gif",
+   "alt": "A crowd of people are sitting in a theater clapping.",
+   "tags": [
+    "reaction-applause",
+    "reaction",
+    "crowd"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/0cnCyeIb6Z4AAAAM/clap-applause.gif",
+   "alt": "A group of people are clapping their hands in a crowd.",
+   "tags": [
+    "reaction-applause",
+    "reaction",
+    "crowd"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/NRvAuY9ug-gAAAAM/applause-clapping.gif",
+   "alt": "A crowd of people are sitting in a theatre applauding.",
+   "tags": [
+    "reaction-applause",
+    "reaction",
+    "crowd"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/4n-NpUjk0IAAAAAM/ryan-gosling-clap-gif---find-%26-share-on-giphy.gif",
+   "alt": "A man in a tuxedo and bow tie is clapping his hands and smiling.",
+   "tags": [
+    "reaction-applause",
+    "reaction",
+    "person"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/UyeUDZucVzUAAAAM/shocked-surprised.gif",
+   "alt": "A cat is sitting on a couch with its mouth open.",
+   "tags": [
+    "reaction-shock",
+    "reaction",
+    "cat"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/5SwbRHeUF8YAAAAM/magma-why-did-you-send-that-to-coolkid.gif",
+   "alt": "A close up of a cat 's face with big eyes.",
+   "tags": [
+    "reaction-shock",
+    "reaction",
+    "cat"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/MZH9j1yvuYMAAAAM/ishowspeed-twd-ishowspeed.gif",
+   "alt": "A young man wearing headphones is making a surprised face.",
+   "tags": [
+    "reaction-shock",
+    "reaction",
+    "person"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/p7ZA5XsSE7IAAAAM/bamboozled-astonished.gif",
+   "alt": "A close up of a man 's face with big eyes and a fake mustache.",
+   "tags": [
+    "reaction-shock",
+    "reaction",
+    "person"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/ZjcnDTsR1GQAAAAM/kitty-cat.gif",
+   "alt": "A close up of a kitten 's face with a loading wheel on it.",
+   "tags": [
+    "reaction-thinking",
+    "reaction",
+    "cat"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/NLRU5ZDMfIkAAAAM/tamil-actress-gif-tamil-heroin-gif.gif",
+   "alt": "A man in a white shirt is thinking while standing in front of a window.",
+   "tags": [
+    "reaction-thinking",
+    "reaction",
+    "person"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/af61P8odKTIAAAAM/face-emoji.gif",
+   "alt": "A cartoon drawing of a person with a hand on their chin.",
+   "tags": [
+    "reaction-thinking",
+    "reaction",
+    "cartoon"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/6KBxbhm2r5YAAAAM/pengu-pudgy.gif",
+   "alt": "A cartoon penguin says \" i 'm thinking \" while giving a thumbs up.",
+   "tags": [
+    "reaction-thinking",
+    "reaction",
+    "animal"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/rokauCI9nPYAAAAM/crying-sad.gif",
+   "alt": "A white dog is crying with tears coming out of its eyes.",
+   "tags": [
+    "reaction-cry",
+    "reaction",
+    "animal"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/wknZD3HfmWIAAAAM/cry.gif",
+   "alt": "A close up of a man 's face with a tear running down his face.",
+   "tags": [
+    "reaction-cry",
+    "reaction",
+    "person"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/4NzCfc6Z4fEAAAAM/ngoclan.gif",
+   "alt": "A cartoon cat is laying on its back with a pillow and crying with tears coming out of its eyes.",
+   "tags": [
+    "reaction-cry",
+    "reaction",
+    "cat"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/4njUeq5al0MAAAAM/reaction-meme-stan-twitter.gif",
+   "alt": "A hamster wearing a pink bow on its head is crying.",
+   "tags": [
+    "reaction-cry",
+    "reaction",
+    "animal"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/dDfq-xrJKdgAAAAM/boomshakalaka.gif",
+   "alt": "A close up of a cat 's face with the words\"mind = blown\" written below it.",
+   "tags": [
+    "reaction-mindblown",
+    "reaction",
+    "cat"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/SBY9UHMcfdAAAAAM/mind-blast-shocked.gif",
+   "alt": "A yellow smiley face with a cracked face and a cloud coming out of it.",
+   "tags": [
+    "reaction-mindblown",
+    "reaction",
+    "cartoon"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/VIQV4KQcKPwAAAAM/ponke-ponkesol.gif",
+   "alt": "A cartoon of a monkey with a light coming out of its head.",
+   "tags": [
+    "reaction-mindblown",
+    "reaction",
+    "animal"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/I6_MIy7-iTsAAAAM/wow-wow-nice.gif",
+   "alt": "An illustration of a girl with the words mind blown written above her.",
+   "tags": [
+    "reaction-mindblown",
+    "reaction",
+    "cartoon"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/-q2yMsZoZuwAAAAM/annoyed-cillian-murphy.gif",
+   "alt": "A close up of a man 's face while sitting in front of a brick wall.",
+   "tags": [
+    "reaction-eyeroll",
+    "reaction",
+    "person"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/Lsyr-2LnlMIAAAAM/huh.gif",
+   "alt": "A man with a beard is making a funny face while wearing a green shirt.",
+   "tags": [
+    "reaction-eyeroll",
+    "reaction",
+    "person"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/XNtjRfePzZAAAAAM/eye-roll-ugh.gif",
+   "alt": "A man in a suit and tie is making a funny face and says\"yeah ok\".",
+   "tags": [
+    "reaction-eyeroll",
+    "reaction",
+    "person"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/Zc-ZTPzlEHoAAAAM/i-don%27t-know-idk.gif",
+   "alt": "Elmo from sesame street standing in front of a wall.",
+   "tags": [
+    "reaction-shrug",
+    "reaction",
+    "cartoon"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/MRESvvy7ibAAAAAM/shrug-what.gif",
+   "alt": "A man in a suit is sitting in a chair with the words i mean written on the screen.",
+   "tags": [
+    "reaction-shrug",
+    "reaction",
+    "person"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/wb7t5L-65dcAAAAM/mkay.gif",
+   "alt": "A close up of a cat 's face with its hands outstretched.",
+   "tags": [
+    "reaction-shrug",
+    "reaction",
+    "cat"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/TsmJ8yVex4kAAAAM/what-the-dog-dog-loading.gif",
+   "alt": "A close up of a dog with a loading bar on its face.",
+   "tags": [
+    "reaction-confused",
+    "reaction",
+    "animal"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/Y7AgkBgy_BcAAAAM/airallia-cat-chan.gif",
+   "alt": "A cartoon cat is covering its mouth with its hand and has a question mark above its head.",
+   "tags": [
+    "reaction-confused",
+    "reaction",
+    "cat"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/W3-dY-RtRygAAAAM/what-huh.gif",
+   "alt": "A man is smiling and looking at the camera with two question marks above his head.",
+   "tags": [
+    "reaction-confused",
+    "reaction",
+    "person"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/ASAsHQNVvacAAAAM/midnight-the-cat-stopped-working-midnight-the-cat.gif",
+   "alt": "A black cat with a loading icon on its face.",
+   "tags": [
+    "reaction-confused",
+    "reaction",
+    "cat"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/yQMseZeANNcAAAAM/jonstewart-eat.gif",
+   "alt": "A man in a suit and tie is eating popcorn from a striped box.",
+   "tags": [
+    "reaction-popcorn",
+    "reaction",
+    "person"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/ZJ_vO2RAbaEAAAAM/spongebob-entertain.gif",
+   "alt": "Spongebob squarepants is sitting at a table with a bowl of popcorn in his hand.",
+   "tags": [
+    "reaction-popcorn",
+    "reaction",
+    "cartoon"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/X0uJSBblnXAAAAAM/stephen-colbert-popcorn.gif",
+   "alt": "A man wearing 3d glasses is holding a bag of popcorn and saying this is getting good.",
+   "tags": [
+    "reaction-popcorn",
+    "reaction",
+    "person"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/NZPml9bKrRAAAAAM/popcorn-anitasarkeesian.gif",
+   "alt": "A woman is eating popcorn from a box that says pop corn on it.",
+   "tags": [
+    "reaction-popcorn",
+    "reaction",
+    "person"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/5H2oJnS2FvQAAAAM/typewriter-type-fast.gif",
+   "alt": "A small hamster wearing glasses is typing on a keyboard.",
+   "tags": [
+    "reaction-typing",
+    "reaction",
+    "animal"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/xxxJXxxulowAAAAM/cat-hack.gif",
+   "alt": "A cat is sitting in front of a laptop computer with its paws on the keyboard.",
+   "tags": [
+    "reaction-typing",
+    "reaction",
+    "cat"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/EHvSWYJ5hDcAAAAM/typing-gif.gif",
+   "alt": "A black cat is sitting in front of an apple laptop computer.",
+   "tags": [
+    "reaction-typing",
+    "reaction",
+    "cat"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/Q3Z8CAadWegAAAAM/the-boyz-new-typing-really-fast-the-boyz.gif",
+   "alt": "A young man is typing on a computer keyboard while wearing a red sweater.",
+   "tags": [
+    "reaction-typing",
+    "reaction",
+    "person"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/jl-vvqsqSdMAAAAM/kermit-waiting.gif",
+   "alt": "Kermit the frog is sitting on a bench with the words\"i 'm waiting\" written above him.",
+   "tags": [
+    "reaction-waiting",
+    "reaction",
+    "cartoon"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/3LtyxeMT4i0AAAAM/milk-and-mocha-milk-mocha-bear.gif",
+   "alt": "A cartoon bear is sitting at a small table with his head resting on it.",
+   "tags": [
+    "reaction-waiting",
+    "reaction",
+    "cartoon"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/2qcEXYyZh-IAAAAM/goma-peach-and-goma.gif",
+   "alt": "A cute cartoon cat is sitting down and waiting for something.",
+   "tags": [
+    "reaction-waiting",
+    "reaction",
+    "cat"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/OMdXQj-sM7MAAAAM/tonton-tontonsticker.gif",
+   "alt": "A cartoon cat is laying on its back with the word waiting written above it.",
+   "tags": [
+    "reaction-waiting",
+    "reaction",
+    "cat"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/HR3YZjYlr_UAAAAM/nervous-sweating-sweating-bullets.gif",
+   "alt": "A close up of a man sweating with water running down his face.",
+   "tags": [
+    "reaction-nervous",
+    "reaction",
+    "person"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/dXZniYoGoQoAAAAM/nervous-nervous-anime.gif",
+   "alt": "A close up of a cartoon character with sweat drops on its face.",
+   "tags": [
+    "reaction-nervous",
+    "reaction",
+    "cartoon"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/o_r1DsHKi9EAAAAM/daily-struggle-struggle.gif",
+   "alt": "A man is wiping his forehead with a towel.",
+   "tags": [
+    "reaction-nervous",
+    "reaction",
+    "person"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/XNCPvj-T6h8AAAAM/dancing-cat-cat.gif",
+   "alt": "A white and orange cat is standing on its hind legs on a tiled floor.",
+   "tags": [
+    "reaction-celebrate",
+    "reaction",
+    "cat"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/z-oBTP1WqfgAAAAM/excited.gif",
+   "alt": "A man and a woman are jumping in the air in a living room.",
+   "tags": [
+    "reaction-celebrate",
+    "reaction",
+    "person"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/7az04LxOjvkAAAAM/party-time-time-to-party.gif",
+   "alt": "A group of cartoon characters holding balloons and the words party time behind them.",
+   "tags": [
+    "reaction-celebrate",
+    "reaction",
+    "cartoon"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/c5aQbgiFfz4AAAAM/friday-happydance.gif",
+   "alt": "A group of people are jumping in the air in a room while a man holds a woman 's hand.",
+   "tags": [
+    "reaction-celebrate",
+    "reaction",
+    "crowd"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/uOdBemNtXHgAAAAM/dog-side-eye-rolling-window-up.gif",
+   "alt": "A dog looks out of the window of a car.",
+   "tags": [
+    "reaction-sideeye",
+    "reaction",
+    "animal"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/lY7VOhEjpTEAAAAM/angry.gif",
+   "alt": "A close up of a gray and white cat sitting on a chair.",
+   "tags": [
+    "reaction-sideeye",
+    "reaction",
+    "cat"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/LvrKESEopm8AAAAM/%D0%BF%D0%BE%D0%B4%D0%BE%D0%B7%D1%80%D0%B8%D1%82%D0%B5%D0%BB%D1%8C%D0%BD%D0%BE-%D0%BA%D0%BE%D1%82.gif",
+   "alt": "A white and brown cat is sitting on a couch looking at the camera.",
+   "tags": [
+    "reaction-sideeye",
+    "reaction",
+    "cat"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/5rdDvEtjekwAAAAM/nope-nope-nope.gif",
+   "alt": "A drawing of a duck walking away with the words nope nope walking away below it.",
+   "tags": [
+    "reaction-nope",
+    "reaction",
+    "animal"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/TqNt8wVD-mgAAAAM/uhhh-no.gif",
+   "alt": "A man is standing in front of a door and says uhhhhhhhh no.",
+   "tags": [
+    "reaction-nope",
+    "reaction",
+    "person"
+   ]
+  },
+  {
+   "kind": "gif",
+   "url": "https://media.tenor.com/VzrFe_WPengAAAAM/nope-haha.gif",
+   "alt": "A cat laying on the floor next to a sign that reads nope.",
+   "tags": [
+    "reaction-nope",
+    "reaction",
+    "cat"
+   ]
+  }
+ ]
+}

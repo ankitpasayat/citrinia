@@ -5,7 +5,7 @@
 // exists before the row pointing at it. Needs no database.
 //
 //   node seed/seed.test.mjs
-import { buildPlan, loadContent, uuidFor } from "./seed.mjs";
+import { buildPlan, dripOrder, loadContent, planDrip, uuidFor, DRIP_WINDOW_MS, LIKE_WINDOW_MS } from "./seed.mjs";
 
 let failures = 0;
 function check(name, ok, detail = "") {
@@ -117,6 +117,167 @@ check("media positions start at 0 and have no gaps", (() => {
 })());
 check("video and youtube media carry empty alt", plan.media.every((m) => (m.kind === "video" || m.kind === "youtube" ? m.alt === "" : m.alt.length > 0)));
 check("every media url is https", plan.media.every((m) => m.url.startsWith("https://")));
+
+// --- drip --------------------------------------------------------------------
+// What the hourly workflow has to get right, checked against the intended
+// behaviour rather than against what the code happens to produce: consecutive
+// runs must carry on where the last one stopped (there is no state file, only
+// the database), a reply must never go out before the peel it answers, and
+// every timestamp must be inside the hour the run claims to be publishing.
+
+const DRIP_NOW = 1_757_100_000_000;
+const HOUR = 3_600_000;
+
+/**
+ * A database that starts empty and remembers what previous runs wrote — the
+ * only thing planDrip is allowed to know. Deliberately not a mock of the HTTP
+ * layer: this is the same data the real fetches hand over.
+ */
+function fakeDb() {
+  return { peels: new Map(), handles: new Set(), follows: new Set(), reposts: new Set(), bookmarks: new Set() };
+}
+function applySlice(db, slice) {
+  for (const h of slice.newHandles) db.handles.add(h);
+  for (const p of slice.peels) db.peels.set(p.id, Date.parse(p.created_at));
+  for (const r of slice.reposts) db.reposts.add(`${r.user_id}|${r.peel_id}`);
+  for (const f of slice.follows) db.follows.add(`${f.follower_id}|${f.followee_id}`);
+  for (const b of slice.bookmarks) db.bookmarks.add(`${b.user_id}|${b.peel_id}`);
+  return slice;
+}
+const dripRun = (db, count, nowMs) =>
+  applySlice(
+    db,
+    planDrip({
+      plan,
+      count,
+      nowMs,
+      existingPeels: db.peels,
+      existingHandles: db.handles,
+      existingFollows: db.follows,
+      existingReposts: db.reposts,
+      existingBookmarks: db.bookmarks,
+    }),
+  );
+
+const db = fakeDb();
+const runs = [];
+for (let h = 0; h < 6; h++) runs.push(dripRun(db, 40, DRIP_NOW + h * HOUR));
+
+const tops = (s) => s.peels.filter((p) => p._kind === "peel");
+check("run 1 publishes exactly the requested number of top-level peels", tops(runs[0]).length === 40, `${tops(runs[0]).length}`);
+check("run 1 publishes no replies or quotes: nothing to answer yet", runs[0].peels.length === 40, `${runs[0].peels.length} rows`);
+check("run 1 asks for every one of its authors to be created", new Set(tops(runs[0]).map((p) => p.user_id)).size === runs[0].newHandles.length);
+check("run 1 has no reactions: no personas and no peels existed", !runs[0].likes.length && !runs[0].follows.length && !runs[0].reposts.length && !runs[0].bookmarks.length);
+
+check("run 2 publishes the next slice, none of run 1's", runs[1].peels.every((p) => !runs[0].peels.some((q) => q.id === p.id)));
+check("run 2 answers run 1: replies and quotes appear", runs[1].peels.some((p) => p._kind !== "peel"), `${runs[1].peels.filter((p) => p._kind !== "peel").length}`);
+check("later runs keep publishing", runs[5].peels.length > 0);
+
+const everyRow = runs.flatMap((r) => r.peels);
+check("no peel is published twice across six runs", new Set(everyRow.map((p) => p.id)).size === everyRow.length);
+check("six runs of 40 publish 240 top-level peels", runs.reduce((n, r) => n + tops(r).length, 0) === 240);
+check("remaining is the corpus minus everything published so far", runs.every((r, i) => r.remaining === plan.peels.length - runs.slice(0, i + 1).reduce((n, x) => n + x.peels.length, 0)));
+
+// The invariant the whole scheme rests on.
+let early = 0;
+const publishedAt = new Map();
+for (const r of runs) {
+  for (const p of r.peels) {
+    const target = p._kind === "reply" ? p.parent_id : p.quote_id;
+    if (!target) continue;
+    if (!publishedAt.has(target) || publishedAt.get(target) >= Date.parse(p.created_at)) early++;
+  }
+  for (const p of r.peels) publishedAt.set(p.id, Date.parse(p.created_at));
+}
+check("no reply or quote is ever published before the peel it points at", early === 0, `${early} too early`);
+
+let knownBefore = new Set();
+for (const [i, r] of runs.entries()) {
+  const now = DRIP_NOW + i * HOUR;
+  const known = knownBefore;
+  knownBefore = new Set([...known, ...r.newHandles]);
+  const stamps = r.peels.map((p) => Date.parse(p.created_at));
+  const inWindow = stamps.every((ms) => ms > now - DRIP_WINDOW_MS && ms < now);
+  check(`run ${i + 1}: every peel is dated inside the last 55 minutes`, inWindow);
+  check(`run ${i + 1}: peel timestamps are unique`, new Set(stamps).size === stamps.length);
+  check(`run ${i + 1}: peel timestamps only move forward`, stamps.every((ms, j) => j === 0 || ms > stamps[j - 1]));
+  const edges = [...r.reposts, ...r.likes, ...r.follows, ...r.bookmarks].map((e) => Date.parse(e.created_at));
+  check(`run ${i + 1}: every reaction is in the past`, edges.every((ms) => ms < now));
+  const actors = [...r.reposts, ...r.likes, ...r.bookmarks].map((e) => e.user_id).concat(r.follows.flatMap((f) => [f.follower_id, f.followee_id]));
+  check(`run ${i + 1}: every reaction is from a persona that already existed`, actors.every((h) => known.has(h)), actors.filter((h) => !known.has(h)).join(" "));
+  const earlier = new Set(runs.slice(0, i).flatMap((p) => p.peels.map((q) => q.id)));
+  check(`run ${i + 1}: every like is on a peel published in an earlier run`, r.likes.every((l) => earlier.has(l.peel_id)));
+  check(`run ${i + 1}: at most a quarter as many reposts as peels`, r.reposts.length <= Math.ceil(40 / 4));
+  check(`run ${i + 1}: at most half as many replies and quotes as peels`, r.peels.filter((p) => p._kind !== "peel").length <= Math.ceil(40 / 2));
+}
+
+check("a like never lands before its peel", runs.every((r) => r.likes.every((l) => Date.parse(l.created_at) > db.peels.get(l.peel_id) - 1)));
+
+// Two runs inside one hour: every parent is seconds old, so every reply wants
+// the same clamped instant. This is the case the unique-and-forward rule exists
+// for, and the only one where a naive spread collides.
+check("replies to peels published moments ago still get unique, ordered timestamps", (() => {
+  const hot = fakeDb();
+  for (const p of plan.personas) hot.handles.add(p.handle);
+  for (const p of plan.peels) if (p._kind === "peel") hot.peels.set(p.id, DRIP_NOW - 30_000);
+  const deps = dripRun(hot, 40, DRIP_NOW).peels;
+  const ms = deps.map((p) => Date.parse(p.created_at));
+  return deps.length > 1 && new Set(ms).size === ms.length && ms.every((v, i) => i === 0 || v > ms[i - 1]) && ms.every((v) => v < DRIP_NOW);
+})());
+check("likes stop once a peel is older than the like window", (() => {
+  const old = fakeDb();
+  old.handles.add(plan.personas[0].handle);
+  const target = plan.likes.find((l) => l.user_id === plan.personas[0].handle);
+  old.peels.set(target.peel_id, DRIP_NOW - LIKE_WINDOW_MS - HOUR);
+  return !dripRun(old, 0, DRIP_NOW).likes.length;
+})());
+
+// --- drip: determinism and ordering ------------------------------------------
+const fresh = fakeDb();
+const again = [];
+for (let h = 0; h < 3; h++) again.push(dripRun(fresh, 40, DRIP_NOW + 7_919 + h * HOUR));
+check(
+  "the same corpus drips in the same order however the clock is set",
+  again.every((r, i) => r.peels.map((p) => p._contentId).join(",") === runs[i].peels.map((p) => p._contentId).join(",")),
+);
+
+const firstOrder = tops(runs[0]).map((p) => p._cluster);
+const clustersInPlay = new Set(plan.peels.map((p) => p._cluster));
+check("the first peel out is from the india anchor", firstOrder[0] === "india");
+check(
+  "clusters are interleaved, not drained one at a time",
+  firstOrder.slice(0, clustersInPlay.size).length === new Set(firstOrder.slice(0, clustersInPlay.size)).size,
+  firstOrder.slice(0, 6).join(" "),
+);
+check(
+  "inside a cluster the file's own chronology is kept, oldest first",
+  (() => {
+    const seenAge = new Map();
+    for (const p of runs.flatMap((r) => tops(r))) {
+      const previous = seenAge.get(p._cluster);
+      if (previous !== undefined && previous > p.created_at) return false;
+      seenAge.set(p._cluster, p.created_at);
+    }
+    return true;
+  })(),
+);
+check(
+  "dripOrder does not depend on the order it is handed",
+  (() => {
+    const rows = plan.peels.filter((p) => p._kind === "peel").slice(0, 500);
+    const a = dripOrder(rows).map((p) => p._contentId).join(",");
+    const b = dripOrder([...rows].reverse()).map((p) => p._contentId).join(",");
+    return a === b && dripOrder(rows).length === rows.length;
+  })(),
+);
+
+check("a run against a fully imported corpus publishes nothing", (() => {
+  const full = fakeDb();
+  for (const p of plan.peels) full.peels.set(p.id, DRIP_NOW - 500 * HOUR);
+  for (const p of plan.personas) full.handles.add(p.handle);
+  const s = dripRun(full, 40, DRIP_NOW);
+  return s.peels.length === 0 && s.remaining === 0 && s.likes.length === 0;
+})());
 
 console.log(failures ? `\n${failures} failure(s)` : "\nall checks passed");
 process.exit(failures ? 1 : 0);

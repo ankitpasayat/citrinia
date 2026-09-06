@@ -17,6 +17,7 @@ const chars = (s) => Array.from(s).length;
 const MEDIA_KINDS = new Set(["image", "gif", "video", "youtube"]);
 const YOUTUBE = /^https:\/\/(www\.)?(youtube\.com\/watch\?v=[\w-]{11}|youtu\.be\/[\w-]{11})/;
 const CHECK_URLS = process.argv.includes("--check-urls");
+const EXEMPT = (() => { try { return JSON.parse(readFileSync(join(HERE, "gate-exemptions.json"), "utf8")); } catch { return { india_share: [] }; } })();
 const urlChecks = [];
 
 function checkMedia(kind, x, err) {
@@ -236,6 +237,12 @@ function validateFile(path, globalHandles, globalIds) {
   }
 
   const india = peels.filter((p) => p.india).length;
+  // Bulk batches must land near the site-wide target (about a third India): the persona mix
+  // gives ~33% when India-centred personas write ~75% India and the rest ≤ 10%.
+  if (String(doc.cluster).startsWith("bulk-") && peels.length >= 100 && !EXEMPT.india_share.includes(doc.cluster)) {
+    const share = india / peels.length;
+    if (share > 0.38 || share < 0.22) err(`quality: india share is ${Math.round(share * 100)}% (bulk batches must be 22–38%); rebalance topics, do not relabel flags`);
+  }
   const quotes = peels.filter((p) => p.quote !== undefined).length;
   const media = [...peels, ...replies].filter((x) => Array.isArray(x.media) && x.media.length).length;
   return {
