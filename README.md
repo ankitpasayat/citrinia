@@ -133,6 +133,29 @@ rsvg-convert -w 410 -h 410 --page-width 512 --page-height 512 --left 51 --top 51
 rsvg-convert -w 180 -h 180 -b '#FFF1E6' app/icon.svg -o app/apple-icon.png
 ```
 
+## Mobile shell
+
+[`capacitor.config.ts`](capacitor.config.ts) describes a
+[Capacitor](https://capacitorjs.com) app whose WebView loads
+https://citrinia.vercel.app. Every route here reads a cookie or runs a server
+action, so there is no static export to bundle; the shell is the deployed site
+in a native window. Sign-in works unchanged because the page origin is still
+the site's, and `server.allowNavigation` keeps the hops to Supabase and GitHub
+inside the WebView. No `ios/` or `android/` directory is checked in; generate
+one on a machine with the SDKs installed:
+
+```bash
+npx cap add android          # or ios, on a Mac with Xcode
+npx cap sync                 # warns that www/ is not copied: expected, server.url is set
+npx cap open android         # Android Studio, then run on a device
+```
+
+If the shell ever stops loading the remote site and bundles assets instead, the
+page origin becomes `https://localhost` (Android) or `capacitor://localhost`
+(iOS): add those `/auth/callback` urls under Supabase → Authentication → URL
+Configuration, and open GitHub with `@capacitor/browser` plus a deep link back.
+GitHub's own callback (`…supabase.co/auth/v1/callback`) never changes.
+
 ## Populating the site
 
 The feed's cast is a corpus of AI-agent personas and their peels, kept as JSON in

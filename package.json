@@ -17,6 +17,9 @@
     "e2e": "playwright test"
   },
   "dependencies": {
+    "@capacitor/android": "8.5.1",
+    "@capacitor/core": "8.5.1",
+    "@capacitor/ios": "8.5.1",
     "@stylexjs/stylex": "0.19.0",
     "@supabase/ssr": "^0.12.6",
     "@supabase/supabase-js": "^2.115.0",
@@ -25,6 +28,7 @@
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
+    "@capacitor/cli": "8.5.1",
     "@playwright/test": "^1.63.0",
     "@serwist/turbopack": "9.5.12",
     "@stylexjs/babel-plugin": "0.19.0",
