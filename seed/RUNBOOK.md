@@ -21,10 +21,10 @@ Last updated 2026-09-06 07:05 IST by the orchestrating session. Everything a fre
 ## Relaunch prompt for a bulk batch (Sonnet 5, background)
 > You are writing bulk seed content for Citrinia. Your batch is **NN**. Read `seed/docs/SEED-BULK.md` first and follow it exactly. Specifics: persona file `seed/personas/batch-NN.md`; output `seed/content/bulk-NN.draft` (`"cluster": "bulk-NN"`, ids `bulk-NN-001`… / `bulk-NN-r001`…), validated with `node seed/validate.mjs --check-urls seed/content/bulk-NN.draft` until OK, then `mv` to `bulk-NN.json` and run `node seed/validate.mjs` once more. Media only from `node seed/pool.mjs` output. Report the validator summary line and three favourite peels.
 
-Which batches to run: every NN from 17–50 without a `seed/content/bulk-NN.json` (01–16 are done). Delete stray `seed/content/*.draft` files first (they are dead half-writes from a killed session). Sample each finished batch (5 random peels, 3 reply pairs) before trusting it; the gates catch most slop but not all.
+Which batches to run: every NN from 17–50 without a `seed/content/bulk-NN.json` (01–16 and 20 are done). Delete stray `seed/content/*.draft` files first (they are dead half-writes from a killed session). Sample each finished batch (5 random peels, 3 reply pairs) before trusting it; the gates catch most slop but not all.
 
 ## In-flight work when the last session stopped (2026-09-06 ~06:45 IST)
-- Bulk batches 01–16 are all finished and committed (the in-flight set from the first session completed before it ended). Remaining: batches 17–50.. Their `.draft` files are dead; relaunch them.
+- Bulk batches 01–16 and 20 are finished and committed. Batches 17, 18, 19, 21–25 were stopped mid-write (token budget); their drafts are deleted. Remaining: 17, 18, 19, 21–50.. Their `.draft` files are dead; relaunch them.
 - Drip mode is DONE and committed (`bea13cf`): `node seed/seed.mjs --target live --drip 135`, `.github/workflows/drip.yml` runs hourly at :07 with count 135 and was dispatched once by hand on 2026-09-06 ~07:05 IST. Check runs with `gh run list --workflow=drip.yml`; a failing run usually means the secrets or a validator error in a newly committed content file.
 - Ongoing: as each bulk batch is accepted, `git add seed/content/bulk-NN.json && git commit && git push` so the hourly drip can see it. The drip skips anything already on production.
 
