@@ -1,13 +1,13 @@
 # Citrinia seeding runbook (resume from here)
 
-Last updated 2026-09-06 ~12:10 IST by the orchestrating session. Everything a fresh Claude session needs to continue is in this repo; nothing depends on any session's scratchpad.
+Last updated 2026-09-06 ~12:05 IST by the orchestrating session. Everything a fresh Claude session needs to continue is in this repo; nothing depends on any session's scratchpad.
 
 ## Where things stand
 - App: two feature slices live on https://citrinia.vercel.app (main `d903720`+). Migrations 20260905 (init), 20260906 (core), 20260907000000 (social), 20260907010000 (service-role grants) are all applied on the live Supabase project `nqkvknsgtfeoqqbvqgal`.
 - `.env.local` (gitignored) holds `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` (sb_secret format). Never print it.
 - GitHub Actions secrets `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are set on ankitpasayat/citrinia (owner consented).
 - Production has the **anchor backfill** (41 personas, 690 peels) plus whatever the hourly drip has published since (135 top-level peels per run; each run's summary line is in the Actions log, e.g. `drip: 135 peels, 52 replies, … ; 10911 remaining`). Import state: `seed/.state/live.json` (gitignored; the importer is idempotent without it — peel uuids derive from content ids).
-- **Content: bulk batches 01–46 and 48 are accepted and committed** (`ls seed/content/bulk-*.json`), plus anchors `india, tech, culture, society`. Whole set passes `node seed/validate.mjs`: 323 personas, 21,036 peels, 9,633 replies, India 33%. **In flight when this was written: batches 47, 49, 50** (Sonnet writers running; if their `.json` is on disk and validates, accept it with the QA step below; a stray `.draft` is a dead half-write, delete it and relaunch). Rejected Haiku attempts live in `seed/rejected/` (do not use).
+- **Content: all 50 bulk batches are accepted and committed** (`ls seed/content/bulk-*.json`), plus anchors `india, tech, culture, society`. Whole set passes `node seed/validate.mjs`: 341 personas, 22,385 peels, 10,234 replies, India 33%. Writing is finished; nothing is in flight. Rejected Haiku attempts live in `seed/rejected/` (do not use).
 - Owner decisions: 20k peels / 300 personas total (both now exceeded: the persona bibles ran to 50 batches × 6, and batches averaged ~440 peels); India share about a third (bulk gate 22–38% per batch, `seed/gate-exemptions.json` lists pre-gate batches); drip rate **135 peels/hour**; anchors backfilled first (done); GitHub cron is the intended drip runner — **but see the cron problem below**.
 
 ## The cron problem (owner action needed)
@@ -16,7 +16,7 @@ Last updated 2026-09-06 ~12:10 IST by the orchestrating session. Everything a fr
 ## The pipeline
 1. **Persona bibles**: `seed/personas/batch-01.md … batch-50.md`, `manifest.json`.
 2. **Media pool**: `seed/media-pool.json` (506 verified items), queried with `node seed/pool.mjs --tags a,b [--kind gif|image|youtube] [--limit 8] [--any]`. Verified URLs are cached in `seed/.urlcache.json` (gitignored; regenerate with `node seed/validate.mjs --check-pool seed/media-pool.json`, ~8 min cold).
-3. **Bulk writing**: one Sonnet 5 agent per batch, prompt below, following `seed/docs/SEED-BULK.md` (+ `seed/docs/SEED-BRIEF.md`). Output `seed/content/bulk-NN.json`. Haiku was rejected (fragments, off-topic replies). Run ~8 agents at a time; each takes 30–55 min and ~300k tokens.
+3. **Bulk writing** (done for 01–50; keep for any future batch): one Sonnet 5 agent per batch, prompt below, following `seed/docs/SEED-BULK.md` (+ `seed/docs/SEED-BRIEF.md`). Output `seed/content/bulk-NN.json`. Haiku was rejected (fragments, off-topic replies). Run ~8 agents at a time; each takes 30–55 min and ~300k tokens.
 4. **Validation**: `node seed/validate.mjs` (whole set) and `node seed/validate.mjs --check-urls seed/content/<file>` (format, media, quality gates). Quarantine failures in `seed/rejected/`; never edit accepted files by hand without re-validating.
 5. **QA before accepting** (the gates catch slop, not these): `node seed/qa.mjs seed/content/bulk-NN.json` prints the length rhythm, five random peels, three reply pairs and a wiring scan. Read them. What came up in batches 17–48 and how it was handled:
    - **All essays** (0–2% of peels under 100 chars, average 200+): send the same agent back (SendMessage) to *add* ~70 real quick takes (jokes, one-line reactions, questions) in each persona's voice; the validator's 15%-under-80 ceiling caps how many. Never accept "shortened by truncation": batch 37 did that and produced setups with the payoff cut off; the fix was restoring the full drafts and adding genuine quick takes.
