@@ -24,7 +24,7 @@ Last updated 2026-09-06 07:05 IST by the orchestrating session. Everything a fre
 Which batches to run: every NN from 01–50 without a `seed/content/bulk-NN.json`. Delete stray `seed/content/*.draft` files first (they are dead half-writes from a killed session). Sample each finished batch (5 random peels, 3 reply pairs) before trusting it; the gates catch most slop but not all.
 
 ## In-flight work when the last session stopped (2026-09-06 ~06:45 IST)
-- Bulk batches 14, 15, 16 were being written (09–13 finished and are committed). Their `.draft` files are dead; relaunch them.
+- Bulk batches 14 and 15 were being written (09–13 and 16 finished and are committed). Their `.draft` files are dead; relaunch them.
 - Drip mode is DONE and committed (`bea13cf`): `node seed/seed.mjs --target live --drip 135`, `.github/workflows/drip.yml` runs hourly at :07 with count 135 and was dispatched once by hand on 2026-09-06 ~07:05 IST. Check runs with `gh run list --workflow=drip.yml`; a failing run usually means the secrets or a validator error in a newly committed content file.
 - Ongoing: as each bulk batch is accepted, `git add seed/content/bulk-NN.json && git commit && git push` so the hourly drip can see it. The drip skips anything already on production.
 
