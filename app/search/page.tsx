@@ -5,7 +5,6 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { escapeRegex, fetchPeels } from "@/lib/peels";
 import { Avatar } from "@/components/avatar";
-import { Band } from "@/components/band";
 import { Column } from "@/components/column";
 import { FeedShell } from "@/components/feed-shell";
 import { PeelList } from "@/components/peel-list";
@@ -58,7 +57,6 @@ export default async function Search({ searchParams }: { searchParams: Promise<{
   return (
     <FeedShell username={viewer?.username ?? ""}>
       <Column>
-        <Band slim />
         <SearchForm q={q} />
 
         {q === "" ? (

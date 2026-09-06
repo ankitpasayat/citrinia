@@ -2,7 +2,6 @@ import * as stylex from "@stylexjs/stylex";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { Band } from "@/components/band";
 import { buttonStyles } from "@/components/button";
 import { Column } from "@/components/column";
 import { FeedShell } from "@/components/feed-shell";
@@ -35,7 +34,6 @@ export default async function Thread({ params }: { params: Promise<{ id: string 
   return (
     <FeedShell username={profile.username}>
       <Column>
-        <Band slim />
         <Link
           href="/"
           {...stylex.props(

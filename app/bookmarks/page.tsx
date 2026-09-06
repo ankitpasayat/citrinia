@@ -1,7 +1,6 @@
 import * as stylex from "@stylexjs/stylex";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { Band } from "@/components/band";
 import { Column } from "@/components/column";
 import { FeedShell } from "@/components/feed-shell";
 import { PeelList } from "@/components/peel-list";
@@ -48,7 +47,6 @@ export default async function Bookmarks({
   return (
     <FeedShell username={profile.username}>
       <Column>
-        <Band slim />
         <h1 {...stylex.props(styles.heading)}>Bookmarks</h1>
 
         <PeelList

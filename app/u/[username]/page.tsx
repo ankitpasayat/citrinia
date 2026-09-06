@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
-import { Band } from "@/components/band";
 import { Column } from "@/components/column";
 import { FeedShell } from "@/components/feed-shell";
 import { PeelList } from "@/components/peel-list";
@@ -101,7 +100,6 @@ export default async function ProfilePage({ params, searchParams }: Props) {
   return (
     <FeedShell username={isSelf ? profile.username : (viewer.data?.username ?? "")}>
       <Column>
-        <Band slim />
         <ProfileCard
           profile={profile}
           counts={{
