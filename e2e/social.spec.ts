@@ -269,8 +269,22 @@ test("4. every kind of notification reaches ada, and the badge empties", async (
   const quoteId = await peelId(QUOTE);
 
   const page = await open("ada");
+  const bellListening = subscribed(page, "realtime:notifications:");
   await page.goto("/");
   await expect(page.getByRole("img", { name: "5 unread notifications" })).toBeVisible();
+
+  // The bell keeps up without a navigation, in both directions: bob takes his
+  // like back (the notification goes with it) and gives it again, while ada
+  // just sits on the feed.
+  await bellListening;
+  await bob.remove(`likes?user_id=eq.${bob.id}&peel_id=eq.${adaPeel}`);
+  await expect(page.getByRole("img", { name: "4 unread notifications" })).toBeVisible({
+    timeout: 10_000,
+  });
+  await bob.insert("likes", { user_id: bob.id, peel_id: adaPeel });
+  await expect(page.getByRole("img", { name: "5 unread notifications" })).toBeVisible({
+    timeout: 10_000,
+  });
 
   // The badge hangs off the bell, so the tab's own name carries it.
   await page.getByRole("link", { name: "Alerts" }).click();

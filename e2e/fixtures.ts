@@ -103,7 +103,7 @@ export function card(page: Page, text: string) {
 }
 
 /**
- * The feed's realtime channel actually listening.
+ * A realtime channel actually listening (the feed's, or the bell's when `topic` says so).
  *
  * `subscribe()` returns long before the server has accepted the postgres_changes
  * subscription — the client sends setAuth, joins, and only then is told
@@ -111,11 +111,14 @@ export function card(page: Page, text: string) {
  * announced at all. Call this *before* navigating, await it after, and the
  * "somebody peeled while you were reading" tests stop being a coin flip.
  */
-export function subscribed(page: Page): Promise<void> {
+export function subscribed(page: Page, topic = ""): Promise<void> {
   return new Promise<void>((resolve) => {
     page.on("websocket", (socket) => {
       socket.on("framereceived", (frame) => {
-        if (frame.payload.toString().includes("Subscribed to PostgreSQL")) resolve();
+        // A page can hold more than one channel (the feed's and the bell's), and
+        // the acknowledgement names its topic, so a caller can wait for a specific one.
+        const text = frame.payload.toString();
+        if (text.includes("Subscribed to PostgreSQL") && text.includes(topic)) resolve();
       });
     });
   });

@@ -63,8 +63,15 @@ do $$ begin
   if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'peels') then
     raise exception 'check 5 FAILED: public.peels not in supabase_realtime';
   end if;
+  if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'notifications') then
+    raise exception 'check 5 FAILED: public.notifications not in supabase_realtime';
+  end if;
+  -- Without the whole old row, a DELETE event has no user_id for the bell's filter to match.
+  if (select relreplident from pg_class where oid = 'public.notifications'::regclass) <> 'f' then
+    raise exception 'check 5 FAILED: public.notifications needs replica identity full';
+  end if;
 end $$;
-\echo check 5 ok: peels in supabase_realtime publication
+\echo check 5 ok: peels and notifications in supabase_realtime publication, notifications logged whole
 
 -- 6. RLS enabled on every table, 22 policies, API roles have the grants their policies assume.
 do $$ begin
