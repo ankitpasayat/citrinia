@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 
 // Temporary diagnostic: which Supabase project the server runtime is configured
@@ -23,6 +24,7 @@ export function GET() {
     anonRole: claim(anon, "role"),
     anonIssued: claim(anon, "iat"),
     anonLength: anon?.length ?? 0,
+    anonSha256: anon ? createHash("sha256").update(anon).digest("hex").slice(0, 12) : null,
     runtime: process.env.NEXT_RUNTIME ?? "node",
   });
 }
