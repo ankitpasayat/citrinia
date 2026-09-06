@@ -337,6 +337,16 @@ export type Database = {
           sort_at: string
         }[]
       }
+      peel_ancestors: {
+        Args: {
+          of_peel: string
+          max_depth?: number
+        }
+        Returns: {
+          id: string
+          depth: number
+        }[]
+      }
       seed_triggers: {
         Args: {
           enabled: boolean

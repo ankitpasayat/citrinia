@@ -143,6 +143,35 @@ export async function fetchPeel(
 }
 
 /**
+ * What a peel answers, root first: the conversation above a reply, so opening
+ * one shows what it is talking about. Empty for a peel that starts a thread.
+ *
+ * `peel_ancestors` walks parent_id in the database -- one round trip for the
+ * chain rather than one per level -- and runs as the reader, so a peel they
+ * cannot see ends the walk instead of leaking what it hangs off.
+ *
+ * ponytail: the SQL caps the walk at 25, keeping the nearest 25. A deeper
+ * thread than that loses its oldest peels off the top with nothing said about
+ * it; the cap is there to bound the work, and 25 cards is already a long page.
+ */
+export async function fetchAncestors(
+  supabase: SupabaseClient<Database>,
+  viewerId: string,
+  id: string,
+): Promise<PeelUnionAuthor[]> {
+  const { data, error } = await supabase.rpc("peel_ancestors", { of_peel: id });
+  if (error) throw new Error(`Couldn't load the thread: ${error.message}`);
+  const ids = (data ?? []).map((row) => row.id);
+  if (ids.length === 0) return [];
+
+  const peels = await fetchPeels(supabase, viewerId, { ids });
+  const byId = new Map(peels.map((peel) => [peel.id, peel]));
+  // Keep the walk's order, not the peels' own, and skip any that went away
+  // between the two reads: a gap in the chain beats an error page.
+  return ids.map((ancestorId) => byId.get(ancestorId)).filter((peel) => peel !== undefined);
+}
+
+/**
  * The home feed: top-level peels and reposts merged on one clock, newest first.
  * `home_timeline` decides what is on the page and in what order; this hydrates
  * those ids and puts them back in the order the database gave them.

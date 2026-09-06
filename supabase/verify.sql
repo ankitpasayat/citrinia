@@ -784,5 +784,60 @@ begin
 end $$;
 \echo check 26 ok: service_role can read and write every public table
 
+-- 27. The thread page's ancestor walk: what a peel answers, root first, bounded,
+--     and running as the reader so RLS still decides what is on the way up.
+insert into public.peels (id, title, user_id, parent_id) values
+  ('40000000-0000-0000-0000-000000000001', 'chain root', :'ada', null),
+  ('40000000-0000-0000-0000-000000000002', 'chain a',    :'bob', '40000000-0000-0000-0000-000000000001'),
+  ('40000000-0000-0000-0000-000000000003', 'chain b',    :'ada', '40000000-0000-0000-0000-000000000002'),
+  ('40000000-0000-0000-0000-000000000004', 'chain leaf', :'bob', '40000000-0000-0000-0000-000000000003'),
+  ('40000000-0000-0000-0000-000000000005', 'off to one side', :'ada', '40000000-0000-0000-0000-000000000002');
+do $$
+declare walked uuid[];
+begin
+  -- `with ordinality` pins the order the function actually emits, not an order
+  -- re-imposed here: the page renders these top to bottom as they come.
+  select array_agg(a.id order by a.ord) into walked
+    from public.peel_ancestors('40000000-0000-0000-0000-000000000004') with ordinality as a(id, depth, ord);
+  if walked is distinct from array['40000000-0000-0000-0000-000000000001', '40000000-0000-0000-0000-000000000002', '40000000-0000-0000-0000-000000000003']::uuid[] then
+    raise exception 'check 27 FAILED: expected root, a, b in that order and nothing off to the side, got %', walked;
+  end if;
+
+  -- A peel that starts a thread answers nothing.
+  if (select count(*) from public.peel_ancestors('40000000-0000-0000-0000-000000000001')) <> 0 then
+    raise exception 'check 27 FAILED: a top-level peel was given ancestors';
+  end if;
+
+  -- The cap keeps the NEAREST ancestors: losing the root is better than losing
+  -- the peel the reply is actually answering.
+  select array_agg(a.id order by a.ord) into walked
+    from public.peel_ancestors('40000000-0000-0000-0000-000000000004', 2) with ordinality as a(id, depth, ord);
+  if walked is distinct from array['40000000-0000-0000-0000-000000000002', '40000000-0000-0000-0000-000000000003']::uuid[] then
+    raise exception 'check 27 FAILED: max_depth 2 should keep the two nearest, got %', walked;
+  end if;
+
+  -- security invoker is the whole reason RLS still applies to the walk.
+  if (select prosecdef from pg_proc where oid = 'public.peel_ancestors(uuid,int)'::regprocedure) then
+    raise exception 'check 27 FAILED: peel_ancestors is security definer, so it would walk past RLS';
+  end if;
+  if has_function_privilege('anon', 'public.peel_ancestors(uuid,int)', 'execute') then
+    raise exception 'check 27 FAILED: anon can execute peel_ancestors';
+  end if;
+  if not has_function_privilege('authenticated', 'public.peel_ancestors(uuid,int)', 'execute') then
+    raise exception 'check 27 FAILED: authenticated cannot execute peel_ancestors';
+  end if;
+end $$;
+
+-- A parent_id cycle is not reachable through the app, but nothing in the schema
+-- forbids one either, and a recursive walk with no ceiling would never return.
+update public.peels set parent_id = '40000000-0000-0000-0000-000000000004' where id = '40000000-0000-0000-0000-000000000001';
+do $$ begin
+  if (select count(*) from public.peel_ancestors('40000000-0000-0000-0000-000000000004', 1000)) <> 100 then
+    raise exception 'check 27 FAILED: a parent_id cycle did not stop at the 100 ceiling';
+  end if;
+end $$;
+update public.peels set parent_id = null where id = '40000000-0000-0000-0000-000000000001';
+\echo check 27 ok: peel_ancestors walks root-first, keeps the nearest under a cap, and cannot run away
+
 rollback;
 \echo ALL CHECKS PASSED

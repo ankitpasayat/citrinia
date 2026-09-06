@@ -26,6 +26,15 @@ async function assertSchema(): Promise<void> {
     if (!response.ok) throw stale(`Table \`${table}\``);
   }
 
+  // A migration can also add a function, which no table check would notice: the
+  // thread page's ancestor walk is one, and without it every peel page errors.
+  const ancestors = await fetch(`${apiUrl}/rest/v1/rpc/peel_ancestors`, {
+    method: "POST",
+    headers: { ...headers, "Content-Type": "application/json" },
+    body: JSON.stringify({ of_peel: "00000000-0000-0000-0000-000000000000" }),
+  });
+  if (!ancestors.ok) throw stale("The `peel_ancestors` function");
+
   // Uploads go to Storage, which the migration provisions through a function
   // that reports rather than raises -- so its bucket is worth its own check.
   const buckets = await fetch(`${apiUrl}/storage/v1/bucket`, { headers });

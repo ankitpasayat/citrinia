@@ -5,7 +5,7 @@ Repo: /home/ankit/Code/citrinia. Owner: Ankit. You are one of several agents bui
 ## Product
 A tiny Twitter-style feed. Posts are **peels**. Users log in with GitHub (Supabase Auth). Voice: "Peel it" (post button), "No peels yet" (empty), "That peel got composted." (404), "how are you peeling?" (composer placeholder). Say peel, not post.
 
-Core MVP feature set: login, feed (All / Following), post, reply threads with a detail page, like, delete own peel, follow/unfollow, profile (bio, counts, edit), search (people + peels), realtime feed refresh, relative timestamps, empty/error states, system+manual dark mode.
+Core MVP feature set: login, feed (All / Following), post, reply threads with a detail page that opens on the conversation above it, like, delete own peel, follow/unfollow, profile (bio, counts, edit), search (people + peels), realtime feed refresh, relative timestamps, empty/error states, system+manual dark mode.
 
 ## Stack (already set up and verified with `pnpm build`)
 - Next **16.3.4** App Router, Turbopack default, React 19, TypeScript strict. `proxy.ts` (Next 16's middleware) refreshes the Supabase session.

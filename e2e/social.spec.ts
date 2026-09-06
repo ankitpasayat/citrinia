@@ -26,6 +26,12 @@ const FRESH = "a fresh peel while ada watches";
 const OTHER_FRESH = "and another one right after";
 const THREAD_REPLY = "one more from the thread";
 
+// A three-deep conversation for the ancestors test: ada starts it, bob answers
+// her, ada answers him. Opening the last one has to show the first two above it.
+const CHAIN_ROOT = "what is the correct number of oranges";
+const CHAIN_MIDDLE = "one more than you have";
+const CHAIN_LEAF = "that is not a number, bob";
+
 /** How many older peels test 8 bulk-loads. PAGE_SIZE in lib/peels.ts is 20. */
 const OLDER = 25;
 const olderTitle = (n: number) => `older peel ${String(n).padStart(2, "0")}`;
@@ -624,4 +630,33 @@ test("10. with nobody followed, bob is offered somebody to follow", async ({ ope
   // And she is no longer somebody to suggest.
   await bob.goto("/search");
   await expect(bob.getByRole("link", { name: /Ada Lovelace/ })).toHaveCount(0);
+});
+
+test("11. a reply opens with the peels it answers above it, oldest first", async ({ open }) => {
+  const rootId = await peelAs("ada", CHAIN_ROOT);
+  const middleId = await peelAs("bob", CHAIN_MIDDLE, rootId);
+  const leafId = await peelAs("ada", CHAIN_LEAF, middleId);
+
+  const bob = await open("bob");
+  await bob.goto(`/p/${leafId}`);
+
+  // The conversation reads top to bottom and the opened peel is the last of it:
+  // the ancestors are context, and the reply box under them belongs to the leaf.
+  // Each card is identified by the peel its timestamp opens, not by its words.
+  const chain = bob.getByRole("link", { name: "Open this peel" });
+  await expect(chain).toHaveCount(3);
+  await expect(chain.nth(0)).toHaveAttribute("href", `/p/${rootId}`);
+  await expect(chain.nth(1)).toHaveAttribute("href", `/p/${middleId}`);
+  await expect(chain.nth(2)).toHaveAttribute("href", `/p/${leafId}`);
+  await expect(bob.getByLabel("Reply to @ada")).toBeVisible();
+
+  await shot(bob, "thread-ancestors-mobile");
+
+  // The root of the same conversation has nothing above it, and its own reply
+  // still below it -- ancestors are not replies read upside down.
+  await bob.goto(`/p/${rootId}`);
+  const fromRoot = bob.getByRole("link", { name: "Open this peel" });
+  await expect(fromRoot).toHaveCount(2);
+  await expect(fromRoot.nth(0)).toHaveAttribute("href", `/p/${rootId}`);
+  await expect(fromRoot.nth(1)).toHaveAttribute("href", `/p/${middleId}`);
 });
