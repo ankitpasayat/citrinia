@@ -706,5 +706,18 @@ begin
 end $$;
 \echo check 24 ok: the media bucket step is idempotent and skips cleanly without Storage
 
+-- 26. The service role holds table privileges on every public table (it bypasses RLS,
+--     but only if the grants exist; the live project lacked them).
+do $$
+declare t text;
+begin
+  for t in select tablename from pg_tables where schemaname = 'public' loop
+    if not has_table_privilege('service_role', format('public.%I', t), 'select, insert, update, delete') then
+      raise exception 'check 26 FAILED: service_role lacks privileges on public.%', t;
+    end if;
+  end loop;
+end $$;
+\echo check 26 ok: service_role can read and write every public table
+
 rollback;
 \echo ALL CHECKS PASSED
