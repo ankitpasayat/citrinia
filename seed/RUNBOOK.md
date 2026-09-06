@@ -1,6 +1,6 @@
 # Citrinia seeding runbook (resume from here)
 
-Last updated 2026-09-06 06:45 IST by the orchestrating session. Everything a fresh Claude session needs to continue is in this repo; nothing depends on the old session's scratchpad.
+Last updated 2026-09-06 07:05 IST by the orchestrating session. Everything a fresh Claude session needs to continue is in this repo; nothing depends on the old session's scratchpad.
 
 ## Where things stand
 - App: two feature slices live on https://citrinia.vercel.app (main `d903720`+). Migrations 20260905 (init), 20260906 (core), 20260907000000 (social), 20260907010000 (service-role grants) are all applied on the live Supabase project `nqkvknsgtfeoqqbvqgal`.
@@ -25,8 +25,8 @@ Which batches to run: every NN from 01–50 without a `seed/content/bulk-NN.json
 
 ## In-flight work when the last session stopped (2026-09-06 ~06:45 IST)
 - Bulk batches 12, 14, 15, 16 were being written (09, 10, 11 and 13 finished and are committed). Their `.draft` files are dead; relaunch them.
-- An agent was adding `--drip` to `seed/seed.mjs` plus `.github/workflows/drip.yml` and README docs. If `.github/workflows/drip.yml` is missing or `node --check seed/seed.mjs` / `node seed/seed.test.mjs` fail, restore the committed importer with `git checkout seed/seed.mjs` and redo that task (spec: stateless, DB-checked idempotency via `uuidFor`, round-robin cluster order, N top-level peels within the last 55 min, then replies/quotes whose parents exist (~N/2), reposts (~N/4), likes only from existing personas, a few follows; triggers ON; reads env vars when `.env.local` is absent; supports sb_secret keys; `--only a,b,c`).
-- After the drip lands: commit `seed/content`, `seed/personas`, `seed/media-pool.json`, the workflow; push; run the workflow once by hand (`gh workflow run drip.yml -f count=135`) and check the live feed.
+- Drip mode is DONE and committed (`bea13cf`): `node seed/seed.mjs --target live --drip 135`, `.github/workflows/drip.yml` runs hourly at :07 with count 135 and was dispatched once by hand on 2026-09-06 ~07:05 IST. Check runs with `gh run list --workflow=drip.yml`; a failing run usually means the secrets or a validator error in a newly committed content file.
+- Ongoing: as each bulk batch is accepted, `git add seed/content/bulk-NN.json && git commit && git push` so the hourly drip can see it. The drip skips anything already on production.
 
 ## Checks
 `pnpm typecheck && pnpm lint && pnpm test && pnpm build`; `supabase/verify.sh` (Docker); `pnpm e2e` (needs `npx supabase start` then `npx supabase db reset`, see README). Owner's dev server usually runs on :3000 — never kill it; Next 16 refuses a second `next dev`, use `next start -p <port>` after a build.
