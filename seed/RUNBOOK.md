@@ -37,4 +37,4 @@ After acceptance: `git add seed/content/bulk-NN.json && git commit -m "Seed cont
 `pnpm typecheck && pnpm lint && pnpm test && pnpm build`; `supabase/verify.sh` (Docker); `pnpm e2e` (needs `npx supabase start` then `npx supabase db reset`, see README). Owner's dev server usually runs on :3000 — never kill it; Next 16 refuses a second `next dev`, use `next start -p <port>` after a build.
 
 ## Still to do after seeding
-Daily fresh-content routine (new peels, not just the corpus), pagination tie-break keyset if ties ever matter for real posts, orphan-upload sweep, notifications realtime badge, PWA service worker, Capacitor shell.
+Daily fresh-content routine (new peels, not just the corpus). Done on the `post-seeding` branch: notifications realtime badge, orphan-upload sweep (`scripts/sweep-media.mjs`, daily via `.github/workflows/sweep-media.yml`; preview with `gh workflow run sweep-media.yml -f dry_run=true`). Remaining there: pagination tie-break keyset, PWA service worker, Capacitor shell.

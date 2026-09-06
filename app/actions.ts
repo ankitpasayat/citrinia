@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { parseMedia } from "@/lib/media";
+import { mediaObjectPath, parseMedia } from "@/lib/media";
 import { parseTitle } from "@/lib/peel";
 import { parseProfile } from "@/lib/profile";
 
@@ -65,12 +65,26 @@ export async function addPeel(_prev: ActionResult, formData: FormData): Promise<
   return {};
 }
 
-/** Delete one of the signed-in user's own peels. RLS rejects anyone else's. */
+/** Delete one of the signed-in user's own peels, and its uploads. RLS rejects anyone else's. */
 export async function deletePeel(id: string): Promise<ActionResult> {
   const { supabase } = await viewer();
 
+  // The peel's media rows go with it by cascade, so the urls are read first.
+  const { data: media } = await supabase.from("peel_media").select("url").eq("peel_id", id);
   const { error, count } = await supabase.from("peels").delete({ count: "exact" }).eq("id", id);
   if (error || count === 0) return { error: "Couldn't delete that peel." };
+
+  // Only objects in this project's bucket are ours to remove, and the bucket
+  // policy lets the signed-in user delete from their own folder alone. Best
+  // effort: the peel is already gone, and the nightly sweep
+  // (scripts/sweep-media.mjs) catches anything left behind.
+  const paths = (media ?? [])
+    .map((row) => mediaObjectPath(row.url, process.env.NEXT_PUBLIC_SUPABASE_URL!))
+    .filter((path) => path !== null);
+  if (paths.length > 0) {
+    const { error: storageError } = await supabase.storage.from("media").remove(paths);
+    if (storageError) console.error(`Couldn't remove the media of peel ${id}: ${storageError.message}`);
+  }
   revalidatePath("/", "layout");
   return {};
 }

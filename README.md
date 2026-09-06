@@ -65,8 +65,9 @@ users, in one narrative on one database:
   theme, and a peel arriving on an open feed.
 - `e2e/desktop.spec.ts` — the same feed on a wide screen.
 - `e2e/social.spec.ts` — repeel, quote, bookmarks, notifications and the unread
-  badge, @mentions and #hashtags, YouTube links, the media picker, cursor
-  pagination, the "N new peels" announcement, and who to follow.
+  badge, @mentions and #hashtags, YouTube links, the media picker and the
+  upload a composted peel takes with it, cursor pagination, the "N new peels"
+  announcement, and who to follow.
 
 GitHub OAuth cannot be completed headlessly, so the suite runs against a
 **local** Supabase stack and mints its sessions with the password grant
@@ -97,11 +98,11 @@ Global setup checks the schema before anything runs and says to reset if the
 `reposts`, `bookmarks`, `peel_media` or `notifications` tables — or the `media`
 Storage bucket — are not there yet.
 
-One thing the local stack cannot exercise: a file uploaded through the composer
-comes back from Storage as `http://127.0.0.1:54321/…`, and both `lib/media.ts`
-and the `peel_media_url_https` constraint require `https://`, so the peel is
-refused. The upload itself is covered end to end; the card it would produce is
-covered from an `https` url, the way the seed importer writes one.
+A file uploaded through the composer comes back from the local stack's Storage
+as `http://127.0.0.1:54321/…`; `lib/media.ts` and the `peel_media_url_https`
+constraint admit that loopback form, so the peel posts, and deleting it removes
+the object from the bucket again. The card such a peel produces is also covered
+from an `https` url, the way the seed importer writes one.
 
 Screenshots land in `e2e/screenshots/` (gitignored) at both sizes. `npx supabase
 stop` tears the stack down; starting it again comes up with the data reset.
@@ -183,3 +184,23 @@ The workflow checks the repo out and runs the script — there is no install ste
 because there is nothing to install. That also means **content files only go live
 once they are committed**: an uncommitted `seed/content/bulk-09.json` is
 invisible to the workflow, however good it is.
+
+### Sweeping orphaned uploads
+
+A picture goes from the browser straight into the `media` bucket before the peel
+exists, so one attached and never posted stays behind; a composted peel takes
+its own uploads with it, but only since the app learned to. Nothing else ever
+deletes from the bucket, so
+[`scripts/sweep-media.mjs`](scripts/sweep-media.mjs) does: every object no
+`peel_media` row points at and older than an hour (a composer may still be
+posting a younger one) is deleted.
+
+```bash
+node scripts/sweep-media.mjs --target local --dry-run           # the running local stack
+node scripts/sweep-media.mjs --target live --dry-run            # .env.local; prints counts only
+node scripts/sweep-media.mjs --target live --min-age 0          # no grace period
+```
+
+[`.github/workflows/sweep-media.yml`](.github/workflows/sweep-media.yml) runs it
+daily with the same two secrets as the drip; `gh workflow run sweep-media.yml -f
+dry_run=true` previews a run from the Actions log.

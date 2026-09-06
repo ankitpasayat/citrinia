@@ -438,26 +438,25 @@ test("7. ada attaches a picture, and the composer holds the line", async ({ open
   const url = mediaUrl(uploaded[0]);
   expect((await ada.request.get(url)).status()).toBe(200);
 
-  // Then the https rule in lib/media.ts turns that url away: the local stack
-  // serves Storage over http on loopback, and the rule (with the
-  // peel_media_url_https constraint behind it) is `^https://` with no carve-out
-  // for it. Against a hosted project the same upload posts. Here it cannot, and
-  // the peel is refused whole rather than posted without the picture on it.
-  expect(url).toMatch(/^http:\/\/127\.0\.0\.1:54321\//);
-  await expect(sheet.getByText("Media needs an https link.")).toBeVisible();
-  const refused = await restAsService().select<{ id: string }>(
-    `peels?select=id&title=eq.${encodeURIComponent(PICTURE)}`,
-  );
-  expect(refused).toHaveLength(0);
+  // The loopback url the local stack serves is admitted by lib/media.ts (a
+  // secure origin in browsers), so the peel posts with the picture on it.
+  await expect(sheet).toBeHidden();
+  const shownUpload = card(ada, PICTURE).getByRole("img", { name: "orange square" });
+  await expect(shownUpload).toBeVisible();
+  await expect(shownUpload).toHaveAttribute("src", url);
 
-  // Nothing typed or attached is lost when a post is refused.
-  await expect(attached).toHaveCount(1);
-  await expect(alt).toHaveValue("orange square");
-  await sheet.getByRole("button", { name: "Cancel" }).click();
+  // Composting the peel takes its upload with it: the object is removed from
+  // the bucket on delete, not left for the nightly sweep.
+  await card(ada, PICTURE).getByRole("button", { name: "More" }).click();
+  await ada.getByRole("button", { name: "Delete peel" }).click();
+  const deleted = actionWrite(ada);
+  await ada.getByRole("button", { name: "Really delete? Tap again" }).click();
+  await deleted;
+  await expect(card(ada, PICTURE)).toHaveCount(0);
+  await expect.poll(() => listMedia(adaId)).toEqual(before);
 
-  // The card an accepted upload produces, written the way the seed importer
-  // writes one -- an https url on somebody's CDN. This is the rendering half of
-  // the same feature, and the half the composer cannot reach on a local stack.
+  // The card an upload produces from an https url on somebody's CDN, the way
+  // the seed importer writes one: the rendering half of the same feature.
   const service = restAsService();
   const [peel] = await service.insert<{ id: string }>("peels", {
     title: PICTURE,

@@ -9,7 +9,7 @@
 // which carry their own.
 import test from "node:test";
 import assert from "node:assert/strict";
-import { MAX_ALT, MAX_MEDIA, parseMedia, youtubeId, youtubeThumbnail } from "./media.ts";
+import { MAX_ALT, MAX_MEDIA, mediaObjectPath, parseMedia, youtubeId, youtubeThumbnail } from "./media.ts";
 
 const IMAGE = { kind: "image", url: "https://cdn.example.com/lemon.png", alt: "a lemon" };
 
@@ -189,4 +189,32 @@ test("youtubeThumbnail builds the still for an id", () => {
     youtubeThumbnail("dQw4w9WgXcQ"),
     "https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
   );
+});
+
+// Spec: deleting a peel removes its own uploads from the bucket, and the sweep
+// must never touch anything else. mediaObjectPath() is the gate: only a public
+// url of this project's media bucket names an object we own.
+test("a public media url of this project maps to its object path", () => {
+  const live = "https://abc.supabase.co";
+  assert.equal(mediaObjectPath(`${live}/storage/v1/object/public/media/u1/f.png`, live), "u1/f.png");
+  const local = "http://127.0.0.1:54321";
+  assert.equal(mediaObjectPath(`${local}/storage/v1/object/public/media/u1/f.png`, local), "u1/f.png");
+  assert.equal(mediaObjectPath(`${live}/storage/v1/object/public/media/u1/f.png`, `${live}/`), "u1/f.png", "trailing slash on the project url");
+  assert.equal(mediaObjectPath(`${live}/storage/v1/object/public/media/u1/f.png?download=1`, live), "u1/f.png", "a query string is not part of the path");
+  assert.equal(mediaObjectPath(`${live}/storage/v1/object/public/media/u1/f.png#x`, live), "u1/f.png", "nor is a fragment");
+});
+
+test("anything that is not this project's public media url is nobody's to delete", () => {
+  const live = "https://abc.supabase.co";
+  for (const [url, why] of [
+    ["https://cdn.example.com/lemon.png", "a CDN"],
+    ["https://www.youtube.com/watch?v=dQw4w9WgXcQ", "YouTube"],
+    [`${live}/storage/v1/object/public/avatars/u1/f.png`, "another bucket"],
+    [`${live}/storage/v1/object/sign/media/u1/f.png?token=t`, "a signed url"],
+    ["https://xyz.supabase.co/storage/v1/object/public/media/u1/f.png", "another project"],
+    [`${live}/storage/v1/object/public/media/`, "the bare prefix"],
+    ["http://127.0.0.1:54321/storage/v1/object/public/media/u1/f.png", "the local stack, when the project is live"],
+  ] as const) {
+    assert.equal(mediaObjectPath(url, live), null, why);
+  }
 });

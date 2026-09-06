@@ -122,6 +122,19 @@ export function youtubeId(url: string): string | null {
   return id !== null && YOUTUBE_ID.test(id) ? id : null;
 }
 
+/**
+ * The object one of this project's public media urls points at, as the
+ * `<uid>/<file>` path in the `media` bucket -- or null for any other url (a CDN,
+ * YouTube, a signed url, another bucket, another project), which is not ours to
+ * touch. The inverse of what supabase-js getPublicUrl() builds.
+ */
+export function mediaObjectPath(url: string, supabaseUrl: string): string | null {
+  const prefix = `${supabaseUrl.replace(/\/+$/, "")}/storage/v1/object/public/media/`;
+  if (!url.startsWith(prefix)) return null;
+  const path = url.slice(prefix.length).split(/[?#]/, 1)[0];
+  return path === "" ? null : path;
+}
+
 /** The still image for a video id. Served by YouTube, so no upload needed. */
 export function youtubeThumbnail(id: string): string {
   return `https://i.ytimg.com/vi/${id}/hqdefault.jpg`;
