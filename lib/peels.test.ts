@@ -8,6 +8,7 @@ import assert from "node:assert/strict";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   countUnreadNotifications,
+  encodeCursor,
   escapeRegex,
   fetchBookmarks,
   fetchLikedBy,
@@ -26,6 +27,12 @@ type Rpc = { name: string; args: Record<string, unknown> };
 const ADA = { id: "u-ada", name: "Ada", username: "ada", avatar_url: "", bio: "" };
 const BOB = { id: "u-bob", name: "Bob", username: "bob", avatar_url: "", bio: "" };
 const CAT = { id: "u-cat", name: "Cat", username: "cat", avatar_url: "", bio: "" };
+/** Real uuids, because a cursor's ids are checked before they reach a query. */
+const ID = "11111111-1111-4111-8111-111111111111";
+const BY = "22222222-2222-4222-8222-222222222222";
+/** The row comparison `(created_at, idColumn) < (at, id)` as PostgREST spells it. */
+const olderThan = (idColumn: string, at: string, id: string) =>
+  `created_at.lt."${at}",and(created_at.eq."${at}",${idColumn}.lt.${id})`;
 
 function peelRow(over: Partial<Record<string, unknown>> = {}) {
   return {
@@ -102,6 +109,7 @@ function fake(rows: {
             eq: push("eq"),
             in: push("in"),
             lt: push("lt"),
+            or: (filters: string) => push("or")("", filters),
             ilike: push("ilike"),
             not: (column: string, op: string, value: unknown) => {
               call.filters.push([`not.${op}`, column, value]);
@@ -144,7 +152,10 @@ test("a parentId string asks for that peel's replies, oldest first when ascendin
   const { client, calls } = fake({ peels: [peelRow({ id: "r1", parent_id: "p1" })] });
   await fetchPeels(client, ADA.id, { parentId: "p1", ascending: true });
   assert.deepEqual(calls[0].filters[0], ["eq", "parent_id", "p1"]);
-  assert.deepEqual(calls[0].filters.at(-1), ["order", "created_at", { ascending: true }]);
+  assert.deepEqual(calls[0].filters.slice(-2), [
+    ["order", "created_at", { ascending: true }],
+    ["order", "id", { ascending: true }],
+  ]);
 });
 
 test("no parent filter leaves parent_id alone", async () => {
@@ -162,27 +173,56 @@ test("repliesOnly asks for peels that do have a parent", async () => {
   assert.deepEqual(calls[0].filters[0], ["not.is", "parent_id", null]);
 });
 
-test("before is a keyset cursor on created_at, so a page never repeats a peel", async () => {
+test("a cursor names a row, and the next page starts strictly after it: older, or the same instant with a smaller id", async () => {
+  // Two peels can share a created_at (one transaction's now(), or plain luck),
+  // and a cursor on the time alone would skip whichever of them fell on the
+  // far side of the page boundary.
   const { client, calls } = fake({ peels: [] });
-  await fetchPeels(client, ADA.id, { before: "2026-09-05T00:00:00Z" });
-  assert.deepEqual(calls[0].filters[0], ["lt", "created_at", "2026-09-05T00:00:00Z"]);
+  await fetchPeels(client, ADA.id, { before: encodeCursor("2026-09-05T00:00:00Z", ID) });
+  assert.deepEqual(calls[0].filters[0], ["or", "", olderThan("id", "2026-09-05T00:00:00Z", ID)]);
 });
 
-test("a cursor that is not a timestamp is dropped, so a hand-edited URL is page one", async () => {
-  // Postgres answers a malformed timestamp with an error, not an empty list, so
-  // a `before` that reaches the query is a 500 on somebody's address bar.
-  for (const junk of ["abc", "", "2026-02-31T00:00:00Z", "2026-13-01T00:00:00Z", "now()"]) {
-    const { client, calls } = fake({ peels: [] });
-    await fetchPeels(client, ADA.id, { before: junk });
+test("garbage is page one, never an error", async () => {
+  // Postgres answers a malformed timestamp or uuid with an error, not an empty
+  // list, so a `before` that reaches the query is a 500 on somebody's address
+  // bar. A bare timestamp is what the cursor used to be; those links are old.
+  for (const junk of [
+    "abc",
+    "",
+    "2026-09-05T00:00:00Z",
+    "2026-02-31T00:00:00Z_" + ID,
+    "2026-13-01T00:00:00Z_" + ID,
+    "2026-09-05T00:00:00Z_nope",
+    "_",
+    `2026-09-05T00:00:00Z_${ID}_nope`,
+    `2026-09-05T00:00:00Z_${ID}_${BY}_${BY}`,
+    "now()_" + ID,
+  ]) {
+    const peels = fake({ peels: [] });
+    await fetchPeels(peels.client, ADA.id, { before: junk });
     assert.equal(
-      calls[0].filters.some(([op]) => op === "lt"),
+      peels.calls[0].filters.some(([op]) => op === "or"),
       false,
       `${JSON.stringify(junk)} must not become a filter`,
+    );
+    const timeline = fake({ timeline: [] });
+    await fetchTimeline(timeline.client, ADA.id, { followingOnly: false, before: junk });
+    assert.deepEqual(
+      [timeline.rpcs[0].args.before, timeline.rpcs[0].args.before_id, timeline.rpcs[0].args.before_by],
+      [null, null, null],
+      `${JSON.stringify(junk)} must not reach home_timeline`,
+    );
+    const joins = fake({ joins: [] });
+    await fetchBookmarks(joins.client, ADA.id, junk);
+    assert.equal(
+      joins.calls[0].filters.some(([op]) => op === "or"),
+      false,
+      `${JSON.stringify(junk)} must not reach a join-table page`,
     );
   }
 });
 
-test("the timestamps Postgres hands back are cursors it takes again", async () => {
+test("the cursor a list hands out is the cursor it takes back", async () => {
   // The shapes PostgREST returns for a timestamptz, plus the ISO the JS side builds.
   for (const good of [
     "2026-09-05T22:37:34.359+00:00",
@@ -192,30 +232,31 @@ test("the timestamps Postgres hands back are cursors it takes again", async () =
     "2026-09-05 22:37:34.359+00",
   ]) {
     const { client, calls } = fake({ peels: [] });
-    await fetchPeels(client, ADA.id, { before: good });
-    assert.deepEqual(calls[0].filters[0], ["lt", "created_at", good]);
+    await fetchPeels(client, ADA.id, { before: encodeCursor(good, ID) });
+    assert.deepEqual(calls[0].filters[0], ["or", "", olderThan("id", good, ID)]);
   }
-});
-
-test("a junk cursor never reaches home_timeline either", async () => {
-  const { client, rpcs } = fake({ timeline: [] });
-  await fetchTimeline(client, ADA.id, { followingOnly: false, before: "abc" });
-  assert.equal(rpcs[0].args.before, null);
-});
-
-test("a junk cursor never reaches a join-table page either", async () => {
-  const { client, calls } = fake({ joins: [] });
-  await fetchBookmarks(client, ADA.id, "abc");
-  assert.equal(
-    calls[0].filters.some(([op]) => op === "lt"),
-    false,
+  // The timeline's cursor carries the repeeler as a third key, or nothing for a peel's own row.
+  const three = fake({ timeline: [] });
+  await fetchTimeline(three.client, ADA.id, { followingOnly: false, before: encodeCursor("2026-09-01T00:00:00Z", ID, BY) });
+  assert.deepEqual(
+    [three.rpcs[0].args.before, three.rpcs[0].args.before_id, three.rpcs[0].args.before_by],
+    ["2026-09-01T00:00:00Z", ID, BY],
+  );
+  const two = fake({ timeline: [] });
+  await fetchTimeline(two.client, ADA.id, { followingOnly: false, before: encodeCursor("2026-09-01T00:00:00Z", ID) });
+  assert.deepEqual(
+    [two.rpcs[0].args.before, two.rpcs[0].args.before_id, two.rpcs[0].args.before_by],
+    ["2026-09-01T00:00:00Z", ID, null],
   );
 });
 
-test("peels default to newest first", async () => {
+test("peels default to newest first, ties broken by id the same way", async () => {
   const { client, calls } = fake({ peels: [peelRow()] });
   await fetchPeels(client, ADA.id);
-  assert.deepEqual(calls[0].filters.at(-1), ["order", "created_at", { ascending: false }]);
+  assert.deepEqual(calls[0].filters.slice(-2), [
+    ["order", "created_at", { ascending: false }],
+    ["order", "id", { ascending: false }],
+  ]);
 });
 
 test("an empty authorIds or ids list returns nothing without touching the database", async () => {
@@ -451,7 +492,10 @@ test("fetchTimeline asks home_timeline for the page and hydrates its ids in orde
   });
   const { items } = await fetchTimeline(client, ADA.id, { followingOnly: false, pageSize: 20 });
   assert.deepEqual(rpcs, [
-    { name: "home_timeline", args: { following_only: false, before: null, page_size: 20 } },
+    {
+      name: "home_timeline",
+      args: { following_only: false, before: null, page_size: 20, before_id: null, before_by: null },
+    },
   ]);
   assert.deepEqual(
     items.map((p) => p.id),
@@ -484,17 +528,19 @@ test("fetchTimeline passes followingOnly and the before cursor straight through"
   const { client, rpcs } = fake({ timeline: [] });
   await fetchTimeline(client, ADA.id, {
     followingOnly: true,
-    before: "2026-09-01T00:00:00Z",
+    before: encodeCursor("2026-09-01T00:00:00Z", ID),
     pageSize: 5,
   });
   assert.deepEqual(rpcs[0].args, {
     following_only: true,
     before: "2026-09-01T00:00:00Z",
     page_size: 5,
+    before_id: ID,
+    before_by: null,
   });
 });
 
-test("nextBefore is the last row's sort_at on a full page, and null on a short one", async () => {
+test("nextBefore names the last row -- its time, its peel and who repeeled it -- on a full page, and is null on a short one", async () => {
   const full = fake({
     timeline: [
       { peel_id: "p2", repost_by: null, sort_at: "2026-09-03T00:00:00Z" },
@@ -504,7 +550,19 @@ test("nextBefore is the last row's sort_at on a full page, and null on a short o
   });
   assert.equal(
     (await fetchTimeline(full.client, ADA.id, { followingOnly: false, pageSize: 2 })).nextBefore,
-    "2026-09-01T00:00:00Z",
+    encodeCursor("2026-09-01T00:00:00Z", "p1"),
+  );
+  const repost = fake({
+    timeline: [
+      { peel_id: "p2", repost_by: null, sort_at: "2026-09-03T00:00:00Z" },
+      { peel_id: "p1", repost_by: BOB.id, sort_at: "2026-09-01T00:00:00Z" },
+    ],
+    peels: [peelRow({ id: "p1" }), peelRow({ id: "p2" })],
+    profiles: [BOB],
+  });
+  assert.equal(
+    (await fetchTimeline(repost.client, ADA.id, { followingOnly: false, pageSize: 2 })).nextBefore,
+    encodeCursor("2026-09-01T00:00:00Z", "p1", BOB.id),
   );
 
   const short = fake({
@@ -545,12 +603,13 @@ test("a peel composted between the RPC and the hydrate is dropped, not rendered 
 
 test("fetchRepliesBy asks for that author's peels that have a parent", async () => {
   const { client, calls } = fake({ peels: [] });
-  await fetchRepliesBy(client, ADA.id, BOB.id, "2026-09-01T00:00:00Z");
+  await fetchRepliesBy(client, ADA.id, BOB.id, encodeCursor("2026-09-01T00:00:00Z", ID));
   assert.deepEqual(calls[0].filters, [
     ["not.is", "parent_id", null],
     ["eq", "user_id", BOB.id],
-    ["lt", "created_at", "2026-09-01T00:00:00Z"],
+    ["or", "", olderThan("id", "2026-09-01T00:00:00Z", ID)],
     ["order", "created_at", { ascending: false }],
+    ["order", "id", { ascending: false }],
     ["limit", "", 20],
   ]);
 });
@@ -575,12 +634,15 @@ test("fetchLikedBy reads that user's likes newest first and keeps the like's ord
 
 test("fetchBookmarks reads the viewer's own bookmarks, with the cursor on the bookmark time", async () => {
   const { client, calls } = fake({ joins: [] });
-  await fetchBookmarks(client, ADA.id, "2026-09-01T00:00:00Z");
+  await fetchBookmarks(client, ADA.id, encodeCursor("2026-09-01T00:00:00Z", ID));
   assert.equal(calls[0].table, "bookmarks");
   assert.deepEqual(calls[0].filters, [
     ["eq", "user_id", ADA.id],
-    ["lt", "created_at", "2026-09-01T00:00:00Z"],
+    // The join's own keys: when it was saved, and which peel, so two saves in
+    // one instant still page cleanly.
+    ["or", "", olderThan("peel_id", "2026-09-01T00:00:00Z", ID)],
     ["order", "created_at", { ascending: false }],
+    ["order", "peel_id", { ascending: false }],
     ["limit", "", 20],
   ]);
 });

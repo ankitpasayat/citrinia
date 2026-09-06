@@ -328,6 +328,8 @@ export type Database = {
           following_only?: boolean
           before?: string | null
           page_size?: number
+          before_id?: string | null
+          before_by?: string | null
         }
         Returns: {
           peel_id: string

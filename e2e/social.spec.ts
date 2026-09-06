@@ -491,8 +491,10 @@ test("8. a feed longer than a page shows older peels, and profile tabs sort them
   const bob = await restAs("bob");
   const db = restAsService();
 
-  // Every row of one insert shares the transaction's now(), which would leave
-  // the keyset cursor with nothing to bite on -- so the clock is set by hand.
+  // Every row of one insert shares the transaction's now(), so the clock is set
+  // by hand, a minute apart -- except rows 13 and 14, which share an instant on
+  // purpose: the page boundary falls between them (8 narrative rows plus 12 of
+  // these fill page one), which is exactly where a time-only cursor lost a row.
   const start = Date.parse("2026-08-01T12:00:00.000Z");
   await db.insert(
     "peels",
@@ -500,9 +502,10 @@ test("8. a feed longer than a page shows older peels, and profile tabs sort them
       title: olderTitle(i + 1),
       user_id: bob.id,
       parent_id: null,
-      created_at: new Date(start + i * 60_000).toISOString(),
+      created_at: new Date(start + (i + 1 === 14 ? 12 : i) * 60_000).toISOString(),
     })),
   );
+  const tied = [await peelId(olderTitle(13)), await peelId(olderTitle(14))].map((id) => `/p/${id}`);
 
   const ada = await open("ada");
   await ada.goto("/");
@@ -510,6 +513,7 @@ test("8. a feed longer than a page shows older peels, and profile tabs sort them
   await expect(card(ada, olderTitle(OLDER))).toHaveCount(1);
   await expect(card(ada, olderTitle(1))).toHaveCount(0);
   const firstPage = await shownIds(ada);
+  expect(tied.filter((href) => firstPage.includes(href))).toHaveLength(1);
 
   await ada.getByRole("link", { name: "Show older peels" }).click();
   await expect(ada).toHaveURL(/\?before=/);
@@ -519,12 +523,19 @@ test("8. a feed longer than a page shows older peels, and profile tabs sort them
   await expect(card(ada, olderTitle(1))).toHaveCount(1);
   const secondPage = await shownIds(ada);
   expect(secondPage.filter((id) => firstPage.includes(id))).toEqual([]);
+  // Both halves of the tie showed up, once each, across the two pages.
+  expect([...firstPage, ...secondPage].filter((href) => tied.includes(href))).toHaveLength(2);
   await expect(ada.getByRole("link", { name: "Show older peels" })).toHaveCount(0);
 
   // Past the last row there is nothing left, and the copy says so.
-  await ada.goto(`/?before=${encodeURIComponent(new Date(start).toISOString())}`);
+  const oldest = `${new Date(start).toISOString()}_${await peelId(olderTitle(1))}`;
+  await ada.goto(`/?before=${encodeURIComponent(oldest)}`);
   await expect(ada.getByRole("heading", { name: "That's all the peels." })).toBeVisible();
   await expect(ada.getByText("You've reached the end.")).toBeVisible();
+
+  // A cursor from before ids were part of it is page one, not an error.
+  await ada.goto(`/?before=${encodeURIComponent(new Date(start).toISOString())}`);
+  await expect(ada.getByRole("article")).toHaveCount(20);
 
   // Bob's own peels page the same way.
   await ada.goto("/u/bob");

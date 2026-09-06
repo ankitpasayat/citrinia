@@ -106,9 +106,14 @@ do $$ begin
     raise exception 'check 6 FAILED: authenticated can write notifications';
   end if;
   -- The two RPCs are scoped by GRANT, not only by their bodies.
-  if not has_function_privilege('authenticated', 'public.home_timeline(boolean, timestamptz, int)', 'execute')
-     or has_function_privilege('anon', 'public.home_timeline(boolean, timestamptz, int)', 'execute') then
+  if not has_function_privilege('authenticated', 'public.home_timeline(boolean, timestamptz, int, uuid, uuid)', 'execute')
+     or has_function_privilege('anon', 'public.home_timeline(boolean, timestamptz, int, uuid, uuid)', 'execute') then
     raise exception 'check 6 FAILED: home_timeline execute grants are wrong';
+  end if;
+  -- The keyset migration replaced the three-argument version; an overload left
+  -- behind would keep its own grants.
+  if exists (select 1 from pg_proc where proname = 'home_timeline' and pronamespace = 'public'::regnamespace and pronargs <> 5) then
+    raise exception 'check 6 FAILED: an old home_timeline overload is still defined';
   end if;
   if has_function_privilege('authenticated', 'public.seed_triggers(boolean)', 'execute')
      or has_function_privilege('anon', 'public.seed_triggers(boolean)', 'execute')
@@ -632,6 +637,59 @@ begin
      or (select count(*) from public.home_timeline(false, '2020-01-04T00:00:00Z', -5)) <> 1 then
     raise exception 'check 22 FAILED: page_size is not clamped to at least 1';
   end if;
+
+  -- Ties. Ada (the caller, so RLS lets her) posts at the very instant cat did,
+  -- and repeels cat's peel at that same instant: three rows on one clock tick,
+  -- two of them the same peel. The order is time, then peel id, then who
+  -- repeeled (a peel's own row last), and a cursor that names all three keys
+  -- carries on from any of them without skipping or repeating a row.
+  insert into public.peels (id, created_at, title, user_id)
+    values ('30000000-0000-0000-0000-000000000004', '2020-01-02T00:00:00Z', 'ada, at the same instant', auth.uid());
+  insert into public.reposts (user_id, peel_id, created_at)
+    values (auth.uid(), '30000000-0000-0000-0000-000000000002', '2020-01-02T00:00:00Z');
+  select string_agg(t.peel_id::text || '/' || coalesce(t.repost_by::text, '-'), ' | ')
+    into rows
+  from public.home_timeline(false, '2020-01-04T00:00:00Z', 100) t;
+  if rows is distinct from
+     '30000000-0000-0000-0000-000000000001/00000000-0000-0000-0000-000000000002 | '
+     '30000000-0000-0000-0000-000000000004/- | '
+     '30000000-0000-0000-0000-000000000002/00000000-0000-0000-0000-000000000001 | '
+     '30000000-0000-0000-0000-000000000002/- | '
+     '30000000-0000-0000-0000-000000000001/-' then
+    raise exception 'check 22 FAILED: tied rows are not ordered by peel id then reposter, got %', rows;
+  end if;
+  -- A page of two ends inside the tie; the next page starts right after it.
+  select string_agg(t.peel_id::text || '/' || coalesce(t.repost_by::text, '-'), ' | ')
+    into rows
+  from public.home_timeline(false, '2020-01-04T00:00:00Z', 2) t;
+  if rows is distinct from
+     '30000000-0000-0000-0000-000000000001/00000000-0000-0000-0000-000000000002 | '
+     '30000000-0000-0000-0000-000000000004/-' then
+    raise exception 'check 22 FAILED: a two-row page came back as %', rows;
+  end if;
+  select string_agg(t.peel_id::text || '/' || coalesce(t.repost_by::text, '-'), ' | ')
+    into rows
+  from public.home_timeline(false, '2020-01-02T00:00:00Z', 100, '30000000-0000-0000-0000-000000000004', null) t;
+  if rows is distinct from
+     '30000000-0000-0000-0000-000000000002/00000000-0000-0000-0000-000000000001 | '
+     '30000000-0000-0000-0000-000000000002/- | '
+     '30000000-0000-0000-0000-000000000001/-' then
+    raise exception 'check 22 FAILED: paging from inside a tie skipped or repeated a row, got %', rows;
+  end if;
+  -- From the repeel, the peel's own row is next; from the peel's own row, only older ones remain.
+  select string_agg(t.peel_id::text || '/' || coalesce(t.repost_by::text, '-'), ' | ')
+    into rows
+  from public.home_timeline(false, '2020-01-02T00:00:00Z', 100, '30000000-0000-0000-0000-000000000002', auth.uid()) t;
+  if rows is distinct from
+     '30000000-0000-0000-0000-000000000002/- | 30000000-0000-0000-0000-000000000001/-' then
+    raise exception 'check 22 FAILED: paging from a repeel came back as %', rows;
+  end if;
+  select string_agg(t.peel_id::text || '/' || coalesce(t.repost_by::text, '-'), ' | ')
+    into rows
+  from public.home_timeline(false, '2020-01-02T00:00:00Z', 100, '30000000-0000-0000-0000-000000000002', null) t;
+  if rows is distinct from '30000000-0000-0000-0000-000000000001/-' then
+    raise exception 'check 22 FAILED: paging from a peel at its own instant came back as %', rows;
+  end if;
 end $$;
 reset role;
 set local role anon;
@@ -640,7 +698,7 @@ do $$ begin
   raise exception 'check 22 FAILED: anon can read the home timeline';
 exception when insufficient_privilege then null; end $$;
 reset role;
-\echo check 22 ok: home_timeline merges reposts by their own time, honours following_only, before and page_size
+\echo check 22 ok: home_timeline merges reposts by their own time, honours following_only, page_size and a three-key cursor
 
 -- 23. seed_triggers is service-role only, twice over, and really does silence
 --     the notification triggers while it is off.

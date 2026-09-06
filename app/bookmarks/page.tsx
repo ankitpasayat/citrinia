@@ -6,7 +6,7 @@ import { Column } from "@/components/column";
 import { FeedShell } from "@/components/feed-shell";
 import { PeelList } from "@/components/peel-list";
 import { ShowOlder } from "@/components/show-older";
-import { PAGE_SIZE, fetchBookmarks } from "@/lib/peels";
+import { PAGE_SIZE, encodeCursor, fetchBookmarks } from "@/lib/peels";
 import { createClient } from "@/lib/supabase/server";
 import { colors, fonts } from "../tokens.stylex";
 
@@ -42,7 +42,7 @@ export default async function Bookmarks({
       .eq("user_id", user.id)
       .eq("peel_id", peels[peels.length - 1].id)
       .maybeSingle();
-    older = cursor?.created_at ?? null;
+    older = cursor ? encodeCursor(cursor.created_at, peels[peels.length - 1].id) : null;
   }
 
   return (

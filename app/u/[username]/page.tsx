@@ -7,7 +7,7 @@ import { PeelList } from "@/components/peel-list";
 import { ProfileCard } from "@/components/profile-card";
 import { ProfileTabs, parseProfileTab, type ProfileTab } from "@/components/profile-tabs";
 import { ShowOlder } from "@/components/show-older";
-import { PAGE_SIZE, fetchLikedBy, fetchPeels, fetchRepliesBy } from "@/lib/peels";
+import { PAGE_SIZE, encodeCursor, fetchLikedBy, fetchPeels, fetchRepliesBy } from "@/lib/peels";
 import { createClient } from "@/lib/supabase/server";
 
 type Props = {
@@ -148,7 +148,7 @@ async function cursor(
   peels: PeelUnionAuthor[],
 ): Promise<string | null> {
   const last = peels[peels.length - 1];
-  if (tab !== "likes") return last.created_at;
+  if (tab !== "likes") return encodeCursor(last.created_at, last.id);
 
   const { data } = await supabase
     .from("likes")
@@ -156,5 +156,5 @@ async function cursor(
     .eq("user_id", profileId)
     .eq("peel_id", last.id)
     .maybeSingle();
-  return data?.created_at ?? null;
+  return data ? encodeCursor(data.created_at, last.id) : null;
 }

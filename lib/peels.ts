@@ -14,7 +14,7 @@ export type PeelFilter = {
   ids?: string[];
   search?: string;
   limit?: number;
-  /** Keyset cursor: only peels created strictly before this ISO timestamp. */
+  /** Keyset cursor from `encodeCursor`: only rows strictly after that one, newest first. */
   before?: string;
   /** Oldest first. Replies read as a thread; everything else is newest first. */
   ascending?: boolean;
@@ -45,19 +45,48 @@ export function escapeRegex(term: string): string {
 const TIMESTAMP =
   /^[1-9]\d{3}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])[T ]([01]\d|2[0-3]):[0-5]\d:[0-5]\d(\.\d{1,6})?(Z|[+-]([01]\d|2[0-3])(:?[0-5]\d)?)?$/;
 
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** A page cursor: the last row on the page, by every key the list is ordered on. */
+type Cursor = { at: string; id: string; by: string | null };
+
 /**
- * A page cursor is a timestamp this module handed out, echoed back through the
- * URL. Postgres answers a malformed one with an error rather than an empty list,
- * so anything that is not a timestamp is dropped here and the reader gets the
- * first page instead of an error screen.
+ * The cursor for the row that ends a page: its time, its id, and on the home
+ * timeline who repeeled it (nothing for a peel's own row). `_` appears in
+ * neither a timestamp nor a uuid, and survives a URL untouched.
  */
-function cursor(before: string | undefined): string | undefined {
-  if (before === undefined || !TIMESTAMP.test(before)) return undefined;
+export function encodeCursor(at: string, id: string, by?: string | null): string {
+  return `${at}_${id}${by ? `_${by}` : ""}`;
+}
+
+/**
+ * A page cursor is something `encodeCursor` handed out, echoed back through the
+ * URL. Postgres answers a malformed timestamp with an error rather than an empty
+ * list, so anything that does not parse is dropped here and the reader gets the
+ * first page instead of an error screen -- including a bare timestamp from
+ * before ids were part of it.
+ */
+function cursor(before: string | undefined): Cursor | undefined {
+  if (before === undefined) return undefined;
+  const parts = before.split("_");
+  if (parts.length < 2 || parts.length > 3) return undefined;
+  const [at, id, by] = parts;
+  if (!TIMESTAMP.test(at) || !UUID.test(id) || (by !== undefined && !UUID.test(by))) return undefined;
   // The shape can be right while the calendar is not ("2026-02-31"), which
   // Postgres rejects just as loudly. Such a day rolls over in a Date, which shows.
-  const [year, month, day] = before.split(/[-T ]/, 3).map(Number);
-  const at = new Date(Date.UTC(year, month - 1, day));
-  return at.getUTCMonth() + 1 === month && at.getUTCDate() === day ? before : undefined;
+  const [year, month, day] = at.split(/[-T ]/, 3).map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  if (date.getUTCMonth() + 1 !== month || date.getUTCDate() !== day) return undefined;
+  return { at, id, by: by ?? null };
+}
+
+/**
+ * PostgREST's spelling of `(column, idColumn) < (at, id)`: older, or the same
+ * instant and a smaller id. Pairs with ordering on both columns, descending.
+ * The timestamp is quoted so its `.`, `+` and `:` cannot be read as syntax.
+ */
+function olderThan(column: string, idColumn: string, c: Cursor): string {
+  return `${column}.lt."${c.at}",and(${column}.eq."${c.at}",${idColumn}.lt.${c.id})`;
 }
 
 /** Fetch peels with author, counts, the viewer's like/repost/bookmark flags, media and quote. */
@@ -78,11 +107,14 @@ export async function fetchPeels(
   if (filter.authorIds) query = query.in("user_id", filter.authorIds);
   if (filter.ids) query = query.in("id", filter.ids);
   const before = cursor(filter.before);
-  if (before) query = query.lt("created_at", before);
+  if (before) query = query.or(olderThan("created_at", "id", before));
   // The term is literal text: escape the regex metacharacters so "2*3" does not match every peel.
   if (filter.search) query = query.filter("title", "imatch", escapeRegex(filter.search));
 
-  const ordered = query.order("created_at", { ascending: filter.ascending ?? false });
+  // The id breaks ties in the same direction, so a page boundary inside a tie
+  // is a real place the next page can start from.
+  const ascending = filter.ascending ?? false;
+  const ordered = query.order("created_at", { ascending }).order("id", { ascending });
   const { data, error } = await (filter.limit ? ordered.limit(filter.limit) : ordered);
   // A failed query is an error (it reaches app/error.tsx), never a fake empty feed.
   if (error) throw new Error(`Couldn't load peels: ${error.message}`);
@@ -118,8 +150,8 @@ export async function fetchPeel(
  * A peel can appear twice, once as itself and once as somebody's repost -- those
  * are two events, and only the repost row carries `reposted_by`.
  *
- * `nextBefore` is the cursor for the next page (pass it back as `before`), or
- * null when this was the last one.
+ * `nextBefore` is the cursor for the next page (pass it back as `before`): the
+ * last row's time, peel and repeeler, or null when this was the last one.
  */
 export async function fetchTimeline(
   supabase: SupabaseClient<Database>,
@@ -127,10 +159,13 @@ export async function fetchTimeline(
   options: { followingOnly: boolean; before?: string; pageSize?: number },
 ): Promise<{ items: PeelUnionAuthor[]; nextBefore: string | null }> {
   const pageSize = options.pageSize ?? PAGE_SIZE;
+  const c = cursor(options.before);
   const { data, error } = await supabase.rpc("home_timeline", {
     following_only: options.followingOnly,
-    before: cursor(options.before) ?? null,
+    before: c?.at ?? null,
     page_size: pageSize,
+    before_id: c?.id ?? null,
+    before_by: c?.by ?? null,
   });
   if (error) throw new Error(`Couldn't load the timeline: ${error.message}`);
   const rows = data ?? [];
@@ -151,7 +186,8 @@ export async function fetchTimeline(
     items.push(row.repost_by ? { ...peel, reposted_by: reposters.get(row.repost_by) ?? null } : peel);
   }
   // A short page means there is nothing older to ask for.
-  const nextBefore = rows.length < pageSize ? null : rows[rows.length - 1].sort_at;
+  const last = rows[rows.length - 1];
+  const nextBefore = rows.length < pageSize ? null : encodeCursor(last.sort_at, last.peel_id, last.repost_by);
   return { items, nextBefore };
 }
 
@@ -389,8 +425,11 @@ async function fetchByJoin(
 ): Promise<PeelUnionAuthor[]> {
   let query = supabase.from(table).select("peel_id, created_at").eq("user_id", userId);
   const at = cursor(before);
-  if (at) query = query.lt("created_at", at);
-  const { data, error } = await query.order("created_at", { ascending: false }).limit(PAGE_SIZE);
+  if (at) query = query.or(olderThan("created_at", "peel_id", at));
+  const { data, error } = await query
+    .order("created_at", { ascending: false })
+    .order("peel_id", { ascending: false })
+    .limit(PAGE_SIZE);
   if (error) throw new Error(`Couldn't load peels: ${error.message}`);
 
   const ids = (data ?? []).map((row) => row.peel_id);
