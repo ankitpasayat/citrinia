@@ -14,7 +14,7 @@ import { TimelineToggle } from "@/components/timeline-toggle";
 import { WhoToFollow } from "@/components/who-to-follow";
 import { fetchTimeline } from "@/lib/peels";
 import { createClient } from "@/lib/supabase/server";
-import { colors, fonts } from "./tokens.stylex";
+import { bp, colors, fonts } from "./tokens.stylex";
 
 export const metadata: Metadata = { title: "Feed" };
 
@@ -56,7 +56,7 @@ export default async function Home({
       : `/?${following ? "tab=following&" : ""}before=${encodeURIComponent(nextBefore)}`;
 
   return (
-    <FeedShell username={profile.username}>
+    <FeedShell username={profile.username} aside={<WhoToFollow viewerId={user.id} n={5} />}>
       <Column>
         <Band>
           <Link
@@ -93,7 +93,12 @@ export default async function Home({
           olderHref={olderHref}
         />
 
-        {suggest && <WhoToFollow viewerId={user.id} n={5} />}
+        {/* On desktop the suggestions live in the rail instead. */}
+        {suggest && (
+          <div {...stylex.props(styles.narrowOnly)}>
+            <WhoToFollow viewerId={user.id} n={5} />
+          </div>
+        )}
       </Column>
     </FeedShell>
   );
@@ -102,6 +107,7 @@ export default async function Home({
 const styles = stylex.create({
   // Cocoa reads on every stripe; the icon variant's muted grey does not.
   bandIcon: { color: colors.onStripe },
+  narrowOnly: { display: { default: "contents", [bp.desktop]: "none" } },
   greet: { margin: 0, fontWeight: 800, color: colors.muted },
   accent: { fontFamily: fonts.display, fontWeight: 400, fontSize: "1.375rem", color: colors.burnt },
 });

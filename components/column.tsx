@@ -21,6 +21,10 @@ const styles = stylex.create({
     gap: 12,
   },
   withTabs: {
-    paddingBottom: "calc(124px + env(safe-area-inset-bottom))",
+    // No bar to clear on desktop, where the rail holds the navigation.
+    paddingBottom: {
+      default: "calc(124px + env(safe-area-inset-bottom))",
+      [bp.desktop]: "calc(24px + env(safe-area-inset-bottom))",
+    },
   },
 });

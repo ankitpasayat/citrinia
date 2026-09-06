@@ -7,7 +7,7 @@ import { colors } from "@/app/tokens.stylex";
 import { Input } from "./field";
 import { SearchIcon } from "./icons";
 
-export function SearchForm({ q = "" }: { q?: string }) {
+export function SearchForm({ q = "", autoFocus = true }: { q?: string; autoFocus?: boolean }) {
   return (
     <form role="search" action="/search" method="get" {...stylex.props(styles.form)}>
       <span {...stylex.props(styles.icon)}>
@@ -17,7 +17,7 @@ export function SearchForm({ q = "" }: { q?: string }) {
         type="search"
         name="q"
         defaultValue={q}
-        autoFocus
+        autoFocus={autoFocus}
         placeholder="Search peels and people"
         aria-label="Search peels and people"
         style={styles.input}
