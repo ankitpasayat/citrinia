@@ -69,7 +69,8 @@ users, in one narrative on one database:
   badge, @mentions and #hashtags, YouTube links, the media picker and the
   upload a composted peel takes with it, cursor pagination, the "N new peels"
   announcement, who to follow, the ancestors above an opened reply, the card
-  a link gets under it, and a thread posted as one chain.
+  a link gets under it, a thread posted as one chain, and the @ list in the
+  composer.
 
 GitHub OAuth cannot be completed headlessly, so the suite runs against a
 **local** Supabase stack and mints its sessions with the password grant

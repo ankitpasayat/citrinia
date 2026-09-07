@@ -3,6 +3,7 @@
 // The inline reply box under a peel. Same rules as the compose sheet, minus the
 // sheet, minus the file picker (a reply with a picture is a peel; use the +) and
 // minus the thread: a chain is composed somewhere you can see all of it at once.
+// The @ list is here too -- answering somebody is when you pull a third person in.
 // Post, clear, and let the revalidated thread show the new reply.
 import * as stylex from "@stylexjs/stylex";
 import { useRouter } from "next/navigation";
@@ -11,7 +12,8 @@ import { addPeel, type ActionResult } from "@/app/actions";
 import { colors, shape } from "@/app/tokens.stylex";
 import { remaining } from "@/lib/peel";
 import { Button } from "./button";
-import { HelpText, Textarea } from "./field";
+import { HelpText } from "./field";
+import { MentionBox } from "./mention-box";
 import { Pill } from "./pill";
 import { youtubeMedia, youtubeUrlIn } from "./youtube-embed";
 
@@ -47,14 +49,14 @@ export function ReplyComposer({ parentId, replyingTo }: { parentId: string; repl
   return (
     <form action={formAction} {...stylex.props(styles.card)}>
       <input type="hidden" name="parent_id" value={parentId} />
-      <Textarea
+      <MentionBox
         rows={3}
         onSurface
         invalid={over}
         placeholder="how are you peeling?"
         aria-label={`Reply to @${replyingTo}`}
         value={text}
-        onChange={(event) => setText(event.target.value)}
+        onChange={setText}
       />
       {youtubeUrlIn(text) !== null && (
         <p {...stylex.props(styles.tube)}>

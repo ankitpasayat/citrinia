@@ -21,8 +21,9 @@ import { colors } from "@/app/tokens.stylex";
 import { remaining } from "@/lib/peel";
 import { MAX_THREAD } from "@/lib/thread";
 import { Button } from "./button";
-import { HelpText, Textarea } from "./field";
+import { HelpText } from "./field";
 import { PlusIcon } from "./icons";
+import { MentionBox } from "./mention-box";
 import { type Attachment, MediaPicker, uploadAttachments } from "./media-picker";
 import { Pill } from "./pill";
 import { QuoteCard } from "./quote-card";
@@ -119,7 +120,7 @@ export function ComposeSheet({
           const tube = box.attachments.length === 0 && youtubeUrlIn(box.text) !== null;
           return (
             <div key={box.id} {...stylex.props(at > 0 && styles.later)}>
-              <Textarea
+              <MentionBox
                 rows={4}
                 autoFocus={at === 0}
                 onSurface
@@ -129,7 +130,7 @@ export function ComposeSheet({
                   at > 0 ? `Peel ${at + 1}` : quote ? "Your quote" : replyingTo ? "Your reply" : "Your peel"
                 }
                 value={box.text}
-                onChange={(event) => patch(at, { text: event.target.value })}
+                onChange={(text) => patch(at, { text })}
               />
               {quote && at === 0 && (
                 <div {...stylex.props(styles.quote)}>

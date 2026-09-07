@@ -1704,3 +1704,69 @@ test("24. ada peels a thread, and it lands as one chain in the order she wrote i
 
   await shot(ada, "thread-composed-mobile");
 });
+
+test("25. the composer offers people after @, and the one ada picks gets the bell", async ({
+  open,
+}) => {
+  const ada = await open("ada");
+
+  // The box looks people up from the browser, so the requests it makes are
+  // countable -- which is the only way to tell "the list did not open" from
+  // "the list had not opened yet".
+  let lookups = 0;
+  ada.on("request", (request) => {
+    const url = request.url();
+    if (url.includes("/rest/v1/profiles") && url.includes("imatch")) lookups += 1;
+  });
+
+  await ada.goto("/");
+  await ada.getByRole("button", { name: "New peel", exact: true }).click();
+
+  const sheet = ada.getByRole("dialog");
+  const written = sheet.getByRole("textbox", { name: "Your peel" });
+  const list = sheet.getByRole("listbox", { name: "People to mention" });
+
+  // One character after the @ is not enough to ask about: it would be a list of
+  // everybody. Given longer than the whole lookup takes when there is one, so
+  // this says nobody asked rather than that nobody had answered yet.
+  await written.fill("morning @b");
+  await ada.waitForTimeout(600);
+  expect(lookups, "one character after @ asks nobody").toBe(0);
+  await expect(list).toHaveCount(0);
+
+  // Two is. The row names the person, not just the handle.
+  await written.fill("morning @bo");
+  await expect(list).toBeVisible();
+  expect(lookups, "two characters ask once").toBe(1);
+  const option = list.getByRole("option");
+  await expect(option.filter({ hasText: "@bob" })).toHaveCount(1);
+  await expect(option.first()).toContainText(BOB);
+
+  // Escape puts it away without closing the sheet or losing the words.
+  await written.press("Escape");
+  await expect(list).toHaveCount(0);
+  await expect(sheet).toBeVisible();
+  await expect(written).toHaveValue("morning @bo");
+
+  // Typing on brings it back, and Enter takes whichever row is highlighted.
+  await written.fill("morning @bob");
+  await expect(list).toBeVisible();
+  await written.press("Enter");
+  await expect(list).toHaveCount(0);
+  // The handle is complete and there is room for the next word after it.
+  await expect(written).toHaveValue("morning @bob ");
+
+  const mention = `morning @bob, the marmalade set ${Date.now()}`;
+  await written.fill(mention);
+  const posted = actionWrite(ada);
+  await sheet.getByRole("button", { name: "Peel it" }).click();
+  await posted;
+
+  // A handle that came from the list is a handle like any other: the trigger
+  // reads the text, so bob hears about it the same way he would have anyway.
+  const bob = await open("bob");
+  await bob.goto("/notifications");
+  const rang = bob.getByRole("link").filter({ hasText: "mentioned you" });
+  await expect(rang).toHaveCount(1);
+  await expect(rang).toContainText(mention);
+});
