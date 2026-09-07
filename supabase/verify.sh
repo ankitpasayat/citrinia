@@ -16,8 +16,11 @@ for _ in $(seq 1 120); do
   fi
   sleep 2
 done
-# Drop the default privileges Supabase gives new tables, so the migration's own grants are what's tested.
-psql -c "alter default privileges for role postgres in schema public revoke all on tables from anon, authenticated, service_role; alter default privileges for role postgres in schema public revoke all on sequences from anon, authenticated, service_role;"
-psql -c "create table public._probe(); do \$\$ begin if has_table_privilege('anon','public._probe','select') then raise exception 'default privileges still active; grant test is meaningless'; end if; end \$\$; drop table public._probe;"
+# Keep the default privileges Supabase gives new tables. They are what a real
+# project has (anon and authenticated get ALL on every new table in public), so
+# a container without them is more restrictive than production and cannot catch
+# a grant that is wider than intended -- which is exactly what it missed once:
+# `grant update (col)` on top of a table-level UPDATE narrows nothing.
+psql -c "create table public._probe(); do \$\$ begin if not has_table_privilege('anon','public._probe','select') then raise exception 'default privileges are not active; this container is not like production'; end if; end \$\$; drop table public._probe;"
 for f in migrations/*.sql; do echo "applying $f"; psql < "$f"; done
 psql < verify.sql

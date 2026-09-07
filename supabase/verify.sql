@@ -1159,5 +1159,73 @@ end $$;
 reset role;
 \echo check 30 ok: handles are lower case and unique, a rename forwards the old one, and the hold is one-sided
 
+-- 31. The entire grant surface for the two API roles, as one list.
+-- Supabase's default privileges hand anon and authenticated ALL on every new
+-- table in public, so a table added by a later migration is wide open until
+-- something says otherwise. 20260913000000_column_grants.sql revokes and
+-- re-grants; this is what holds that line for tables nobody has written yet.
+do $$
+declare actual text; expected text;
+begin
+  select coalesce(string_agg(grantee || ' ' || table_name || ' ' || privilege_type, E'\n'
+                             order by grantee, table_name, privilege_type), '(none)')
+    into actual
+    from information_schema.role_table_grants
+   where table_schema = 'public' and grantee in ('anon', 'authenticated');
+  expected :=
+    'anon likes SELECT'                      || E'\n' ||
+    'anon profiles SELECT'                   || E'\n' ||
+    'authenticated bookmarks DELETE'         || E'\n' ||
+    'authenticated bookmarks INSERT'         || E'\n' ||
+    'authenticated bookmarks SELECT'         || E'\n' ||
+    'authenticated follows DELETE'           || E'\n' ||
+    'authenticated follows INSERT'           || E'\n' ||
+    'authenticated follows SELECT'           || E'\n' ||
+    'authenticated likes DELETE'             || E'\n' ||
+    'authenticated likes INSERT'             || E'\n' ||
+    'authenticated likes SELECT'             || E'\n' ||
+    'authenticated notifications SELECT'     || E'\n' ||
+    'authenticated peel_media DELETE'        || E'\n' ||
+    'authenticated peel_media INSERT'        || E'\n' ||
+    'authenticated peel_media SELECT'        || E'\n' ||
+    'authenticated peels DELETE'             || E'\n' ||
+    'authenticated peels INSERT'             || E'\n' ||
+    'authenticated peels SELECT'             || E'\n' ||
+    'authenticated profiles SELECT'          || E'\n' ||
+    'authenticated reposts DELETE'           || E'\n' ||
+    'authenticated reposts INSERT'           || E'\n' ||
+    'authenticated reposts SELECT'           || E'\n' ||
+    'authenticated username_history SELECT';
+  if actual <> expected then
+    raise exception E'check 31 FAILED: table grants drifted.\n--- got ---\n%\n--- want ---\n%', actual, expected;
+  end if;
+end $$;
+
+-- The same list at column level: UPDATE is granted nowhere table-wide, so every
+-- updatable column has to be named.
+do $$
+declare actual text; expected text;
+begin
+  select coalesce(string_agg(grantee || ' ' || table_name || '.' || column_name, E'\n'
+                             order by grantee, table_name, column_name), '(none)')
+    into actual
+    from information_schema.column_privileges
+   where table_schema = 'public' and grantee in ('anon', 'authenticated')
+     and privilege_type = 'UPDATE';
+  expected :=
+    'authenticated notifications.read_at'    || E'\n' ||
+    'authenticated profiles.avatar_url'      || E'\n' ||
+    'authenticated profiles.banner_url'      || E'\n' ||
+    'authenticated profiles.bio'             || E'\n' ||
+    'authenticated profiles.location'        || E'\n' ||
+    'authenticated profiles.name'            || E'\n' ||
+    'authenticated profiles.pinned_peel_id'  || E'\n' ||
+    'authenticated profiles.website';
+  if actual <> expected then
+    raise exception E'check 31 FAILED: updatable columns drifted.\n--- got ---\n%\n--- want ---\n%', actual, expected;
+  end if;
+end $$;
+\echo check 31 ok: the API roles hold exactly the listed table and column grants
+
 rollback;
 \echo ALL CHECKS PASSED
