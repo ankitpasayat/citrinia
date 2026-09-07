@@ -1,8 +1,9 @@
 "use client";
 
-// "Edit profile" and the sheet it opens: the pictures, the words, and the two
-// facts underneath them. username stays GitHub-owned (the column grant is what
-// enforces that, not this form).
+// "Edit profile" and the sheet it opens: the pictures, the words, the handle,
+// and the two facts underneath them. The handle is the one field this form does
+// not write itself -- change_username() does, because taking one has to check
+// who holds it and leave the old one forwarding.
 import * as stylex from "@stylexjs/stylex";
 import { useRouter } from "next/navigation";
 import { useActionState, useId, useState } from "react";

@@ -239,3 +239,20 @@ export function PinIcon({ filled, ...p }: IconProps & { filled?: boolean }) {
     </Svg>
   );
 }
+
+export function FlagIcon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path {...stroke} d="M5 21V4h12l-2 4 2 4H5" />
+    </Svg>
+  );
+}
+
+export function GearIcon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <circle {...stroke} cx="12" cy="12" r="3" />
+      <path {...stroke} d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1" />
+    </Svg>
+  );
+}

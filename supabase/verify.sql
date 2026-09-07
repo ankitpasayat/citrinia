@@ -73,15 +73,15 @@ do $$ begin
 end $$;
 \echo check 5 ok: peels and notifications in supabase_realtime publication, notifications logged whole
 
--- 6. RLS enabled on every table, 23 policies, API roles have the grants their policies assume.
+-- 6. RLS enabled on every table, 24 policies, API roles have the grants their policies assume.
 do $$ begin
   if exists (select 1 from pg_tables where schemaname = 'public'
-               and tablename in ('profiles','peels','likes','follows','reposts','bookmarks','peel_media','notifications','username_history')
+               and tablename in ('profiles','peels','likes','follows','reposts','bookmarks','peel_media','notifications','username_history','reports')
                and not rowsecurity) then
     raise exception 'check 6 FAILED: RLS not enabled on every table';
   end if;
-  if (select count(*) from pg_policies where schemaname = 'public') <> 23 then
-    raise exception 'check 6 FAILED: expected 23 policies, found %', (select count(*) from pg_policies where schemaname = 'public');
+  if (select count(*) from pg_policies where schemaname = 'public') <> 24 then
+    raise exception 'check 6 FAILED: expected 24 policies, found %', (select count(*) from pg_policies where schemaname = 'public');
   end if;
   if not has_table_privilege('authenticated', 'public.peels', 'insert') or not has_table_privilege('anon', 'public.profiles', 'select') then
     raise exception 'check 6 FAILED: API roles lack table grants';
@@ -125,7 +125,7 @@ do $$ begin
     raise exception 'check 6 FAILED: ensure_media_bucket is not locked down';
   end if;
 end $$;
-\echo check 6 ok: RLS on, 22 policies, grants present
+\echo check 6 ok: RLS on, 24 policies, grants present
 
 -- 7. RLS behaviour as an authenticated user: own peel ok, spoofed user_id blocked, own like ok, spoofed like blocked.
 set local role authenticated;
@@ -1192,6 +1192,7 @@ begin
     'authenticated peels INSERT'             || E'\n' ||
     'authenticated peels SELECT'             || E'\n' ||
     'authenticated profiles SELECT'          || E'\n' ||
+    'authenticated reports INSERT'           || E'\n' ||
     'authenticated reposts DELETE'           || E'\n' ||
     'authenticated reposts INSERT'           || E'\n' ||
     'authenticated reposts SELECT'           || E'\n' ||
@@ -1226,6 +1227,149 @@ begin
   end if;
 end $$;
 \echo check 31 ok: the API roles hold exactly the listed table and column grants
+
+-- 32. Reports: one subject, a reason from the list, filed as yourself, once,
+--     and readable by nobody through the API.
+-- Its own ground: two accounts and a peel that no earlier check has touched.
+insert into auth.users (id, instance_id, aud, role, email, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
+values ('70000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+        'quinn@example.com', '{"provider":"github"}', '{"user_name":"quinnverify","avatar_url":""}', now(), now()),
+       ('70000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+        'rhea@example.com', '{"provider":"github"}', '{"user_name":"rheaverify","avatar_url":""}', now(), now());
+insert into public.peels (id, title, user_id)
+values ('71000000-0000-0000-0000-000000000001', 'something worth flagging', '70000000-0000-0000-0000-000000000002');
+
+-- The shape rules hold before anybody's identity is involved.
+do $$ begin
+  insert into public.reports (reporter_id, reason) values ('70000000-0000-0000-0000-000000000001', 'spam');
+  raise exception 'check 32 FAILED: a report about nothing was accepted';
+exception when check_violation then null; end $$;
+do $$ begin
+  insert into public.reports (reporter_id, peel_id, profile_id, reason)
+  values ('70000000-0000-0000-0000-000000000001', '71000000-0000-0000-0000-000000000001',
+          '70000000-0000-0000-0000-000000000002', 'spam');
+  raise exception 'check 32 FAILED: a report of a peel AND a profile was accepted';
+exception when check_violation then null; end $$;
+do $$ begin
+  insert into public.reports (reporter_id, peel_id, reason)
+  values ('70000000-0000-0000-0000-000000000001', '71000000-0000-0000-0000-000000000001', 'because i said so');
+  raise exception 'check 32 FAILED: a reason outside the list was accepted';
+exception when check_violation then null; end $$;
+do $$ begin
+  insert into public.reports (reporter_id, peel_id, reason, note)
+  values ('70000000-0000-0000-0000-000000000001', '71000000-0000-0000-0000-000000000001', 'other', repeat('x', 281));
+  raise exception 'check 32 FAILED: a 281-character note was accepted';
+exception when check_violation then null; end $$;
+
+-- Filing one is something a person does, so the rest runs as one. Both GUCs;
+-- see the note on check 30.
+set local role authenticated;
+do $$ begin
+  perform set_config('request.jwt.claim.sub', '70000000-0000-0000-0000-000000000001', true);
+  perform set_config('request.jwt.claims', '{"sub":"70000000-0000-0000-0000-000000000001","role":"authenticated"}', true);
+end $$;
+
+insert into public.reports (reporter_id, peel_id, reason)
+values ('70000000-0000-0000-0000-000000000001', '71000000-0000-0000-0000-000000000001', 'spam');
+
+-- The same peel again is not more information, and is what stops a loop filling
+-- the table. A different subject by the same person is a different report.
+do $$ begin
+  insert into public.reports (reporter_id, peel_id, reason, note)
+  values ('70000000-0000-0000-0000-000000000001', '71000000-0000-0000-0000-000000000001', 'abuse', 'again');
+  raise exception 'check 32 FAILED: the same peel was reported twice by the same person';
+exception when unique_violation then null; end $$;
+insert into public.reports (reporter_id, profile_id, reason, note)
+values ('70000000-0000-0000-0000-000000000001', '70000000-0000-0000-0000-000000000002', 'abuse', 'and the person too');
+
+-- A report names who filed it, so filing one under somebody else's name would be
+-- a way to put words in their mouth in the one place staff will read.
+do $$ begin
+  insert into public.reports (reporter_id, peel_id, reason)
+  values ('70000000-0000-0000-0000-000000000002', '71000000-0000-0000-0000-000000000001', 'spam');
+  raise exception 'check 32 FAILED: quinn filed a report as rhea';
+exception when insufficient_privilege then null; end $$;
+
+reset role;
+
+do $$ begin
+  if (select count(*) from public.reports where reporter_id = '70000000-0000-0000-0000-000000000001') <> 2 then
+    raise exception 'check 32 FAILED: expected quinn to have filed exactly two reports';
+  end if;
+  -- Insert and nothing else. A readable queue would publish who reported whom.
+  if not has_table_privilege('authenticated', 'public.reports', 'insert') then
+    raise exception 'check 32 FAILED: a signed-in user cannot report anything';
+  end if;
+  if has_table_privilege('authenticated', 'public.reports', 'select')
+     or has_table_privilege('authenticated', 'public.reports', 'update')
+     or has_table_privilege('authenticated', 'public.reports', 'delete') then
+    raise exception 'check 32 FAILED: a signed-in user can read back or edit the report queue';
+  end if;
+  if has_table_privilege('anon', 'public.reports', 'insert')
+     or has_table_privilege('anon', 'public.reports', 'select') then
+    raise exception 'check 32 FAILED: a signed-out visitor can reach the report queue';
+  end if;
+  if exists (select 1 from pg_policies where schemaname = 'public' and tablename = 'reports' and cmd <> 'INSERT') then
+    raise exception 'check 32 FAILED: reports has a policy for something other than filing one';
+  end if;
+end $$;
+\echo check 32 ok: a report has one subject, a listed reason, your name on it, and no way back out
+
+-- 33. Deleting your account: the typed handle has to be yours, and the auth row
+--     takes everything of yours with it and nothing of anybody else's.
+set local role authenticated;
+do $$ begin
+  perform set_config('request.jwt.claim.sub', '70000000-0000-0000-0000-000000000001', true);
+  perform set_config('request.jwt.claims', '{"sub":"70000000-0000-0000-0000-000000000001","role":"authenticated"}', true);
+end $$;
+
+do $$ begin
+  perform public.delete_account('rheaverify');
+  raise exception 'check 33 FAILED: somebody else''s handle confirmed quinn''s deletion';
+exception when check_violation then null; end $$;
+do $$ begin
+  perform public.delete_account('');
+  raise exception 'check 33 FAILED: an empty confirmation deleted the account';
+exception when check_violation then null; end $$;
+
+reset role;
+do $$ begin
+  if not exists (select 1 from auth.users where id = '70000000-0000-0000-0000-000000000001') then
+    raise exception 'check 33 FAILED: a refused confirmation deleted the account anyway';
+  end if;
+end $$;
+
+-- The handle as somebody types it: their own case, and the @ they did not mean.
+set local role authenticated;
+do $$ begin
+  perform set_config('request.jwt.claim.sub', '70000000-0000-0000-0000-000000000001', true);
+  perform set_config('request.jwt.claims', '{"sub":"70000000-0000-0000-0000-000000000001","role":"authenticated"}', true);
+end $$;
+do $$ begin perform public.delete_account('  @QuinnVerify  '); end $$;
+reset role;
+
+do $$ begin
+  if exists (select 1 from auth.users where id = '70000000-0000-0000-0000-000000000001') then
+    raise exception 'check 33 FAILED: the auth row survived';
+  end if;
+  if exists (select 1 from public.profiles where id = '70000000-0000-0000-0000-000000000001') then
+    raise exception 'check 33 FAILED: the profile survived';
+  end if;
+  if exists (select 1 from public.reports where reporter_id = '70000000-0000-0000-0000-000000000001') then
+    raise exception 'check 33 FAILED: the reports she filed survived, still naming her';
+  end if;
+  -- Leaving takes your things, not the things you looked at.
+  if not exists (select 1 from public.peels where id = '71000000-0000-0000-0000-000000000001') then
+    raise exception 'check 33 FAILED: deleting an account took somebody else''s peel';
+  end if;
+  if not exists (select 1 from auth.users where id = '70000000-0000-0000-0000-000000000002') then
+    raise exception 'check 33 FAILED: deleting an account took somebody else''s account';
+  end if;
+  if has_function_privilege('anon', 'public.delete_account(text)', 'execute') then
+    raise exception 'check 33 FAILED: a signed-out caller can delete an account';
+  end if;
+end $$;
+\echo check 33 ok: the way out needs your own handle, and takes only what is yours
 
 rollback;
 \echo ALL CHECKS PASSED

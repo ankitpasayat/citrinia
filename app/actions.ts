@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { objectPath, parseMedia } from "@/lib/media";
 import { parseTitle } from "@/lib/peel";
 import { parseHandle, parseProfile } from "@/lib/profile";
+import { parseReport } from "@/lib/report";
 
 export type ActionResult = {
   error?: string;
@@ -190,7 +191,8 @@ export async function unfollowUser(followeeId: string): Promise<ActionResult> {
   return {};
 }
 
-/** Save the signed-in user's name and bio. username and avatar_url stay GitHub-owned. */
+/** Save the signed-in user's profile: the words, the facts, the pictures, and
+ *  the handle -- which goes through change_username() rather than the update. */
 export async function updateProfile(_prev: ActionResult, formData: FormData): Promise<ActionResult> {
   const parsed = parseProfile({
     name: formData.get("name"),
@@ -278,6 +280,78 @@ export async function setPinnedPeel(peelId: string | null): Promise<ActionResult
 
   revalidatePath("/", "layout");
   return {};
+}
+
+/**
+ * File a report about one peel or one profile. Shaped for useActionState.
+ *
+ * There is no moderation screen: the reports table is the queue, read with the
+ * service role. So the reporter hears the same sentence either way, and the one
+ * thing that has to be right is whose name ends up on the row -- which the RLS
+ * policy, not this function, is what settles.
+ */
+export async function reportContent(_prev: ActionResult, formData: FormData): Promise<ActionResult> {
+  const parsed = parseReport({ reason: formData.get("reason"), note: formData.get("note") });
+  if ("error" in parsed) return { error: parsed.error };
+
+  const rawPeel = formData.get("peel_id");
+  const peelId = typeof rawPeel === "string" && rawPeel !== "" ? rawPeel : null;
+  const rawProfile = formData.get("profile_id");
+  const profileId = typeof rawProfile === "string" && rawProfile !== "" ? rawProfile : null;
+
+  // One subject, the same rule reports_one_subject applies. Neither means the
+  // form lost it; both means somebody built the request by hand.
+  if ((peelId === null) === (profileId === null)) return { error: "Couldn't send that report." };
+  if (peelId !== null && !UUID.test(peelId)) return { error: "Couldn't send that report." };
+  if (profileId !== null && !UUID.test(profileId)) return { error: "Couldn't send that report." };
+
+  const { supabase, user } = await viewer();
+  // Free to check, because the id is already here. The same is not done for a
+  // peel -- that would cost a round trip to learn who wrote it, and a report of
+  // your own peel is noise in a queue rather than a way in.
+  if (profileId === user.id) return { error: "You can't report yourself." };
+
+  const { error } = await supabase.from("reports").insert({
+    reporter_id: user.id,
+    peel_id: peelId,
+    profile_id: profileId,
+    reason: parsed.reason,
+    note: parsed.note,
+  });
+  // 23505 is reports_one_per_peel / reports_one_per_profile: they already told
+  // us about this one. Saying it twice is not a failure, and telling them it was
+  // would only invite a third.
+  if (error && error.code !== "23505") return { error: "Couldn't send that report. Try again." };
+  return {};
+}
+
+/**
+ * Close the account the caller is signed in to, for good.
+ *
+ * The typed handle is the confirmation and delete_account() is what checks it --
+ * against the session's own profile, in the database, where a crafted call
+ * cannot get past it either. Everything the person has hangs off their
+ * auth.users row on delete cascade, so there is nothing to tidy up here.
+ */
+export async function deleteAccount(_prev: ActionResult, formData: FormData): Promise<ActionResult> {
+  const raw = formData.get("confirm");
+  const { supabase } = await viewer();
+
+  const { error } = await supabase.rpc("delete_account", {
+    confirm: typeof raw === "string" ? raw : "",
+  });
+  if (error) {
+    // The one failure a person can cause is typing the wrong handle; the
+    // database says so in those words. Anything else is a fault.
+    return /handle/.test(error.message)
+      ? { error: "That's not your handle." }
+      : { error: "Couldn't delete your account. Try again." };
+  }
+
+  // Local scope: the session rows cascaded away with the user a moment ago, so
+  // there is nothing left to revoke -- this is only here to drop the cookies.
+  await supabase.auth.signOut({ scope: "local" });
+  redirect("/login");
 }
 
 export async function signOut(): Promise<void> {

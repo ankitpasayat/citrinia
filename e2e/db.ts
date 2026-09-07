@@ -3,7 +3,7 @@
 // Only global setup uses the service role. Everything a test does mid-flow goes
 // through a real user's token, so RLS is exercised rather than bypassed.
 import { localEnv, USERS, type UserKey } from "./env.ts";
-import { signIn } from "./auth.ts";
+import { signIn, signInAs, type Credentials } from "./auth.ts";
 
 async function rest(
   path: string,
@@ -226,7 +226,8 @@ export async function makeExtras(n: number, prefix: string): Promise<{ id: strin
   return made;
 }
 
-/** Undo `makeExtras`: deleting the account takes its profile and its follows with it. */
+/** Undo `makeExtras`: deleting the account takes its profile and its follows with it.
+ *  A 404 is fine -- the delete-account test's guest closes its own account. */
 export async function removeExtras(ids: string[]): Promise<void> {
   const { apiUrl, serviceRoleKey } = localEnv();
   for (const id of ids) {
@@ -234,8 +235,41 @@ export async function removeExtras(ids: string[]): Promise<void> {
       method: "DELETE",
       headers: { apikey: serviceRoleKey, Authorization: `Bearer ${serviceRoleKey}` },
     });
-    if (!response.ok) {
+    if (!response.ok && response.status !== 404) {
       throw new Error(`Could not delete ${id}: ${response.status} ${await response.text()}`);
     }
   }
+}
+
+/**
+ * One throwaway account that can also sign in -- `makeExtras` skips the password
+ * because hashing is the slow part and nobody drives those in a browser. The
+ * account that closes itself does, so this one pays for it.
+ */
+export async function makeGuest(username: string): Promise<Credentials & { id: string; username: string }> {
+  const { apiUrl, serviceRoleKey } = localEnv();
+  const guest = { email: `${username}@citrinia.test`, password: `peel-${username}-123` };
+  const response = await fetch(`${apiUrl}/auth/v1/admin/users`, {
+    method: "POST",
+    headers: {
+      apikey: serviceRoleKey,
+      Authorization: `Bearer ${serviceRoleKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      ...guest,
+      email_confirm: true,
+      user_metadata: { name: `Guest ${username}`, user_name: username, avatar_url: "" },
+    }),
+  });
+  if (!response.ok) {
+    throw new Error(`Could not create ${username}: ${response.status} ${await response.text()}`);
+  }
+  return { ...guest, id: ((await response.json()) as { id: string }).id, username };
+}
+
+/** A PostgREST client for an account a test made, rather than a fixture one. */
+export async function restAsGuest(guest: Credentials): Promise<Rest> {
+  const session = await signInAs(guest);
+  return client(session.access_token, session.user.id);
 }

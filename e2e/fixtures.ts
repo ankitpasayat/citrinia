@@ -5,7 +5,7 @@
 // (asserted in fixture teardown, once the flows have finished).
 import { test as base, expect, type BrowserContext, type Page } from "@playwright/test";
 import { BASE_URL } from "../playwright.config.ts";
-import { signInContext } from "./auth.ts";
+import { signInContext, type Credentials } from "./auth.ts";
 import type { UserKey } from "./env.ts";
 
 const NOISE = /hydration|Warning: |Error:/;
@@ -33,8 +33,9 @@ const REMOTE_IMAGE_BODY =
   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="#D4551B"/></svg>';
 
 type Fixtures = {
-  /** A fresh page, signed in as `user` — or signed out when called with nothing. */
-  open: (user?: UserKey) => Promise<Page>;
+  /** A fresh page, signed in as `user` — a fixture key, or the credentials of an
+   *  account the test made itself — or signed out when called with nothing. */
+  open: (user?: UserKey | Credentials) => Promise<Page>;
   /** Page errors and suspicious console lines seen this test; asserted empty at teardown. */
   problems: string[];
 };
@@ -51,7 +52,7 @@ export const test = base.extend<Fixtures>({
   open: async ({ browser, problems }, provide, testInfo) => {
     const contexts: BrowserContext[] = [];
 
-    await provide(async (user?: UserKey) => {
+    await provide(async (user?: UserKey | Credentials) => {
       const context = await browser.newContext({
         viewport: testInfo.project.use.viewport,
         deviceScaleFactor: 1,
@@ -72,7 +73,7 @@ export const test = base.extend<Fixtures>({
       if (user) await signInContext(context, user);
 
       const page = await context.newPage();
-      const who = user ?? "signed out";
+      const who = user === undefined ? "signed out" : typeof user === "string" ? user : user.email;
       page.on("pageerror", (error) => problems.push(`[${who}] pageerror: ${error.message}`));
       page.on("console", (message) => {
         const text = message.text();

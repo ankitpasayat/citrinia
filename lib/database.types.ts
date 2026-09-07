@@ -279,6 +279,58 @@ export type Database = {
           }
         ]
       }
+      reports: {
+        Row: {
+          created_at: string
+          id: string
+          note: string
+          peel_id: string | null
+          profile_id: string | null
+          reason: string
+          reporter_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          note?: string
+          peel_id?: string | null
+          profile_id?: string | null
+          reason: string
+          reporter_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          note?: string
+          peel_id?: string | null
+          profile_id?: string | null
+          reason?: string
+          reporter_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reports_reporter_id_fkey"
+            columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_peel_id_fkey"
+            columns: ["peel_id"]
+            isOneToOne: false
+            referencedRelation: "peels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string
@@ -376,6 +428,12 @@ export type Database = {
           new_username: string
         }
         Returns: string
+      }
+      delete_account: {
+        Args: {
+          confirm: string
+        }
+        Returns: undefined
       }
       home_timeline: {
         Args: {

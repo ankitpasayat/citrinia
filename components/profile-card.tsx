@@ -1,7 +1,7 @@
 // The head of a profile page: banner, big avatar, name, handle, bio, the facts
-// underneath, counts, and the one action that belongs to the viewer — follow
-// someone else, or edit and log out of your own. Server component; the two
-// interactive bits are client children.
+// underneath, counts, and the actions that belong to the viewer — follow and a
+// dots menu on someone else's, edit and log out on your own. Server component;
+// the interactive bits are client children.
 /* eslint-disable @next/next/no-img-element -- a Storage url, sized by CSS; no optimizer config to add */
 import * as stylex from "@stylexjs/stylex";
 import Link from "next/link";
@@ -13,7 +13,8 @@ import { Avatar } from "./avatar";
 import { Button, buttonStyles } from "./button";
 import { EditProfileButton } from "./edit-profile-sheet";
 import { FollowButton } from "./follow-button";
-import { BookmarkIcon, CalendarIcon, LinkIcon, LogOutIcon, MapPinIcon } from "./icons";
+import { BookmarkIcon, CalendarIcon, GearIcon, LinkIcon, LogOutIcon, MapPinIcon } from "./icons";
+import { ProfileMenu } from "./profile-menu";
 
 export type ProfileCounts = { peels: number; followers: number; following: number };
 
@@ -128,6 +129,19 @@ export function ProfileCard({ profile, counts, isSelf, isFollowing }: Props) {
                 <BookmarkIcon />
                 Bookmarks
               </Link>
+              {/* The rail's You is a link to here, so this is the door to
+                  /settings from every page that is not the feed. */}
+              <Link
+                href="/settings"
+                {...stylex.props(
+                  buttonStyles.base,
+                  buttonStyles.variants.secondary,
+                  buttonStyles.sizes.sm,
+                )}
+              >
+                <GearIcon />
+                Settings
+              </Link>
               <form action={signOut}>
                 <Button type="submit" variant="tertiary" size="sm">
                   <LogOutIcon />
@@ -136,7 +150,10 @@ export function ProfileCard({ profile, counts, isSelf, isFollowing }: Props) {
               </form>
             </>
           ) : (
-            <FollowButton profileId={profile.id} isFollowing={isFollowing} />
+            <>
+              <FollowButton profileId={profile.id} isFollowing={isFollowing} />
+              <ProfileMenu profileId={profile.id} handle={profile.username} />
+            </>
           )}
         </div>
       </div>

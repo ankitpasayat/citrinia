@@ -6,7 +6,17 @@
 import { deflateSync } from "node:zlib";
 import { BASE_URL } from "../playwright.config.ts";
 import { actionWrite, card, expect, REMOTE_IMAGE, shot, subscribed, test, type Page } from "./fixtures.ts";
-import { listUploads, makeExtras, peelAs, publicUrl, removeExtras, restAs, restAsService } from "./db.ts";
+import {
+  listUploads,
+  makeExtras,
+  makeGuest,
+  peelAs,
+  publicUrl,
+  removeExtras,
+  restAs,
+  restAsGuest,
+  restAsService,
+} from "./db.ts";
 
 declare global {
   interface Window {
@@ -36,6 +46,12 @@ const THREAD_REPLY = "one more from the thread";
 
 // A three-deep conversation for the ancestors test: ada starts it, bob answers
 // her, ada answers him. Opening the last one has to show the first two above it.
+// Slice 6: something to flag, something of bob's own that offers no flag, and a
+// peel whose author is about to close their account.
+const REPORTABLE = "a peel worth telling somebody about";
+const BOB_OWN = "bob has nothing to report about himself";
+const LEAVING = "posted by somebody on their way out";
+
 const CHAIN_ROOT = "what is the correct number of oranges";
 const CHAIN_MIDDLE = "one more than you have";
 const CHAIN_LEAF = "that is not a number, bob";
@@ -1078,5 +1094,164 @@ test("17. ada changes her handle, and the old one still finds her", async ({ ope
   } finally {
     await service.update(`profiles?id=eq.${adaApi.id}`, { username: "ada" });
     await service.remove(`username_history?profile_id=eq.${adaApi.id}`);
+  }
+});
+
+test("18. bob reports a peel and a person, and saying it twice still lands once", async ({
+  open,
+}) => {
+  // Its own ground: one peel of ada's to flag, and no reports of bob's on file.
+  const id = await peelAs("ada", REPORTABLE);
+  const bobApi = await restAs("bob");
+  const adaApi = await restAs("ada");
+  const service = restAsService();
+  await service.remove(`reports?reporter_id=eq.${bobApi.id}`);
+
+  const bob = await open("bob");
+  await bob.goto("/");
+
+  // Report is on somebody else's peel and not on your own -- there is nothing
+  // to tell us about a peel you can simply delete.
+  const ownPeel = await peelAs("bob", BOB_OWN);
+  await bob.reload();
+  await peelCard(bob, ownPeel).getByRole("button", { name: "More" }).click();
+  await expect(bob.getByRole("button", { name: "Report peel" })).toHaveCount(0);
+  await bob.keyboard.press("Escape");
+
+  await peelCard(bob, id).getByRole("button", { name: "More" }).click();
+  await bob.getByRole("button", { name: "Report peel" }).click();
+
+  const sheet = bob.getByRole("dialog");
+  await expect(sheet.getByRole("heading", { name: "Report this peel" })).toBeVisible();
+
+  // Nothing is picked for you, because a report is a thing somebody says.
+  const send = sheet.getByRole("button", { name: "Send report" });
+  await expect(send).toBeDisabled();
+
+  await sheet.getByRole("radio", { name: /Abuse/ }).check();
+  await expect(send).toBeEnabled();
+  await sheet.getByRole("textbox", { name: "Anything to add?" }).fill("  keeps\n\nsaying it  ");
+  await send.click();
+
+  await expect(sheet).toBeHidden();
+  await expect(bob.getByRole("status")).toHaveText("Thanks, we'll take a look");
+
+  // The row is bob's, about that peel, with the reason he picked and the note
+  // as one line. Read with the service role, because nothing else can read it.
+  const filed = await service.select<{
+    reporter_id: string;
+    peel_id: string | null;
+    profile_id: string | null;
+    reason: string;
+    note: string;
+  }>(`reports?reporter_id=eq.${bobApi.id}&select=reporter_id,peel_id,profile_id,reason,note`);
+  expect(filed).toEqual([
+    {
+      reporter_id: bobApi.id,
+      peel_id: id,
+      profile_id: null,
+      reason: "abuse",
+      note: "keeps saying it",
+    },
+  ]);
+
+  // Saying it again is not a failure and is not a second row: he is thanked and
+  // the queue stays as it was.
+  await peelCard(bob, id).getByRole("button", { name: "More" }).click();
+  await bob.getByRole("button", { name: "Report peel" }).click();
+  await sheet.getByRole("radio", { name: /Spam/ }).check();
+  await sheet.getByRole("button", { name: "Send report" }).click();
+  await expect(sheet).toBeHidden();
+  await expect(bob.getByRole("status")).toHaveText("Thanks, we'll take a look");
+  expect(
+    await service.select<{ reason: string }>(
+      `reports?reporter_id=eq.${bobApi.id}&peel_id=eq.${id}&select=reason`,
+    ),
+  ).toEqual([{ reason: "abuse" }]);
+
+  // The person, from the same sheet on their profile -- a different subject, so
+  // a row of its own.
+  await bob.goto("/u/ada");
+  await bob.getByRole("button", { name: "More for @ada" }).click();
+  await bob.getByRole("button", { name: "Report @ada" }).click();
+  await expect(sheet.getByRole("heading", { name: "Report @ada" })).toBeVisible();
+  await sheet.getByRole("radio", { name: /Spam/ }).check();
+  await sheet.getByRole("button", { name: "Send report" }).click();
+  await expect(bob.getByRole("status")).toHaveText("Thanks, we'll take a look");
+  expect(
+    await service.select<{ profile_id: string; reason: string; note: string }>(
+      `reports?reporter_id=eq.${bobApi.id}&profile_id=eq.${adaApi.id}&select=profile_id,reason,note`,
+    ),
+  ).toEqual([{ profile_id: adaApi.id, reason: "spam", note: "" }]);
+
+  // Your own profile has no dots at all: there is nobody to report.
+  const ada = await open("ada");
+  await ada.goto("/u/ada");
+  await expect(ada.getByRole("button", { name: /^More for @/ })).toHaveCount(0);
+
+  // The queue is not something a signed-in reader can read back, whoever they are.
+  await expect(bobApi.select("reports?select=id")).rejects.toThrow(/40[13]/);
+
+  await service.remove(`reports?reporter_id=eq.${bobApi.id}`);
+});
+
+test("19. an account can be closed from settings, and it takes its peels with it", async ({
+  open,
+}) => {
+  const guest = await makeGuest("leaver");
+  const service = restAsService();
+
+  try {
+    const guestApi = await restAsGuest(guest);
+    await guestApi.insert("peels", { title: LEAVING, user_id: guestApi.id });
+
+    // Ada can see them, and their peel, before any of this.
+    const ada = await open("ada");
+    await ada.goto("/");
+    await expect(card(ada, LEAVING)).toBeVisible();
+
+    const leaver = await open(guest);
+    await leaver.goto("/settings");
+
+    // What the page holds today: the handle, the theme, and the way out. Email,
+    // password, muted and blocked arrive with the slices that own them.
+    await expect(leaver.getByRole("heading", { name: "Settings", level: 1 })).toBeVisible();
+    await expect(leaver.getByRole("link", { name: /Username @leaver/ })).toHaveAttribute(
+      "href",
+      "/u/leaver",
+    );
+    await expect(leaver.getByRole("group", { name: "Theme" })).toBeVisible();
+
+    await leaver.getByRole("button", { name: "Delete account" }).click();
+    const dialog = leaver.getByRole("dialog");
+    await expect(dialog.getByRole("heading", { name: "Delete your account?" })).toBeVisible();
+
+    // Nothing happens until the handle is typed, and somebody else's will not do.
+    const confirm = dialog.getByRole("textbox", { name: "Your handle" });
+    const destroy = dialog.getByRole("button", { name: "Delete everything" });
+    await expect(destroy).toBeDisabled();
+    await confirm.fill("ada");
+    await expect(destroy).toBeDisabled();
+    await confirm.fill("leave");
+    await expect(destroy).toBeDisabled();
+
+    // Their own, as people type it: the @ they did not mean and the case they did.
+    await confirm.fill("@Leaver");
+    await expect(destroy).toBeEnabled();
+    await destroy.click();
+
+    // The session ends where a session with no account has to end.
+    await expect(leaver).toHaveURL(`${BASE_URL}/login`);
+
+    // The account, the profile and the peel are gone, for them and for everyone.
+    expect(
+      await service.select<{ id: string }>(`profiles?id=eq.${guest.id}&select=id`),
+    ).toEqual([]);
+    await ada.reload();
+    await expect(card(ada, LEAVING)).toHaveCount(0);
+    await ada.goto("/u/leaver");
+    await expect(ada.getByRole("heading", { name: "That peel got composted." })).toBeVisible();
+  } finally {
+    await removeExtras([guest.id]);
   }
 });

@@ -25,10 +25,16 @@ export type Session = {
   user: { id: string; email: string };
 };
 
+export type Credentials = { email: string; password: string };
+
 /** Exchange a password for a session, the way the browser client would store it. */
 export async function signIn(user: UserKey): Promise<Session> {
+  return signInAs(USERS[user]);
+}
+
+/** The same, for an account a test made rather than one global setup seeded. */
+export async function signInAs({ email, password }: Credentials): Promise<Session> {
   const { apiUrl, anonKey } = localEnv();
-  const { email, password } = USERS[user];
   const response = await fetch(`${apiUrl}/auth/v1/token?grant_type=password`, {
     method: "POST",
     headers: { apikey: anonKey, "Content-Type": "application/json" },
@@ -78,9 +84,13 @@ export function sessionCookies(session: Session, domain = "127.0.0.1"): Cookie[]
   }));
 }
 
-/** Sign `context` in as `user`, and hand back the session for API calls as them. */
-export async function signInContext(context: BrowserContext, user: UserKey): Promise<Session> {
-  const session = await signIn(user);
+/** Sign `context` in as `user` (a fixture account, or credentials a test made),
+ *  and hand back the session for API calls as them. */
+export async function signInContext(
+  context: BrowserContext,
+  user: UserKey | Credentials,
+): Promise<Session> {
+  const session = typeof user === "string" ? await signIn(user) : await signInAs(user);
   await context.addCookies(sessionCookies(session));
   return session;
 }

@@ -252,15 +252,23 @@ test("10. theme survives a reload, and log out ends the session", async ({ open 
   await page.goto("/");
   const system = await page.evaluate(() => document.documentElement.className);
 
+  // The theme switch lives on /settings, with the rest of the switches. The
+  // account menu is how you get there.
   await page.getByRole("button", { name: "Account menu" }).click();
-  await page.getByRole("button", { name: "Dark" }).click();
+  await page.getByRole("link", { name: "Settings" }).click();
+  await expect(page).toHaveURL(/\/settings$/);
+
+  const theme = page.getByRole("group", { name: "Theme" });
+  await theme.getByRole("button", { name: "Dark" }).click();
 
   await expect.poll(() => page.evaluate(() => localStorage.getItem("theme"))).toBe("dark");
   const dark = await page.evaluate(() => document.documentElement.className);
   expect(dark.split(" ").length).toBeGreaterThan(system.split(" ").length);
   await expect(page.locator("body")).toHaveCSS("background-color", DARK_GROUND);
 
-  await page.keyboard.press("Escape");
+  // It is the whole app that went dark, not this page.
+  await page.goto("/");
+  await expect(page.locator("body")).toHaveCSS("background-color", DARK_GROUND);
   await shot(page, "feed-dark-mobile");
 
   // The pre-paint script in app/layout.tsx, not a post-hydration flash.
@@ -268,11 +276,13 @@ test("10. theme survives a reload, and log out ends the session", async ({ open 
   await expect(page.locator("body")).toHaveCSS("background-color", DARK_GROUND);
   expect(await page.evaluate(() => document.documentElement.className)).toBe(dark);
 
-  await page.getByRole("button", { name: "Account menu" }).click();
-  await page.getByRole("button", { name: "System" }).click();
+  await page.goto("/settings");
+  await theme.getByRole("button", { name: "System" }).click();
   await expect.poll(() => page.evaluate(() => localStorage.getItem("theme"))).toBe(null);
   await expect.poll(() => page.evaluate(() => document.documentElement.className)).toBe(system);
 
+  await page.goto("/");
+  await page.getByRole("button", { name: "Account menu" }).click();
   const logOut = page.getByRole("button", { name: "Log out" });
   await expect(logOut).toBeVisible();
   await logOut.click();

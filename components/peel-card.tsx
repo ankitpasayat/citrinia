@@ -4,28 +4,26 @@
 // to the thread, and the actions row sits underneath. The body is no longer one
 // big link -- it has @handles and #hashtags in it now, and an <a> cannot hold
 // another <a>. Every peel gets a dots menu -- copy the link, hand it to the
-// system share sheet -- and your own adds a delete that asks once before it
-// fires. Popovers live in the top layer with no anchor of their own, so the menu
-// is measured off its trigger when it opens.
+// system share sheet, report somebody else's -- and your own adds a delete that
+// asks once before it fires. The menu's plumbing lives in components/menu.tsx.
 import * as stylex from "@stylexjs/stylex";
 import Link from "next/link";
-import { startTransition, useId, useRef, useState, useSyncExternalStore } from "react";
+import { startTransition, useState, useSyncExternalStore } from "react";
 import { deletePeel, setPinnedPeel } from "@/app/actions";
 import { bp, colors, fonts, shape } from "@/app/tokens.stylex";
 import { formatRelative, fullTime } from "@/lib/relative-time";
 import { Avatar } from "./avatar";
 import { BookmarkButton } from "./bookmark-button";
 import { Button } from "./button";
-import { LinkIcon, MoreIcon, PinIcon, RepeatIcon, ReplyIcon, ShareIcon, TrashIcon } from "./icons";
+import { FlagIcon, LinkIcon, MoreIcon, PinIcon, RepeatIcon, ReplyIcon, ShareIcon, TrashIcon } from "./icons";
 import { chipStyles, LikeChip } from "./like-chip";
+import { menuStyles, useMenu } from "./menu";
 import { MediaGrid } from "./media-grid";
 import { QuoteCard } from "./quote-card";
+import { ReportSheet } from "./report-sheet";
 import { RepostButton } from "./repost-button";
 import { RichText } from "./rich-text";
 import { toast } from "./toast";
-
-const MENU_WIDTH = 220;
-const GAP = 8;
 
 // Whether this browser has a share sheet at all: phones, tablets and the
 // Capacitor shell do, most desktops do not, and where it does not exist Copy
@@ -62,12 +60,11 @@ export function PeelCard({
   onOptimisticBookmark: (next: PeelUnionAuthor) => void;
   onQuote: (peel: PeelUnionAuthor) => void;
 }) {
-  const menuId = useId();
-  const trigger = useRef<HTMLButtonElement>(null);
-  const menu = useRef<HTMLDivElement>(null);
-  const [pos, setPos] = useState({ top: GAP, right: GAP });
   const [confirming, setConfirming] = useState(false);
+  const [reporting, setReporting] = useState(false);
   const canShare = useSyncExternalStore(noSubscribe, hasShare, noShareOnServer);
+  // A reopened menu always asks again before it deletes.
+  const { menuId, trigger, menu, pos, onToggle, close } = useMenu(() => setConfirming(false));
 
   const author = peel.author;
   const profileHref = `/u/${author.username}`;
@@ -75,32 +72,13 @@ export function PeelCard({
   const reposter = peel.reposted_by;
   const mine = peel.user_id === viewerId;
 
-  function onMenuToggle(event: React.ToggleEvent<HTMLDivElement>) {
-    if (event.newState !== "open") {
-      setConfirming(false); // A reopened menu always asks again.
-      return;
-    }
-    const rect = trigger.current?.getBoundingClientRect();
-    if (!rect) return;
-    // Clamp all four edges so neither a narrow viewport nor a card sitting at the
-    // bottom of the screen pushes the menu off it. `toggle` fires once the popover
-    // is in the top layer, so its height is measurable here.
-    const maxRight = Math.max(GAP, window.innerWidth - MENU_WIDTH - GAP);
-    const height = menu.current?.offsetHeight ?? 0;
-    const maxTop = Math.max(GAP, window.innerHeight - height - GAP);
-    setPos({
-      top: Math.min(Math.max(GAP, rect.bottom + GAP), maxTop),
-      right: Math.min(Math.max(GAP, window.innerWidth - rect.right), maxRight),
-    });
-  }
-
   /** The link people paste: absolute, because it is leaving the app. */
   function peelUrl(): string {
     return new URL(threadHref, window.location.origin).href;
   }
 
   async function onCopy() {
-    menu.current?.hidePopover();
+    close();
     try {
       await navigator.clipboard.writeText(peelUrl());
       toast("Link copied");
@@ -112,7 +90,7 @@ export function PeelCard({
   }
 
   async function onShare() {
-    menu.current?.hidePopover();
+    close();
     try {
       await navigator.share({ title: `${author.name} on Citrinia`, url: peelUrl() });
     } catch (error) {
@@ -121,8 +99,13 @@ export function PeelCard({
     }
   }
 
+  function onReport() {
+    close();
+    setReporting(true);
+  }
+
   function onPin() {
-    menu.current?.hidePopover();
+    close();
     startTransition(async () => {
       await setPinnedPeel(pinned ? null : peel.id);
       toast(pinned ? "Unpinned" : "Pinned to your profile");
@@ -134,7 +117,7 @@ export function PeelCard({
       setConfirming(true);
       return;
     }
-    menu.current?.hidePopover();
+    close();
     startTransition(async () => {
       onOptimisticRemove(peel.id);
       // A failure leaves the server state alone, so the card comes back on its own.
@@ -219,33 +202,43 @@ export function PeelCard({
             ref={menu}
             id={menuId}
             popover="auto"
-            onToggle={onMenuToggle}
-            {...stylex.props(styles.menu)}
+            onToggle={onToggle}
+            {...stylex.props(menuStyles.menu)}
             style={pos}
           >
-            <button type="button" onClick={onCopy} {...stylex.props(styles.menuItem)}>
+            <button type="button" onClick={onCopy} {...stylex.props(menuStyles.item)}>
               <LinkIcon />
               Copy link
             </button>
 
             {canShare && (
-              <button type="button" onClick={onShare} {...stylex.props(styles.menuItem)}>
+              <button type="button" onClick={onShare} {...stylex.props(menuStyles.item)}>
                 <ShareIcon />
                 Share…
               </button>
             )}
 
+            {!mine && (
+              <>
+                <hr {...stylex.props(menuStyles.rule)} />
+                <button type="button" onClick={onReport} {...stylex.props(menuStyles.item)}>
+                  <FlagIcon />
+                  Report peel
+                </button>
+              </>
+            )}
+
             {mine && (
               <>
-                <hr {...stylex.props(styles.rule)} />
-                <button type="button" onClick={onPin} {...stylex.props(styles.menuItem)}>
+                <hr {...stylex.props(menuStyles.rule)} />
+                <button type="button" onClick={onPin} {...stylex.props(menuStyles.item)}>
                   <PinIcon filled={pinned} />
                   {pinned ? "Unpin from profile" : "Pin to profile"}
                 </button>
                 <button
                   type="button"
                   onClick={onDelete}
-                  {...stylex.props(styles.menuItem, styles.danger)}
+                  {...stylex.props(menuStyles.item, menuStyles.danger)}
                 >
                   <TrashIcon />
                   {confirming ? "Really delete? Tap again" : "Delete peel"}
@@ -255,6 +248,16 @@ export function PeelCard({
           </div>
         </div>
       </div>
+
+      {/* Mounted on the first ask: a feed is twenty cards, and a dialog nobody
+          opened is twenty dialogs nobody opened. */}
+      {reporting && (
+        <ReportSheet
+          subject={{ kind: "peel", id: peel.id, author: author.name }}
+          open
+          onClose={() => setReporting(false)}
+        />
+      )}
     </article>
   );
 }
@@ -330,65 +333,4 @@ const styles = stylex.create({
   replyIcon: { width: 18, height: 18 },
   count: { fontVariantNumeric: "tabular-nums" },
   push: { marginLeft: "auto", display: "inline-flex" },
-  menu: {
-    position: "fixed",
-    top: "auto",
-    right: "auto",
-    bottom: "auto",
-    left: "auto",
-    marginBlock: 0,
-    marginInline: 0,
-    // No `display` here, ever: the UA hides a closed popover with `display: none`,
-    // and an author rule of any kind beats it -- which paints every card's menu
-    // open over the page. The rows stack on their own, as the account menu's do.
-    minWidth: MENU_WIDTH,
-    maxWidth: "calc(100vw - 16px)",
-    paddingBlock: 8,
-    paddingInline: 8,
-    backgroundColor: colors.surface,
-    color: colors.ink,
-    borderWidth: 0,
-    borderStyle: "none",
-    borderRadius: shape.band,
-    boxShadow: colors.shadowLg,
-  },
-  menuItem: {
-    display: "flex",
-    alignItems: "center",
-    gap: 10,
-    width: "100%",
-    minHeight: 44,
-    textAlign: "left",
-    fontFamily: fonts.body,
-    fontWeight: 800,
-    fontSize: "0.875rem",
-    lineHeight: 1,
-    color: colors.ink,
-    backgroundColor: {
-      default: "transparent",
-      [bp.hover]: { default: "transparent", ":hover": colors.chip },
-    },
-    backgroundImage: "none",
-    borderWidth: 0,
-    borderStyle: "none",
-    borderRadius: 12,
-    paddingBlock: 10,
-    paddingInline: 10,
-    cursor: "pointer",
-    touchAction: "manipulation",
-    outlineStyle: { default: "none", ":focus-visible": "solid" },
-    outlineWidth: 3,
-    outlineColor: colors.amber,
-    outlineOffset: -3,
-  },
-  danger: { color: colors.danger },
-  rule: {
-    borderWidth: 0,
-    borderTopWidth: 2,
-    borderTopStyle: "solid",
-    borderTopColor: colors.chip,
-    marginBlock: 4,
-    marginInline: 0,
-    width: "100%",
-  },
 });
