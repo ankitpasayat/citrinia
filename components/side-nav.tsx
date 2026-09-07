@@ -10,6 +10,7 @@ import { bp, colors, fonts, shape } from "@/app/tokens.stylex";
 import { Button } from "./button";
 import { BellIcon, HomeIcon, MailIcon, PlusIcon, SearchIcon, UserIcon } from "./icons";
 import { isOn } from "./tabs";
+import { MessageBadge } from "./message-badge";
 import { UnreadBadge } from "./unread-badge";
 
 export function SideNav({ username, onCompose }: { username: string; onCompose: () => void }) {
@@ -36,6 +37,7 @@ export function SideNav({ username, onCompose }: { username: string; onCompose: 
       </Item>
       <Item href="/messages" label="Messages" on={isOn(pathname, "/messages")}>
         <MailIcon style={styles.icon} />
+        <MessageBadge />
       </Item>
       {/* The rail has the room the phone bar does not, so You keeps its place here. */}
       <Item href={you} label="You" on={isOn(pathname, you)}>

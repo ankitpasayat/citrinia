@@ -25,11 +25,9 @@ import { Avatar } from "./avatar";
 import { Button } from "./button";
 import { HelpText, Textarea } from "./field";
 import { Pill } from "./pill";
+import { MESSAGES_READ_EVENT } from "./message-badge";
 import { RichText } from "./rich-text";
 import { SendIcon } from "./icons";
-
-/** Fired on `window` when a conversation has been marked read, so the badge re-counts. */
-export const MESSAGES_READ_EVENT = "citrinia:messages-read";
 
 /** A message that has not been acknowledged by the server yet, or never will be. */
 type Sent = Message & { state?: "sending" | "failed" };

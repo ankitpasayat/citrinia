@@ -207,6 +207,51 @@ export async function unfollowUser(followeeId: string): Promise<ActionResult> {
 }
 
 /**
+ * Accept a message request: it leaves the Requests tab, joins the inbox and
+ * starts counting on the badge. Replying to it does the same thing without this
+ * -- see the bump_conversation() trigger -- so this is the button for somebody
+ * who wants to keep a conversation without answering yet.
+ *
+ * accept_conversation() is definer and does its own checking: only the person it
+ * was sent to, only while it is still pending. Calling it on anything else
+ * changes nothing rather than failing, which is the right answer to accepting
+ * twice.
+ */
+export async function acceptRequest(conversationId: string): Promise<ActionResult> {
+  if (!UUID.test(conversationId)) return { error: "Couldn't accept that. Try again." };
+
+  const { supabase } = await viewer();
+  const { error } = await supabase.rpc("accept_conversation", { conversation: conversationId });
+  if (error) return { error: "Couldn't accept that. Try again." };
+  revalidatePath("/", "layout");
+  return {};
+}
+
+/**
+ * Bin a request, and the messages in it. The policy allows this only for a
+ * pending conversation somebody else started: a request you sent is not yours to
+ * take back out of their inbox, and an accepted conversation is not yours to
+ * erase for both of you.
+ *
+ * RLS refuses by matching no rows rather than by raising, so the returned rows
+ * are what says it worked -- without `select()` a refusal and a success are the
+ * same silent answer.
+ */
+export async function deleteRequest(conversationId: string): Promise<ActionResult> {
+  if (!UUID.test(conversationId)) return { error: "Couldn't delete that. Try again." };
+
+  const { supabase } = await viewer();
+  const { data, error } = await supabase
+    .from("conversations")
+    .delete()
+    .eq("id", conversationId)
+    .select("id");
+  if (error || !data || data.length === 0) return { error: "Couldn't delete that. Try again." };
+  revalidatePath("/", "layout");
+  return {};
+}
+
+/**
  * Mute a profile: their peels leave the viewer's feeds, replies and search, and
  * they stop ringing the viewer's bell. Nothing is said to them, and the follow
  * between the two, either way, is left exactly as it was.

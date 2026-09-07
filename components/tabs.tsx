@@ -9,6 +9,7 @@ import { usePathname } from "next/navigation";
 import { bp, colors, fonts, shape } from "@/app/tokens.stylex";
 import { Button } from "./button";
 import { BellIcon, HomeIcon, MailIcon, PlusIcon, SearchIcon } from "./icons";
+import { MessageBadge } from "./message-badge";
 import { UnreadBadge } from "./unread-badge";
 
 /** A prefix only counts at a path boundary: `/u/ada` is not inside `/u/adam`. */
@@ -44,6 +45,7 @@ export function Tabs({ onCompose }: { onCompose: () => void }) {
           appears. Five is what fits on a phone. */}
       <Tab href="/messages" label="Messages" on={isOn(pathname, "/messages")}>
         <MailIcon style={styles.icon} />
+        <MessageBadge />
       </Tab>
     </nav>
   );

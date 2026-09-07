@@ -4,7 +4,9 @@ import { Column } from "@/components/column";
 import { Conversation } from "@/components/conversation";
 import { ConversationHead } from "@/components/conversation-head";
 import { FeedShell } from "@/components/feed-shell";
+import { RequestBanner } from "@/components/request-banner";
 import { fetchConversation, fetchMessages } from "@/lib/conversations";
+import { isRequest } from "@/lib/messages";
 import { createClient } from "@/lib/supabase/server";
 
 type Props = { params: Promise<{ id: string }> };
@@ -40,6 +42,11 @@ export default async function OneConversation({ params }: Props) {
       {/* No bar to clear: the composer sits on the bottom edge. */}
       <Column withTabs={false}>
         <ConversationHead other={thread.other} />
+        {/* A request opened from the Requests tab keeps its three answers here,
+            so the choice does not mean going back for it. */}
+        {isRequest(thread.conversation, user.id) && (
+          <RequestBanner conversationId={thread.conversation.id} other={thread.other} />
+        )}
         <Conversation
           // Opening another conversation is a fresh screen, not this one handed
           // somebody else's messages.

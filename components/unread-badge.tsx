@@ -5,11 +5,10 @@
 // no user id and none can leak. Re-counts on every navigation and on every
 // change Realtime reports for the viewer's own rows, and clears the moment the
 // notifications screen says it marked them read.
-import * as stylex from "@stylexjs/stylex";
 import { usePathname } from "next/navigation";
 import { useEffect, useId, useState } from "react";
-import { colors, fonts, shape } from "@/app/tokens.stylex";
 import { createClient } from "@/lib/supabase/client";
+import { Badge } from "./badge";
 
 import type { RealtimeChannel } from "@supabase/supabase-js";
 
@@ -98,39 +97,5 @@ export function UnreadBadge() {
     };
   }, [pathname, channelId]);
 
-  if (count === 0) return null;
-
-  return (
-    // `img`, not `status`: the count belongs to the bell's accessible name, and a
-    // live region here would announce itself on every single navigation.
-    <span
-      role="img"
-      aria-label={`${count} unread notification${count === 1 ? "" : "s"}`}
-      {...stylex.props(styles.badge)}
-    >
-      {count > 9 ? "9+" : count}
-    </span>
-  );
+  return <Badge count={count} label={(n) => `${n} unread notification${n === 1 ? "" : "s"}`} />;
 }
-
-const styles = stylex.create({
-  badge: {
-    position: "absolute",
-    top: -5,
-    insetInlineEnd: -9,
-    display: "grid",
-    placeItems: "center",
-    minWidth: 17,
-    height: 17,
-    paddingInline: 4,
-    borderRadius: shape.pill,
-    backgroundColor: colors.burnt,
-    color: colors.onButton,
-    fontFamily: fonts.body,
-    fontWeight: 800,
-    fontSize: "0.6875rem",
-    lineHeight: 1,
-    fontVariantNumeric: "tabular-nums",
-    pointerEvents: "none",
-  },
-});

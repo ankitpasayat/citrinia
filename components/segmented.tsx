@@ -6,8 +6,12 @@ import * as stylex from "@stylexjs/stylex";
 import Link from "next/link";
 import { bp, colors, fonts, shape } from "@/app/tokens.stylex";
 
-/** One slot. `href` doubles as the key, so no two segments may share one. */
-export type Segment = { href: string; label: string; current: boolean };
+/**
+ * One slot. `href` doubles as the key, so no two segments may share one. The
+ * label is a node rather than a string because Requests carries a dot beside its
+ * word -- everything else hands over plain text.
+ */
+export type Segment = { href: string; label: React.ReactNode; current: boolean };
 
 export function Segmented({ label, segments }: { label: string; segments: Segment[] }) {
   return (

@@ -1824,13 +1824,15 @@ test("26. ada writes to bob from his profile, and his answer arrives without a r
   await expect(box).toHaveValue("");
   await expect(ada).toHaveURL(new RegExp(`^${BASE_URL}/messages/[0-9a-f-]{36}$`));
 
+  // The dot is matched exactly: role names match as a case-insensitive substring,
+  // so a bare "Unread" also finds the bar's "1 unread conversation".
   // Bob follows ada, so it is an ordinary conversation rather than a request:
   // straight into his list, with the preview and a dot on it.
   await bob.reload();
   const row = bob.getByRole("link").filter({ hasText: BOB_ROW_MATCH });
   await expect(row).toHaveCount(1);
   await expect(row).toContainText(ADA_HELLO);
-  await expect(bob.getByRole("img", { name: "Unread" })).toHaveCount(1);
+  await expect(bob.getByRole("img", { name: "Unread", exact: true })).toHaveCount(1);
 
   // Opening it clears the dot and shows what she said. The read mark is waited
   // for as the request it makes, not as a dot that goes: toHaveCount(0) is true
@@ -1843,7 +1845,7 @@ test("26. ada writes to bob from his profile, and his answer arrives without a r
   await expect(bob.getByText(ADA_HELLO)).toBeVisible();
   await marked;
   await bob.goto("/messages");
-  await expect(bob.getByRole("img", { name: "Unread" })).toHaveCount(0);
+  await expect(bob.getByRole("img", { name: "Unread", exact: true })).toHaveCount(0);
 
   // Ada's page is left open on the conversation. Bob answers, and it lands
   // there with nothing reloaded.
@@ -1858,4 +1860,83 @@ test("26. ada writes to bob from his profile, and his answer arrives without a r
 
   await expect(ada.getByText(BOB_ANSWER)).toBeVisible();
   await shot(ada, "conversation-mobile");
+});
+
+const DARA_ASK = "hello bob, dara here";
+
+test("27. a stranger's message waits in requests, and a block stops the next one", async ({
+  open,
+}) => {
+  // Its own ground: somebody bob has never followed, so her first message is a
+  // request by the rule rather than by whatever an earlier test left behind.
+  const dara = await makeGuest("dara");
+
+  try {
+    const bobApi = await restAs("bob");
+    const adaApi = await restAs("ada");
+
+    const bob = await open("bob");
+    await bob.goto("/messages");
+    // Bob's inbox at the start: whatever test 26 left, and no request tab.
+    await expect(bob.getByRole("group", { name: "Messages" })).toHaveCount(0);
+    const before = await bob.getByRole("img", { name: /unread conversation/ }).count();
+
+    // Dara writes. She is a stranger, so it lands in requests -- and a request
+    // does not touch the badge.
+    const she = await open(dara);
+    await she.goto("/messages/with/bob");
+    await she.getByRole("textbox", { name: "Message @bob" }).fill(DARA_ASK);
+    await she.getByRole("button", { name: "Send" }).click();
+    await expect(she.getByText(DARA_ASK)).toBeVisible();
+
+    // She is told nothing about waiting: her side is an ordinary conversation.
+    // The url is waited for first, so the banner has been given the chance to
+    // render before its absence is asserted.
+    await expect(she).toHaveURL(new RegExp(`^${BASE_URL}/messages/[0-9a-f-]{36}$`));
+    await expect(she.getByRole("region", { name: "Message request" })).toHaveCount(0);
+
+    // Waiting for the badge's own count to land before asserting it did not
+    // move: toHaveCount is true before a badge renders as well as after it goes,
+    // so on its own this would pass against a badge that counts requests.
+    const counted = bob.waitForResponse(
+      (response) =>
+        response.request().method() === "GET" && response.url().includes("/rest/v1/conversations"),
+    );
+    await bob.reload();
+    await counted;
+    await expect(bob.getByRole("img", { name: /unread conversation/ })).toHaveCount(before);
+    await expect(bob.getByText(DARA_ASK)).toHaveCount(0);
+
+    // It is on the Requests tab, with the three answers on it.
+    await bob.getByRole("link", { name: "Requests" }).click();
+    await expect(bob.getByText(DARA_ASK)).toBeVisible();
+    await bob.getByRole("button", { name: "Accept" }).first().click();
+    await expect(bob.getByRole("status")).toHaveText(`You'll hear from @${dara.username}`);
+
+    // Accepted, it is an ordinary conversation: off the requests tab, in the
+    // inbox, and now on the badge.
+    await bob.goto("/messages");
+    await expect(bob.getByText(DARA_ASK)).toBeVisible();
+    await expect(bob.getByRole("img", { name: /unread conversation/ })).toHaveCount(before + 1);
+
+    // A block is the one thing that stops a message. Bob blocks ada; her next
+    // send is refused by the database, and the words stay on her screen rather
+    // than disappearing as if they had gone.
+    await restAsService().insert("blocks", { blocker_id: bobApi.id, blocked_id: adaApi.id });
+
+    const ada = await open("ada");
+    await ada.goto("/messages/with/bob");
+    await ada.getByRole("textbox", { name: "Message @bob" }).fill("still there?");
+    await ada.getByRole("button", { name: "Send" }).click();
+    await expect(ada.getByText("You can't message @bob")).toBeVisible();
+    await expect(ada.getByText("Not sent")).toBeVisible();
+    await expect(ada.getByText("still there?")).toBeVisible();
+
+    await restAsService().remove(`blocks?blocker_id=eq.${bobApi.id}&blocked_id=eq.${adaApi.id}`);
+    // The follow the block severed is put back, since test 26's ground and this
+    // one's are the same two people.
+    await bobApi.insert("follows", { follower_id: bobApi.id, followee_id: adaApi.id });
+  } finally {
+    await removeExtras([dara.id]);
+  }
 });
