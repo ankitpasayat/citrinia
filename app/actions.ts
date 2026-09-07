@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { mediaObjectPath, parseMedia } from "@/lib/media";
+import { objectPath, parseMedia } from "@/lib/media";
 import { parseTitle } from "@/lib/peel";
 import { parseProfile } from "@/lib/profile";
 
@@ -79,7 +79,7 @@ export async function deletePeel(id: string): Promise<ActionResult> {
   // effort: the peel is already gone, and the nightly sweep
   // (scripts/sweep-media.mjs) catches anything left behind.
   const paths = (media ?? [])
-    .map((row) => mediaObjectPath(row.url, process.env.NEXT_PUBLIC_SUPABASE_URL!))
+    .map((row) => objectPath(row.url, process.env.NEXT_PUBLIC_SUPABASE_URL!, "media"))
     .filter((path) => path !== null);
   if (paths.length > 0) {
     const { error: storageError } = await supabase.storage.from("media").remove(paths);
@@ -188,15 +188,32 @@ export async function unfollowUser(followeeId: string): Promise<ActionResult> {
 
 /** Save the signed-in user's name and bio. username and avatar_url stay GitHub-owned. */
 export async function updateProfile(_prev: ActionResult, formData: FormData): Promise<ActionResult> {
-  const parsed = parseProfile({ name: formData.get("name"), bio: formData.get("bio") });
+  const parsed = parseProfile({
+    name: formData.get("name"),
+    bio: formData.get("bio"),
+    location: formData.get("location"),
+    website: formData.get("website"),
+  });
   if ("error" in parsed) return { error: parsed.error };
 
   const { supabase, user } = await viewer();
 
-  const { error } = await supabase
-    .from("profiles")
-    .update({ name: parsed.name, bio: parsed.bio })
-    .eq("id", user.id);
+  // A picture the sheet did not touch is absent from the form, which is not the
+  // same as an empty one: absent leaves the column alone, empty takes the
+  // picture down. Their contents are the database's to judge -- profiles_avatar_url_ok
+  // and profiles_banner_url_ok are what keep a `javascript:` url out of an href.
+  const patch: Database["public"]["Tables"]["profiles"]["Update"] = {
+    name: parsed.name,
+    bio: parsed.bio,
+    location: parsed.location,
+    website: parsed.website,
+  };
+  const avatar = formData.get("avatar_url");
+  if (typeof avatar === "string") patch.avatar_url = avatar;
+  const banner = formData.get("banner_url");
+  if (typeof banner === "string") patch.banner_url = banner;
+
+  const { error } = await supabase.from("profiles").update(patch).eq("id", user.id);
   if (error) return { error: "Couldn't save your profile. Try again." };
   revalidatePath("/", "layout");
   return {};

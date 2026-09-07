@@ -123,13 +123,14 @@ export function youtubeId(url: string): string | null {
 }
 
 /**
- * The object one of this project's public media urls points at, as the
- * `<uid>/<file>` path in the `media` bucket -- or null for any other url (a CDN,
- * YouTube, a signed url, another bucket, another project), which is not ours to
- * touch. The inverse of what supabase-js getPublicUrl() builds.
+ * The object one of this project's public urls points at, as the `<uid>/<file>`
+ * path inside `bucket` -- or null for any other url (a CDN, YouTube, a signed
+ * url, a different bucket, another project), which is not ours to touch. The
+ * inverse of what supabase-js getPublicUrl() builds. Peel media and profile
+ * pictures live in different buckets and both delete through this.
  */
-export function mediaObjectPath(url: string, supabaseUrl: string): string | null {
-  const prefix = `${supabaseUrl.replace(/\/+$/, "")}/storage/v1/object/public/media/`;
+export function objectPath(url: string, supabaseUrl: string, bucket: string): string | null {
+  const prefix = `${supabaseUrl.replace(/\/+$/, "")}/storage/v1/object/public/${bucket}/`;
   if (!url.startsWith(prefix)) return null;
   const path = url.slice(prefix.length).split(/[?#]/, 1)[0];
   return path === "" ? null : path;

@@ -32,3 +32,14 @@ export function fullTime(iso: string): string {
   if (Number.isNaN(then.getTime())) return "";
   return new Intl.DateTimeFormat("en-US", { dateStyle: "full", timeStyle: "short" }).format(then);
 }
+
+/**
+ * "September 2026": the month somebody joined. Fixed to UTC, because this one
+ * is rendered on the server and again in the browser, and a date near a month
+ * boundary would otherwise disagree between the two and trip hydration.
+ */
+export function formatMonthYear(iso: string): string {
+  const then = new Date(iso);
+  if (Number.isNaN(then.getTime())) return "";
+  return new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric", timeZone: "UTC" }).format(then);
+}

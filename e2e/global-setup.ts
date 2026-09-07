@@ -41,6 +41,15 @@ async function assertSchema(): Promise<void> {
   if (!buckets.ok) throw new Error(`Could not list Storage buckets: ${buckets.status}`);
   const names = ((await buckets.json()) as { id: string }[]).map((bucket) => bucket.id);
   if (!names.includes("media")) throw stale("The `media` Storage bucket");
+  if (!names.includes("avatars")) throw stale("The `avatars` Storage bucket");
+
+  // A migration that only adds columns passes every check above, and then the
+  // profile page renders a banner nobody has.
+  const profile = await fetch(
+    `${apiUrl}/rest/v1/profiles?select=banner_url,location,website,created_at&limit=0`,
+    { headers },
+  );
+  if (!profile.ok) throw stale("The profile's banner_url/location/website/created_at columns");
 }
 
 export default async function globalSetup(): Promise<void> {

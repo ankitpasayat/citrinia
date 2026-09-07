@@ -138,10 +138,10 @@ export function restAsService(): Rest {
   return client(localEnv().serviceRoleKey, "");
 }
 
-/** The objects one user has put in the `media` bucket, as `<uid>/<file>` paths. */
-export async function listMedia(userId: string): Promise<string[]> {
+/** The objects one user has put in a bucket, as `<uid>/<file>` paths. */
+export async function listUploads(userId: string, bucket = "media"): Promise<string[]> {
   const { apiUrl, serviceRoleKey } = localEnv();
-  const response = await fetch(`${apiUrl}/storage/v1/object/list/media`, {
+  const response = await fetch(`${apiUrl}/storage/v1/object/list/${bucket}`, {
     method: "POST",
     headers: {
       apikey: serviceRoleKey,
@@ -157,8 +157,8 @@ export async function listMedia(userId: string): Promise<string[]> {
 }
 
 /** The url Storage serves an object at — what supabase-js getPublicUrl() builds. */
-export function mediaUrl(path: string): string {
-  return `${localEnv().apiUrl}/storage/v1/object/public/media/${path}`;
+export function publicUrl(path: string, bucket = "media"): string {
+  return `${localEnv().apiUrl}/storage/v1/object/public/${bucket}/${path}`;
 }
 
 /**

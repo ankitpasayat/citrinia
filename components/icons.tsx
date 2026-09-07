@@ -213,3 +213,20 @@ export function ShareIcon(p: IconProps) {
     </Svg>
   );
 }
+
+export function MapPinIcon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path {...stroke} d="M12 21s7-6.3 7-11a7 7 0 1 0-14 0c0 4.7 7 11 7 11Z" />
+      <circle {...stroke} cx="12" cy="10" r="2.5" />
+    </Svg>
+  );
+}
+
+export function CalendarIcon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path {...stroke} d="M4 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2ZM4 10h16M9 3v4M15 3v4" />
+    </Svg>
+  );
+}

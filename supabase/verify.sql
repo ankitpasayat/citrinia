@@ -839,5 +839,147 @@ end $$;
 update public.peels set parent_id = null where id = '40000000-0000-0000-0000-000000000001';
 \echo check 27 ok: peel_ancestors walks root-first, keeps the nearest under a cap, and cannot run away
 
+
+-- 28. The profile's own fields. Their owner can write these straight through
+--     PostgREST, so the constraints -- not the server action -- are what decide
+--     what a profile may say, and the column grant is what keeps the handle out.
+\set carol '50000000-0000-0000-0000-000000000001'
+
+-- A url column that reaches an href or an <img src> takes https or nothing.
+do $$ begin
+  update public.profiles set website = 'javascript:alert(1)' where id = '00000000-0000-0000-0000-000000000001';
+  raise exception 'check 28 FAILED: a javascript: url was storable as a website';
+exception when check_violation then null; end $$;
+do $$ begin
+  update public.profiles set website = 'http://ada.example' where id = '00000000-0000-0000-0000-000000000001';
+  raise exception 'check 28 FAILED: a cleartext website was accepted';
+exception when check_violation then null; end $$;
+do $$ begin
+  update public.profiles set banner_url = 'javascript:alert(1)' where id = '00000000-0000-0000-0000-000000000001';
+  raise exception 'check 28 FAILED: a javascript: url was storable as a banner';
+exception when check_violation then null; end $$;
+do $$ begin
+  update public.profiles set avatar_url = 'data:text/html,<script>alert(1)</script>' where id = '00000000-0000-0000-0000-000000000001';
+  raise exception 'check 28 FAILED: a data: url was storable as an avatar';
+exception when check_violation then null; end $$;
+
+-- A picture of ours may be a loopback url, because that is what a local
+-- Supabase stack serves Storage over -- the same latitude peel_media.url gets.
+update public.profiles set avatar_url = 'http://127.0.0.1:54321/storage/v1/object/public/avatars/u/a.png'
+ where id = :'ada';
+update public.profiles set banner_url = 'http://localhost:54321/storage/v1/object/public/avatars/u/b.png'
+ where id = :'ada';
+-- A website is a link pointing outward, so it gets none of that latitude.
+do $$ begin
+  update public.profiles set website = 'http://127.0.0.1:54321/' where id = '00000000-0000-0000-0000-000000000001';
+  raise exception 'check 28 FAILED: a loopback website was accepted';
+exception when check_violation then null; end $$;
+-- Loopback is the only cleartext exception; a lookalike host is not loopback.
+do $$ begin
+  update public.profiles set avatar_url = 'http://127.0.0.1.evil.example/a.png' where id = '00000000-0000-0000-0000-000000000001';
+  raise exception 'check 28 FAILED: a host that merely starts with 127.0.0.1 passed as loopback';
+exception when check_violation then null; end $$;
+
+-- The lengths, at the boundary on both sides.
+do $$ begin
+  update public.profiles set location = repeat('x', 31) where id = '00000000-0000-0000-0000-000000000001';
+  raise exception 'check 28 FAILED: a 31-character location was accepted';
+exception when check_violation then null; end $$;
+do $$ begin
+  update public.profiles set website = 'https://' || repeat('x', 93) where id = '00000000-0000-0000-0000-000000000001';
+  raise exception 'check 28 FAILED: a 101-character website was accepted';
+exception when check_violation then null; end $$;
+
+update public.profiles
+   set website = 'https://ada.example', location = repeat('x', 30),
+       banner_url = 'https://cdn.example/b.png', avatar_url = ''
+ where id = :'ada';
+do $$
+declare p public.profiles%rowtype;
+begin
+  select * into strict p from public.profiles where id = '00000000-0000-0000-0000-000000000001';
+  if p.website <> 'https://ada.example' or char_length(p.location) <> 30 or p.avatar_url <> '' then
+    raise exception 'check 28 FAILED: a legal profile did not survive the round trip: %', p;
+  end if;
+end $$;
+
+-- Every new column is "not set", never null, so no reader needs a fallback.
+do $$
+declare bad int;
+begin
+  select count(*) into bad from public.profiles
+   where banner_url is null or location is null or website is null or created_at is null;
+  if bad <> 0 then
+    raise exception 'check 28 FAILED: % profiles carry a null in a not-null profile field', bad;
+  end if;
+end $$;
+
+-- "Joined" is the account's date. The row is written by the signup trigger in
+-- the same transaction as the auth user, so the two instants agree.
+insert into auth.users (id, instance_id, aud, role, email, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
+values (:'carol', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'carol@example.com',
+        '{"provider":"github"}',
+        '{"name":"Carol","user_name":"carol","avatar_url":"http://insecure.example/c.png"}',
+        now(), now());
+do $$
+declare p public.profiles%rowtype;
+declare u_at timestamptz;
+begin
+  select * into strict p from public.profiles where id = '50000000-0000-0000-0000-000000000001';
+  select created_at into u_at from auth.users where id = '50000000-0000-0000-0000-000000000001';
+  if abs(extract(epoch from (p.created_at - u_at))) > 1 then
+    raise exception 'check 28 FAILED: joined date % is not the signup date %', p.created_at, u_at;
+  end if;
+  -- An avatar the constraint would reject must not abort the signup; it is dropped.
+  if p.avatar_url <> '' then
+    raise exception 'check 28 FAILED: a non-https avatar was kept as %', p.avatar_url;
+  end if;
+  if p.name <> 'Carol' then
+    raise exception 'check 28 FAILED: the trigger rewrite lost the name, got %', p.name;
+  end if;
+end $$;
+
+-- A provider that sends no avatar at all still gets an account.
+insert into auth.users (id, instance_id, aud, role, email, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
+values ('50000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+        'dan@example.com', '{"provider":"github"}', '{"user_name":"dan"}', now(), now());
+do $$ begin
+  if not exists (select 1 from public.profiles where id = '50000000-0000-0000-0000-000000000002' and avatar_url = '') then
+    raise exception 'check 28 FAILED: a signup with no avatar did not produce a profile';
+  end if;
+end $$;
+
+-- The grant is the only thing standing between a signed-in browser and its own
+-- handle: the update policy allows the whole row, and a policy cannot see columns.
+do $$
+declare col text;
+begin
+  foreach col in array array['name','bio','location','website','avatar_url','banner_url'] loop
+    if not has_column_privilege('authenticated', 'public.profiles', col, 'update') then
+      raise exception 'check 28 FAILED: authenticated cannot update its own %', col;
+    end if;
+  end loop;
+  foreach col in array array['username','id','created_at'] loop
+    if has_column_privilege('authenticated', 'public.profiles', col, 'update') then
+      raise exception 'check 28 FAILED: authenticated can rewrite %', col;
+    end if;
+  end loop;
+  if has_column_privilege('anon', 'public.profiles', 'name', 'update') then
+    raise exception 'check 28 FAILED: a signed-out reader can edit a profile';
+  end if;
+end $$;
+
+-- The bucket helper is the migration's own tool, not an API.
+do $$ begin
+  if to_regprocedure('public.ensure_public_bucket(text,bigint,text[])') is null then
+    raise exception 'check 28 FAILED: ensure_public_bucket is missing';
+  end if;
+  if has_function_privilege('anon', 'public.ensure_public_bucket(text,bigint,text[])', 'execute')
+     or has_function_privilege('authenticated', 'public.ensure_public_bucket(text,bigint,text[])', 'execute') then
+    raise exception 'check 28 FAILED: a client can create Storage buckets';
+  end if;
+end $$;
+\echo check 28 ok: profile fields take https or nothing, joined is the signup date, and the handle stays ungranted
+
 rollback;
 \echo ALL CHECKS PASSED

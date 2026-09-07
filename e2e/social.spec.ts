@@ -6,7 +6,7 @@
 import { deflateSync } from "node:zlib";
 import { BASE_URL } from "../playwright.config.ts";
 import { actionWrite, card, expect, REMOTE_IMAGE, shot, subscribed, test, type Page } from "./fixtures.ts";
-import { listMedia, makeExtras, mediaUrl, peelAs, removeExtras, restAs, restAsService } from "./db.ts";
+import { listUploads, makeExtras, peelAs, publicUrl, removeExtras, restAs, restAsService } from "./db.ts";
 
 declare global {
   interface Window {
@@ -449,17 +449,17 @@ test("7. ada attaches a picture, and the composer holds the line", async ({ open
   await expect(alt).toHaveValue("orange-square");
   await alt.fill("orange square");
 
-  const before = await listMedia(adaId);
+  const before = await listUploads(adaId);
   const posted = actionWrite(ada);
   await sheet.getByRole("button", { name: "Peel it" }).click();
   await posted;
 
   // The file itself goes straight to the bucket, into the uploader's own folder,
   // and it really lands there: the public url serves it back.
-  const uploaded = (await listMedia(adaId)).filter((path) => !before.includes(path));
+  const uploaded = (await listUploads(adaId)).filter((path) => !before.includes(path));
   expect(uploaded).toHaveLength(1);
   expect(uploaded[0].startsWith(`${adaId}/`)).toBe(true);
-  const url = mediaUrl(uploaded[0]);
+  const url = publicUrl(uploaded[0]);
   expect((await ada.request.get(url)).status()).toBe(200);
 
   // The loopback url the local stack serves is admitted by lib/media.ts (a
@@ -477,7 +477,7 @@ test("7. ada attaches a picture, and the composer holds the line", async ({ open
   await ada.getByRole("button", { name: "Really delete? Tap again" }).click();
   await deleted;
   await expect(card(ada, PICTURE)).toHaveCount(0);
-  await expect.poll(() => listMedia(adaId)).toEqual(before);
+  await expect.poll(() => listUploads(adaId)).toEqual(before);
 
   // The card an upload produces from an https url on somebody's CDN, the way
   // the seed importer writes one: the rendering half of the same feature.
@@ -811,4 +811,81 @@ test("13. followers and following are lists of their own, and they page", async 
   } finally {
     await removeExtras(pips.map((pip) => pip.id));
   }
+});
+
+test("14. bob's profile says where he is, where else to find him, and since when", async ({ open }) => {
+  const bobApi = await restAs("bob");
+  const bob = await open("bob");
+
+  // This test states its own ground rather than inheriting it: the profile
+  // fields are the one thing resetData() leaves alone, so a second run would
+  // otherwise start with what the first one saved. "Joined" is given a date
+  // today can never be mistaken for, because it must be the account's date.
+  await restAsService().update(`profiles?id=eq.${bobApi.id}`, {
+    created_at: "2024-01-15T00:00:00Z",
+    location: "",
+    website: "",
+    banner_url: "",
+  });
+
+  const before = await listUploads(bobApi.id, "avatars");
+  await bob.goto("/u/bob");
+  const head = bob.getByRole("heading", { name: BOB, level: 1 }).locator("..");
+
+  await bob.getByRole("button", { name: "Edit profile" }).click();
+  const sheet = bob.getByRole("dialog");
+
+  // A link that is not a link at all never reaches the column: the sheet says so
+  // and stays open, and nothing else on the profile is saved behind it.
+  await sheet.getByRole("textbox", { name: "Location" }).fill("Lisbon");
+  const website = sheet.getByRole("textbox", { name: "Website" });
+  await website.fill("javascript:alert(1)");
+  await sheet.getByRole("button", { name: "Save" }).click();
+  await expect(sheet.getByText("A link has to start with https://")).toBeVisible();
+  await expect(sheet).toBeVisible();
+  await expect(head.getByText("Lisbon")).toHaveCount(0);
+
+  // Typed without a scheme, the way people write an address down.
+  await website.fill("citrinia.example");
+  await sheet.getByLabel("Banner", { exact: true }).setInputFiles([
+    { name: "banner.png", mimeType: "image/png", buffer: SQUARE },
+  ]);
+  await sheet.getByRole("button", { name: "Save" }).click();
+  await expect(sheet).toBeHidden();
+
+  await expect(head.getByText("Lisbon")).toBeVisible();
+  // Shown without its scheme, but the href is the https url that was stored.
+  const link = head.getByRole("link", { name: "citrinia.example" });
+  await expect(link).toHaveAttribute("href", "https://citrinia.example");
+  await expect(link).toHaveAttribute("rel", /noopener/);
+  await expect(link).toHaveAttribute("rel", /noreferrer/);
+  await expect(link).toHaveAttribute("target", "_blank");
+  await expect(head.getByText("Joined January 2024")).toBeVisible();
+
+  // The file went to the avatars bucket, into bob's own folder, and the banner
+  // on the card is that object being served back.
+  const uploaded = (await listUploads(bobApi.id, "avatars")).filter((path) => !before.includes(path));
+  expect(uploaded).toHaveLength(1);
+  expect(uploaded[0].startsWith(`${bobApi.id}/`)).toBe(true);
+  const bannerUrl = publicUrl(uploaded[0], "avatars");
+  // `:visible`, because the edit sheet holds a preview of the same banner at the
+  // same url and is rendered inside this very card whether it is open or not.
+  const banner = bob.locator(`img[src="${bannerUrl}"]:visible`);
+  await expect(banner).toBeVisible();
+  expect((await bob.request.get(bannerUrl)).status()).toBe(200);
+  await shot(bob, "profile-banner");
+
+  // All of it survives a reload, because it is in the row and not in the sheet.
+  await bob.reload();
+  await expect(head.getByText("Lisbon")).toBeVisible();
+  await expect(head.getByRole("link", { name: "citrinia.example" })).toBeVisible();
+  await expect(banner).toBeVisible();
+
+  // Taking the banner down clears the column and drops the object with it.
+  await bob.getByRole("button", { name: "Edit profile" }).click();
+  await sheet.getByRole("button", { name: "Remove banner" }).click();
+  await sheet.getByRole("button", { name: "Save" }).click();
+  await expect(sheet).toBeHidden();
+  await expect(banner).toHaveCount(0);
+  await expect.poll(() => listUploads(bobApi.id, "avatars")).toEqual(before);
 });

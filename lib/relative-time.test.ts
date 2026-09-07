@@ -3,7 +3,7 @@
 // current one ("Sep 3, 2025"). Clock skew (a future timestamp) reads as "now".
 import test from "node:test";
 import assert from "node:assert/strict";
-import { formatRelative, fullTime } from "./relative-time.ts";
+import { formatMonthYear, formatRelative, fullTime } from "./relative-time.ts";
 
 // Dates render in the runtime's zone. Pin it so "Aug 29" is not "Aug 30" on a
 // machine east of UTC. Safe after the import because the module builds its
@@ -86,4 +86,22 @@ test("fullTime spells the date and time out for the title attribute", () => {
   assert.match(full, /2:05/);
   // It is the long form, not the terse relative one.
   assert.notEqual(full, formatRelative("2025-09-03T14:05:00.000Z", NOW));
+});
+
+// Spec: a "joined" date is the month and the year, spelled out, in UTC so the
+// server and the browser render the same string. Nothing for a date we cannot read.
+test("a joined date is its month and year", () => {
+  assert.equal(formatMonthYear("2026-09-07T04:30:00Z"), "September 2026");
+  assert.equal(formatMonthYear("2025-01-31T23:59:59Z"), "January 2025");
+});
+
+test("a joined date does not drift across a month boundary with the time zone", () => {
+  // 23:30 on the last day of September is still September, wherever it is read.
+  assert.equal(formatMonthYear("2026-09-30T23:30:00Z"), "September 2026");
+  assert.equal(formatMonthYear("2026-10-01T00:30:00Z"), "October 2026");
+});
+
+test("a date that cannot be read is nothing at all", () => {
+  assert.equal(formatMonthYear("not a date"), "");
+  assert.equal(formatMonthYear(""), "");
 });
