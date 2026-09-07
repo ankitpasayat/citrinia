@@ -23,9 +23,11 @@ type Props = {
   counts: ProfileCounts;
   isSelf: boolean;
   isFollowing: boolean;
+  /** Whether the viewer has muted this profile, for the dots menu's label. */
+  isMuted: boolean;
 };
 
-export function ProfileCard({ profile, counts, isSelf, isFollowing }: Props) {
+export function ProfileCard({ profile, counts, isSelf, isFollowing, isMuted }: Props) {
   const base = `/u/${encodeURIComponent(profile.username)}`;
   // "1 peel", not "1 peels". "following" has no singular to get wrong.
   // The two follow counts are the way to those lists; the peel count is a fact.
@@ -152,7 +154,7 @@ export function ProfileCard({ profile, counts, isSelf, isFollowing }: Props) {
           ) : (
             <>
               <FollowButton profileId={profile.id} isFollowing={isFollowing} />
-              <ProfileMenu profileId={profile.id} handle={profile.username} />
+              <ProfileMenu profileId={profile.id} handle={profile.username} isMuted={isMuted} />
             </>
           )}
         </div>

@@ -9,7 +9,7 @@ import { FeedShell } from "@/components/feed-shell";
 import { ArrowLeftIcon } from "@/components/icons";
 import { PeelList } from "@/components/peel-list";
 import { ReplyComposer } from "@/components/reply-composer";
-import { fetchAncestors, fetchPeel, fetchPeels } from "@/lib/peels";
+import { fetchAncestors, fetchMutedIds, fetchPeel, fetchPeels } from "@/lib/peels";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Peel" };
@@ -22,15 +22,24 @@ export default async function Thread({ params }: { params: Promise<{ id: string 
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const peel = await fetchPeel(supabase, user.id, id);
+  // The mutes come along for the ride: the replies below need them, and nothing
+  // above depends on them.
+  const [peel, muted] = await Promise.all([
+    fetchPeel(supabase, user.id, id),
+    fetchMutedIds(supabase, user.id),
+  ]);
   if (!peel) notFound();
 
   const [{ data: profile }, ancestors, replies] = await Promise.all([
     supabase.from("profiles").select("username").eq("id", user.id).single(),
-    // What this peel answers, root first, so the page reads top to bottom.
+    // What this peel answers, root first, so the page reads top to bottom. Not
+    // muted-filtered: a gap in the middle of a conversation is worse than seeing
+    // one peel from somebody quiet, and the reader came here on purpose.
     fetchAncestors(supabase, user.id, id),
     // Replies read oldest first: a thread is a conversation, not a feed.
-    fetchPeels(supabase, user.id, { parentId: id, ascending: true }),
+    // A muted person's reply is hidden here and nowhere else -- it is still
+    // under the peel for everybody else, and still on their own profile.
+    fetchPeels(supabase, user.id, { parentId: id, ascending: true, excludeAuthorIds: muted }),
   ]);
   if (!profile) throw new Error("No profile for the signed-in user.");
 

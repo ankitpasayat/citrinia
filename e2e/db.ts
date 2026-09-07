@@ -32,6 +32,9 @@ export async function resetData(): Promise<void> {
   // Peels cascade to their replies and likes; follows have no surrogate key.
   await rest("peels?id=not.is.null", { method: "DELETE", token });
   await rest("follows?follower_id=not.is.null", { method: "DELETE", token });
+  // A mute survives its peels, so a run that muted somebody would otherwise
+  // hand the next run a feed with a person missing from it.
+  await rest("mutes?muter_id=not.is.null", { method: "DELETE", token });
   for (const user of Object.values(USERS)) {
     await rest(`profiles?username=eq.${user.username}`, {
       method: "PATCH",

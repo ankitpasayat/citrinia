@@ -1,8 +1,8 @@
 // Settings: the page every app needs and nobody designs.
 //
 // Sections are added by the slice that has something to put in one, rather than
-// stubbed out ahead of it -- so Email and Password arrive with email sign-in, and
-// Muted and Blocked with block and mute. What is here is what works.
+// stubbed out ahead of it -- so Email and Password arrive with email sign-in.
+// What is here is what works.
 import * as stylex from "@stylexjs/stylex";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -42,6 +42,17 @@ export default async function Settings() {
           <Link href={`/u/${encodeURIComponent(profile.username)}`} {...stylex.props(styles.row)}>
             <span {...stylex.props(styles.rowLabel)}>Username</span>
             <span {...stylex.props(styles.rowValue)}>@{profile.username}</span>
+            <span aria-hidden="true" {...stylex.props(styles.chevron)}>
+              ›
+            </span>
+          </Link>
+        </div>
+
+        <h2 {...stylex.props(styles.section)}>People</h2>
+        <div {...stylex.props(styles.group)}>
+          {/* Blocked joins this group with the other half of the slice. */}
+          <Link href="/settings/muted" {...stylex.props(styles.row)}>
+            <span {...stylex.props(styles.rowLabel)}>Muted</span>
             <span aria-hidden="true" {...stylex.props(styles.chevron)}>
               ›
             </span>

@@ -10,6 +10,13 @@ export type PeelFilter = {
   repliesOnly?: boolean;
   authorId?: string;
   authorIds?: string[];
+  /**
+   * Authors to leave out: the people the viewer has muted. Only the lists a mute
+   * covers pass it -- the feed, the replies under a peel, search -- because a
+   * muted person's own profile still shows everything, which is the whole
+   * difference between muting them and blocking them.
+   */
+  excludeAuthorIds?: string[];
   /** Exactly these peels, in whatever order the query returns them. */
   ids?: string[];
   /** Everything but this one. The Media tab's pinned peel is already above it. */
@@ -100,6 +107,27 @@ function olderThan(column: string, idColumn: string, c: Cursor): string {
   return `${column}.lt."${c.at}",and(${column}.eq."${c.at}",${idColumn}.lt.${c.id})`;
 }
 
+/**
+ * Who the viewer has muted, for `PeelFilter.excludeAuthorIds`.
+ *
+ * The home feed does not need this: `home_timeline` drops muted authors in SQL,
+ * where the page size is decided, so filtering there is what keeps a page from
+ * coming back short and a cursor from skipping. The lists that page in the app
+ * -- replies, search -- read it here instead.
+ *
+ * An empty list is the common answer and costs one small indexed read; RLS on
+ * `mutes` is select-own, so this can only ever return the viewer's own rows.
+ */
+export async function fetchMutedIds(
+  supabase: SupabaseClient<Database>,
+  viewerId: string,
+): Promise<string[]> {
+  const { data, error } = await supabase.from("mutes").select("muted_id").eq("muter_id", viewerId);
+  // A feed that quietly stops honouring a mute is worse than an error page.
+  if (error) throw new Error(`Couldn't load your mutes: ${error.message}`);
+  return (data ?? []).map((row) => row.muted_id);
+}
+
 /** Fetch peels with author, counts, the viewer's like/repost/bookmark flags, media and quote. */
 export async function fetchPeels(
   supabase: SupabaseClient<Database>,
@@ -116,6 +144,10 @@ export async function fetchPeels(
   else if (filter.repliesOnly) query = query.not("parent_id", "is", null);
   if (filter.authorId) query = query.eq("user_id", filter.authorId);
   if (filter.authorIds) query = query.in("user_id", filter.authorIds);
+  // An empty list would send `not.in.()`, which PostgREST answers with a 400.
+  if (filter.excludeAuthorIds?.length) {
+    query = query.not("user_id", "in", `(${filter.excludeAuthorIds.join(",")})`);
+  }
   if (filter.ids) query = query.in("id", filter.ids);
   if (filter.excludeId) query = query.neq("id", filter.excludeId);
   const before = cursor(filter.before);
@@ -323,13 +355,15 @@ export async function fetchSuggestedProfiles(
   viewerId: string,
   n: number = 3,
 ): Promise<Profile[]> {
-  const { data: follows, error: followsError } = await supabase
-    .from("follows")
-    .select("followee_id")
-    .eq("follower_id", viewerId);
+  // Neither read depends on the other, and the pool below needs both.
+  const [{ data: follows, error: followsError }, muted] = await Promise.all([
+    supabase.from("follows").select("followee_id").eq("follower_id", viewerId),
+    fetchMutedIds(supabase, viewerId),
+  ]);
   if (followsError) throw new Error(`Couldn't load suggestions: ${followsError.message}`);
 
-  const skip = [viewerId, ...(follows ?? []).map((row) => row.followee_id)];
+  // Somebody the viewer has muted is not somebody to suggest they follow.
+  const skip = [viewerId, ...muted, ...(follows ?? []).map((row) => row.followee_id)];
   // A pool rather than every profile: the ranking below is done in memory.
   const { data: pool, error: poolError } = await supabase
     .from("profiles")
@@ -443,6 +477,57 @@ export async function fetchFollowList(
 
   const last = rows[rows.length - 1];
   const older = rows.length === PAGE_SIZE ? encodeCursor(last.created_at, last[shown]) : null;
+  return { people, older };
+}
+
+/**
+ * One page of the people the viewer has muted, most recent first, for
+ * /settings/muted. The same shape and the same keyset as `fetchFollowList` --
+ * the pair is the row there too, so the boundary is (created_at, muted_id).
+ *
+ * `isFollowing` is read for the same reason it is in a follow list: muting
+ * somebody does not unfollow them, so whether you still do is worth seeing next
+ * to the button that undoes the mute.
+ */
+export async function fetchMutedList(
+  supabase: SupabaseClient<Database>,
+  viewerId: string,
+  before?: string,
+): Promise<{ people: Person[]; older: string | null }> {
+  let query = supabase.from("mutes").select("*").eq("muter_id", viewerId);
+  const from = cursor(before);
+  if (from) query = query.or(olderThan("created_at", "muted_id", from));
+  const { data: rows, error } = await query
+    .order("created_at", { ascending: false })
+    .order("muted_id", { ascending: false })
+    .limit(PAGE_SIZE);
+  if (error) throw new Error(`Couldn't load the muted list: ${error.message}`);
+  if (!rows || rows.length === 0) return { people: [], older: null };
+
+  const ids = rows.map((row) => row.muted_id);
+  const [profiles, mine] = await Promise.all([
+    supabase.from("profiles").select("*").in("id", ids),
+    supabase.from("follows").select("followee_id").eq("follower_id", viewerId).in("followee_id", ids),
+  ]);
+  if (profiles.error) throw new Error(`Couldn't load the muted list: ${profiles.error.message}`);
+  if (mine.error) throw new Error(`Couldn't load the muted list: ${mine.error.message}`);
+
+  const byId = new Map((profiles.data ?? []).map((profile) => [profile.id, profile]));
+  const followed = new Set((mine.data ?? []).map((row) => row.followee_id));
+
+  // `.in()` answers in its own order, so the mute rows are what orders the page.
+  const people = ids
+    .map((id) => byId.get(id))
+    .filter((profile) => profile !== undefined)
+    .map((profile) => ({
+      profile,
+      isFollowing: followed.has(profile.id),
+      // mutes_not_self means the viewer is never in their own muted list.
+      isSelf: false,
+    }));
+
+  const last = rows[rows.length - 1];
+  const older = rows.length === PAGE_SIZE ? encodeCursor(last.created_at, last.muted_id) : null;
   return { people, older };
 }
 

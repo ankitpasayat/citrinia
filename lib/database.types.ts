@@ -111,6 +111,39 @@ export type Database = {
           }
         ]
       }
+      mutes: {
+        Row: {
+          created_at: string
+          muted_id: string
+          muter_id: string
+        }
+        Insert: {
+          created_at?: string
+          muted_id: string
+          muter_id: string
+        }
+        Update: {
+          created_at?: string
+          muted_id?: string
+          muter_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mutes_muter_id_fkey"
+            columns: ["muter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mutes_muted_id_fkey"
+            columns: ["muted_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       notifications: {
         Row: {
           actor_id: string
@@ -434,6 +467,13 @@ export type Database = {
           confirm: string
         }
         Returns: undefined
+      }
+      hidden_from: {
+        Args: {
+          viewer: string
+          author: string
+        }
+        Returns: boolean
       }
       home_timeline: {
         Args: {

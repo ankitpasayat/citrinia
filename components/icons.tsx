@@ -256,3 +256,17 @@ export function GearIcon(p: IconProps) {
     </Svg>
   );
 }
+
+// The artifact's i-mute: an eye with a line through it. Muting is about not
+// seeing them, not about volume, so it is the eye rather than a speaker.
+export function MuteIcon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path {...stroke} d="M3 3l18 18" />
+      <path
+        {...stroke}
+        d="M10.5 6.5C11 6.2 11.5 6 12 6c3 0 5.5 2.5 8 6-1 1.4-2 2.5-3 3.4M6.5 8.5C5.3 9.5 4.2 10.7 3 12c2.5 3.5 5 6 9 6 1.3 0 2.5-.3 3.6-.9"
+      />
+    </Svg>
+  );
+}

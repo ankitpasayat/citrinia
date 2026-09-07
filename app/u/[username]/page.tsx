@@ -87,7 +87,7 @@ export default async function ProfilePage({ params, searchParams }: Props) {
   const pinnedId = tab === "peels" && !before ? profile.pinned_peel_id : null;
 
   // Counts are head requests, so nothing but the number crosses the wire.
-  const [peelCount, followers, following, follow, peels, viewer, pinned] = await Promise.all([
+  const [peelCount, followers, following, follow, mute, peels, viewer, pinned] = await Promise.all([
     supabase
       .from("peels")
       .select("id", { count: "exact", head: true })
@@ -100,6 +100,14 @@ export default async function ProfilePage({ params, searchParams }: Props) {
       .select("follower_id")
       .eq("follower_id", user.id)
       .eq("followee_id", profile.id)
+      .maybeSingle(),
+    // Only for the dots menu's label. A mute changes nothing on this page: the
+    // whole point of it is that a muted person's profile still reads in full.
+    supabase
+      .from("mutes")
+      .select("muted_id")
+      .eq("muter_id", user.id)
+      .eq("muted_id", profile.id)
       .maybeSingle(),
     tab === "replies"
       ? fetchRepliesBy(supabase, user.id, profile.id, before)
@@ -135,6 +143,7 @@ export default async function ProfilePage({ params, searchParams }: Props) {
           }}
           isSelf={isSelf}
           isFollowing={follow.data !== null}
+          isMuted={mute.data !== null}
         />
 
         <ProfileTabs username={profile.username} tab={tab} />

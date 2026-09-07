@@ -12,6 +12,8 @@ import {
   escapeRegex,
   fetchBookmarks,
   fetchLikedBy,
+  fetchMutedIds,
+  fetchMutedList,
   fetchNotifications,
   fetchPeel,
   fetchPeels,
@@ -65,6 +67,8 @@ function fake(rows: {
   follows?: { followee_id: string }[];
   /** One row per follower of the pool profiles -- the second read of follows. */
   followers?: { followee_id: string }[];
+  /** Who the viewer has muted. */
+  mutes?: { muted_id: string; created_at?: string }[];
   count?: number;
 }) {
   const calls: Call[] = [];
@@ -85,6 +89,7 @@ function fake(rows: {
       followReads += 1;
       return (followReads === 1 ? rows.follows : rows.followers) ?? [];
     }
+    if (table === "mutes") return rows.mutes ?? [];
     if (table === "likes" || table === "bookmarks") return rows.joins ?? [];
     return [];
   }
@@ -750,4 +755,67 @@ test("suggestions are ordered by how many followers each profile has, and capped
 test("no profiles left to suggest is an empty list, not a crash", async () => {
   const { client } = fake({ follows: [], profiles: [] });
   assert.deepEqual(await fetchSuggestedProfiles(client, ADA.id, 3), []);
+});
+
+// --- mute --------------------------------------------------------------------
+// Spec (slice 7): a mute hides that person's peels from the reader's feed, from
+// the replies under a peel and from search, and it hides nothing anywhere else --
+// their own profile still reads in full, which is the whole difference between
+// muting somebody and blocking them.
+
+test("fetchMutedIds asks for the viewer's own mutes and returns the ids", async () => {
+  const { client, calls } = fake({ mutes: [{ muted_id: BOB.id }, { muted_id: CAT.id }] });
+  assert.deepEqual(await fetchMutedIds(client, ADA.id), [BOB.id, CAT.id]);
+  const call = calls.find((c) => c.table === "mutes");
+  assert.equal(call?.columns, "muted_id");
+  assert.deepEqual(call?.filters[0], ["eq", "muter_id", ADA.id]);
+});
+
+test("excludeAuthorIds leaves those authors out of the query", async () => {
+  const { client, calls } = fake({ peels: [peelRow()] });
+  await fetchPeels(client, ADA.id, { parentId: "p1", excludeAuthorIds: [BOB.id, CAT.id] });
+  assert.deepEqual(calls[0].filters[1], ["not.in", "user_id", `(${BOB.id},${CAT.id})`]);
+});
+
+test("an empty excludeAuthorIds sends no filter, because `not.in.()` is a 400", async () => {
+  // Nobody muted is the common case, so this is the path most reads take.
+  const { client, calls } = fake({ peels: [peelRow()] });
+  await fetchPeels(client, ADA.id, { parentId: "p1", excludeAuthorIds: [] });
+  assert.equal(
+    calls[0].filters.some(([op]) => op === "not.in"),
+    false,
+  );
+});
+
+test("suggestions skip the people the viewer has muted", async () => {
+  // Offering somebody you have just muted as somebody to follow is the one place
+  // a mute would be plainly visible to its owner as a bug.
+  const { client, calls } = fake({
+    follows: [{ followee_id: BOB.id }],
+    mutes: [{ muted_id: CAT.id }],
+    profiles: [DEE],
+    followers: [],
+  });
+  await fetchSuggestedProfiles(client, ADA.id, 2);
+  const pool = calls.find((c) => c.table === "profiles");
+  assert.deepEqual(pool?.filters[0], ["not.in", "id", `(${ADA.id},${CAT.id},${BOB.id})`]);
+});
+
+test("the muted list pages on (created_at, muted_id), newest mute first", async () => {
+  const { client, calls } = fake({
+    mutes: [{ muted_id: BOB.id, created_at: "2026-09-05T00:00:00Z" }],
+    profiles: [BOB],
+  });
+  const { people } = await fetchMutedList(client, ADA.id, encodeCursor("2026-09-05T00:00:00Z", ID));
+  const call = calls.find((c) => c.table === "mutes");
+  assert.deepEqual(call?.filters[0], ["eq", "muter_id", ADA.id]);
+  assert.deepEqual(call?.filters[1], ["or", "", olderThan("muted_id", "2026-09-05T00:00:00Z", ID)]);
+  assert.deepEqual(call?.filters.slice(2, 4), [
+    ["order", "created_at", { ascending: false }],
+    ["order", "muted_id", { ascending: false }],
+  ]);
+  assert.deepEqual(
+    people.map((person) => person.profile.id),
+    [BOB.id],
+  );
 });

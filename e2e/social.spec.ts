@@ -52,6 +52,12 @@ const REPORTABLE = "a peel worth telling somebody about";
 const BOB_OWN = "bob has nothing to report about himself";
 const LEAVING = "posted by somebody on their way out";
 
+// Slice 7: ada goes quiet for bob. Distinct words, because the mute is proved by
+// a card being absent, and an absence is only meaningful if the text is unique.
+const MUTED_PEEL = "marmalade thoughts nobody asked for";
+const MUTED_REPLY = "and another marmalade thought";
+const BOB_THREAD = "bob starts something for ada to answer";
+
 const CHAIN_ROOT = "what is the correct number of oranges";
 const CHAIN_MIDDLE = "one more than you have";
 const CHAIN_LEAF = "that is not a number, bob";
@@ -1213,12 +1219,16 @@ test("19. an account can be closed from settings, and it takes its peels with it
     const leaver = await open(guest);
     await leaver.goto("/settings");
 
-    // What the page holds today: the handle, the theme, and the way out. Email,
-    // password, muted and blocked arrive with the slices that own them.
+    // What the page holds today: the handle, the muted list, the theme, and the
+    // way out. Email, password and blocked arrive with the slices that own them.
     await expect(leaver.getByRole("heading", { name: "Settings", level: 1 })).toBeVisible();
     await expect(leaver.getByRole("link", { name: /Username @leaver/ })).toHaveAttribute(
       "href",
       "/u/leaver",
+    );
+    await expect(leaver.getByRole("link", { name: "Muted" })).toHaveAttribute(
+      "href",
+      "/settings/muted",
     );
     await expect(leaver.getByRole("group", { name: "Theme" })).toBeVisible();
 
@@ -1254,4 +1264,100 @@ test("19. an account can be closed from settings, and it takes its peels with it
   } finally {
     await removeExtras([guest.id]);
   }
+});
+
+test("20. bob mutes ada: she leaves his feed, his replies and his bell, but not her own profile", async ({
+  open,
+}) => {
+  // Its own ground: no mute of bob's on file, and a thread of his for ada to
+  // answer into. Everything asserted below is about rows made inside this test.
+  const bobApi = await restAs("bob");
+  const adaApi = await restAs("ada");
+  const service = restAsService();
+  await service.remove(`mutes?muter_id=eq.${bobApi.id}`);
+  const thread = await peelAs("bob", BOB_THREAD);
+
+  const bob = await open("bob");
+  await bob.goto("/u/ada");
+  await bob.getByRole("button", { name: "More for @ada" }).click();
+  await bob.getByRole("button", { name: "Mute @ada" }).click();
+  // The wording is the promise: it says what bob stops seeing, not that ada was
+  // told anything -- because she was not.
+  await expect(bob.getByRole("status")).toHaveText("You won't see @ada");
+
+  // Everything ada does from here is quiet for bob and ordinary for everyone else.
+  await peelAs("ada", MUTED_PEEL);
+  await peelAs("ada", MUTED_REPLY, thread);
+
+  // Her profile still reads in full. This is the whole line between muting
+  // somebody and blocking them, so it is the first thing checked.
+  await bob.reload();
+  await expect(card(bob, MUTED_PEEL)).toBeVisible();
+  await expect(bob.getByRole("button", { name: "Unmute @ada" })).toBeHidden();
+
+  // The feed drops her, and keeps working.
+  await bob.goto("/");
+  await expect(card(bob, BOB_PEEL)).toBeVisible();
+  await expect(card(bob, MUTED_PEEL)).toHaveCount(0);
+
+  // So do the replies under his own peel -- for him. Not for anybody else.
+  await bob.goto(`/p/${thread}`);
+  await expect(card(bob, BOB_THREAD)).toBeVisible();
+  await expect(card(bob, MUTED_REPLY)).toHaveCount(0);
+
+  const ada = await open("ada");
+  await ada.goto(`/p/${thread}`);
+  await expect(card(ada, MUTED_REPLY)).toBeVisible();
+
+  // Search drops her peels but still finds her, which is how he reaches the
+  // profile to undo it. The person row is named in full: a bare "@ada" also
+  // matches the mention link inside somebody's peel, which is a different link.
+  await bob.goto("/search?q=marmalade");
+  await expect(card(bob, MUTED_PEEL)).toHaveCount(0);
+  await bob.goto("/search?q=ada");
+  await expect(bob.getByRole("link", { name: "Ada Lovelace @ada" })).toBeVisible();
+
+  // The bell says nothing. Everything bob already had from ada is cleared first,
+  // so what is counted afterwards is only what she does from here.
+  await service.remove(`notifications?user_id=eq.${bobApi.id}&actor_id=eq.${adaApi.id}`);
+  const quiet = await peelAs("bob", "something for ada to answer quietly");
+  await adaApi.insert("likes", { peel_id: quiet, user_id: adaApi.id });
+  await adaApi.insert("peels", { title: "a quiet reply", user_id: adaApi.id, parent_id: quiet });
+  await adaApi.insert("peels", { title: "quietly at @bob", user_id: adaApi.id });
+  expect(
+    await service.select<{ type: string }>(
+      `notifications?user_id=eq.${bobApi.id}&actor_id=eq.${adaApi.id}&select=type`,
+    ),
+  ).toEqual([]);
+
+  // Settings lists her, and the button there is the way back.
+  await bob.goto("/settings");
+  await bob.getByRole("link", { name: "Muted" }).click();
+  await expect(bob.getByRole("heading", { name: "Muted", level: 1 })).toBeVisible();
+  await expect(bob.getByRole("link", { name: "Ada Lovelace @ada" })).toBeVisible();
+
+  await bob.getByRole("button", { name: "Unmute @ada" }).click();
+  await expect(bob.getByRole("status")).toHaveText("You'll see @ada again");
+  await expect(bob.getByRole("link", { name: "Ada Lovelace @ada" })).toHaveCount(0);
+  await expect(bob.getByRole("heading", { name: "Nobody muted" })).toBeVisible();
+
+  // And she is back, everywhere she left.
+  await bob.goto("/");
+  await expect(card(bob, MUTED_PEEL)).toBeVisible();
+  await bob.goto(`/p/${thread}`);
+  await expect(card(bob, MUTED_REPLY)).toBeVisible();
+
+  // The control the silence above needs: the same act, now that she is unmuted,
+  // does ring. Without this, a bell that was simply broken would have passed.
+  const loud = await peelAs("bob", "something for ada to answer out loud");
+  await adaApi.insert("likes", { peel_id: loud, user_id: adaApi.id });
+  await expect
+    .poll(async () =>
+      (
+        await service.select<{ type: string }>(
+          `notifications?user_id=eq.${bobApi.id}&actor_id=eq.${adaApi.id}&select=type`,
+        )
+      ).map((row) => row.type),
+    )
+    .toEqual(["like"]);
 });

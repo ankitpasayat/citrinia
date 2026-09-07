@@ -191,6 +191,45 @@ export async function unfollowUser(followeeId: string): Promise<ActionResult> {
   return {};
 }
 
+/**
+ * Mute a profile: their peels leave the viewer's feeds, replies and search, and
+ * they stop ringing the viewer's bell. Nothing is said to them, and the follow
+ * between the two, either way, is left exactly as it was.
+ *
+ * Muting somebody already muted is a primary-key collision, which is the right
+ * answer to "mute them" -- so 23505 comes back as success, the way a duplicate
+ * report does in reportContent.
+ */
+export async function muteUser(profileId: string): Promise<ActionResult> {
+  if (!UUID.test(profileId)) return { error: "Couldn't mute. Try again." };
+
+  const { supabase, user } = await viewer();
+  if (user.id === profileId) return { error: "You can't mute yourself." };
+
+  const { error } = await supabase
+    .from("mutes")
+    .insert({ muter_id: user.id, muted_id: profileId });
+  if (error && error.code !== "23505") return { error: "Couldn't mute. Try again." };
+  revalidatePath("/", "layout");
+  return {};
+}
+
+/** Unmute a profile. A no-op if the signed-in user had not muted them. */
+export async function unmuteUser(profileId: string): Promise<ActionResult> {
+  if (!UUID.test(profileId)) return { error: "Couldn't unmute. Try again." };
+
+  const { supabase, user } = await viewer();
+
+  const { error } = await supabase
+    .from("mutes")
+    .delete()
+    .eq("muter_id", user.id)
+    .eq("muted_id", profileId);
+  if (error) return { error: "Couldn't unmute. Try again." };
+  revalidatePath("/", "layout");
+  return {};
+}
+
 /** Save the signed-in user's profile: the words, the facts, the pictures, and
  *  the handle -- which goes through change_username() rather than the update. */
 export async function updateProfile(_prev: ActionResult, formData: FormData): Promise<ActionResult> {

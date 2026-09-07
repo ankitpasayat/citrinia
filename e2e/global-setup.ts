@@ -3,8 +3,16 @@ import { BASE_URL } from "../playwright.config.ts";
 import { ensureUsers, resetData } from "./db.ts";
 import { localEnv } from "./env.ts";
 
-/** Everything 20260907000000_social.sql adds, and nothing the earlier files did. */
-const SOCIAL_TABLES = ["reposts", "bookmarks", "peel_media", "notifications", "username_history"];
+/** The tables the migrations after the first two add, newest last. */
+const LATER_TABLES = [
+  "reposts",
+  "bookmarks",
+  "peel_media",
+  "notifications",
+  "username_history",
+  "reports",
+  "mutes",
+];
 
 /**
  * `supabase start` restores the stack's own cached snapshot, which is whatever
@@ -21,7 +29,7 @@ async function assertSchema(): Promise<void> {
         "rather than applying new migrations -- run `npx supabase db reset` and rebuild.",
     );
 
-  for (const table of SOCIAL_TABLES) {
+  for (const table of LATER_TABLES) {
     const response = await fetch(`${apiUrl}/rest/v1/${table}?select=*&limit=0`, { headers });
     if (!response.ok) throw stale(`Table \`${table}\``);
   }

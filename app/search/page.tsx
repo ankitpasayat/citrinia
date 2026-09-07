@@ -3,7 +3,7 @@ import * as stylex from "@stylexjs/stylex";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { escapeRegex, fetchPeels } from "@/lib/peels";
+import { escapeRegex, fetchMutedIds, fetchPeels } from "@/lib/peels";
 import { Avatar } from "@/components/avatar";
 import { Column } from "@/components/column";
 import { FeedShell } from "@/components/feed-shell";
@@ -42,6 +42,11 @@ export default async function Search({ searchParams }: { searchParams: Promise<{
 
   const q = ((await searchParams).q ?? "").trim();
 
+  // Peels by muted people are dropped from the results; the people list is not
+  // filtered, because finding somebody is how the reader gets to their profile
+  // to unmute them.
+  const muted = q === "" ? [] : await fetchMutedIds(supabase, user.id);
+
   const [{ data: viewer }, { data: people }, peels] = await Promise.all([
     supabase.from("profiles").select("username").eq("id", user.id).maybeSingle(),
     q === ""
@@ -51,7 +56,9 @@ export default async function Search({ searchParams }: { searchParams: Promise<{
           .select("id, name, username, avatar_url")
           .or(searchFilter(q))
           .limit(PEOPLE_LIMIT),
-    q === "" ? Promise.resolve([]) : fetchPeels(supabase, user.id, { search: q, limit: PEEL_LIMIT }),
+    q === ""
+      ? Promise.resolve([])
+      : fetchPeels(supabase, user.id, { search: q, limit: PEEL_LIMIT, excludeAuthorIds: muted }),
   ]);
 
   return (

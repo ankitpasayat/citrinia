@@ -4,34 +4,53 @@
 // Server-safe; the follow button is the client leaf.
 import * as stylex from "@stylexjs/stylex";
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { colors, fonts, shape } from "@/app/tokens.stylex";
 import type { Person } from "@/lib/peels";
 import { Avatar } from "./avatar";
 import { FollowButton } from "./follow-button";
 
-export function PersonList({ people, heading }: { people: Person[]; heading?: string }) {
+type Props = {
+  people: Person[];
+  heading?: string;
+  /**
+   * What sits at the end of a row, when Follow is not the point of the list --
+   * Unmute on /settings/muted. Left out, every row gets the follow button.
+   */
+  action?: (person: Person) => ReactNode;
+};
+
+export function PersonList({ people, heading, action }: Props) {
   return (
     <section {...stylex.props(styles.card)}>
       {heading && <h2 {...stylex.props(styles.label)}>{heading}</h2>}
 
-      {people.map(({ profile, isFollowing, isSelf }) => (
-        <div key={profile.id} {...stylex.props(styles.row)}>
+      {people.map((person) => (
+        <div key={person.profile.id} {...stylex.props(styles.row)}>
           <Link
-            href={`/u/${encodeURIComponent(profile.username)}`}
+            href={`/u/${encodeURIComponent(person.profile.username)}`}
             {...stylex.props(styles.who)}
           >
-            <Avatar src={profile.avatar_url} name={profile.name} size="sm" />
+            <Avatar src={person.profile.avatar_url} name={person.profile.name} size="sm" />
             <span {...stylex.props(styles.text)}>
-              <b {...stylex.props(styles.name)}>{profile.name}</b>
-              <span {...stylex.props(styles.handle)}>@{profile.username}</span>
+              <b {...stylex.props(styles.name)}>{person.profile.name}</b>
+              <span {...stylex.props(styles.handle)}>@{person.profile.username}</span>
               {/* One line of bio: the rest belongs on their profile. */}
-              {profile.bio !== "" && (
-                <span {...stylex.props(styles.bio)}>{profile.bio.split("\n")[0]}</span>
+              {person.profile.bio !== "" && (
+                <span {...stylex.props(styles.bio)}>{person.profile.bio.split("\n")[0]}</span>
               )}
             </span>
           </Link>
           {/* Nobody follows themselves, so the viewer's own row has no button. */}
-          {!isSelf && <FollowButton profileId={profile.id} isFollowing={isFollowing} compact />}
+          {action
+            ? action(person)
+            : !person.isSelf && (
+                <FollowButton
+                  profileId={person.profile.id}
+                  isFollowing={person.isFollowing}
+                  compact
+                />
+              )}
         </div>
       ))}
     </section>

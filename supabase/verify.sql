@@ -73,15 +73,15 @@ do $$ begin
 end $$;
 \echo check 5 ok: peels and notifications in supabase_realtime publication, notifications logged whole
 
--- 6. RLS enabled on every table, 24 policies, API roles have the grants their policies assume.
+-- 6. RLS enabled on every table, 27 policies, API roles have the grants their policies assume.
 do $$ begin
   if exists (select 1 from pg_tables where schemaname = 'public'
-               and tablename in ('profiles','peels','likes','follows','reposts','bookmarks','peel_media','notifications','username_history','reports')
+               and tablename in ('profiles','peels','likes','follows','reposts','bookmarks','peel_media','notifications','username_history','reports','mutes')
                and not rowsecurity) then
     raise exception 'check 6 FAILED: RLS not enabled on every table';
   end if;
-  if (select count(*) from pg_policies where schemaname = 'public') <> 24 then
-    raise exception 'check 6 FAILED: expected 24 policies, found %', (select count(*) from pg_policies where schemaname = 'public');
+  if (select count(*) from pg_policies where schemaname = 'public') <> 27 then
+    raise exception 'check 6 FAILED: expected 27 policies, found %', (select count(*) from pg_policies where schemaname = 'public');
   end if;
   if not has_table_privilege('authenticated', 'public.peels', 'insert') or not has_table_privilege('anon', 'public.profiles', 'select') then
     raise exception 'check 6 FAILED: API roles lack table grants';
@@ -1184,6 +1184,9 @@ begin
     'authenticated likes DELETE'             || E'\n' ||
     'authenticated likes INSERT'             || E'\n' ||
     'authenticated likes SELECT'             || E'\n' ||
+    'authenticated mutes DELETE'             || E'\n' ||
+    'authenticated mutes INSERT'             || E'\n' ||
+    'authenticated mutes SELECT'             || E'\n' ||
     'authenticated notifications SELECT'     || E'\n' ||
     'authenticated peel_media DELETE'        || E'\n' ||
     'authenticated peel_media INSERT'        || E'\n' ||
@@ -1370,6 +1373,240 @@ do $$ begin
   end if;
 end $$;
 \echo check 33 ok: the way out needs your own handle, and takes only what is yours
+
+-- 34. Mute: private, one-sided, and quiet.
+-- Its own ground, since check 33 deleted quinn: three fresh accounts and a peel
+-- each, so nothing here depends on what earlier checks left behind.
+insert into auth.users (id, instance_id, aud, role, email, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
+values ('80000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+        'sam@example.com', '{"provider":"github"}', '{"user_name":"samverify","avatar_url":""}', now(), now()),
+       ('80000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+        'tess@example.com', '{"provider":"github"}', '{"user_name":"tessverify","avatar_url":""}', now(), now()),
+       ('80000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+        'uma@example.com', '{"provider":"github"}', '{"user_name":"umaverify","avatar_url":""}', now(), now());
+
+-- The shape rules, before anybody's identity is involved.
+do $$ begin
+  insert into public.mutes (muter_id, muted_id)
+  values ('80000000-0000-0000-0000-000000000001', '80000000-0000-0000-0000-000000000001');
+  raise exception 'check 34 FAILED: somebody muted themselves';
+exception when check_violation then null; end $$;
+
+-- Sam mutes Tess. Everything below is from inside Sam's session.
+set local role authenticated;
+do $$ begin
+  perform set_config('request.jwt.claim.sub', '80000000-0000-0000-0000-000000000001', true);
+  perform set_config('request.jwt.claims', '{"sub":"80000000-0000-0000-0000-000000000001","role":"authenticated"}', true);
+end $$;
+
+insert into public.mutes (muter_id, muted_id)
+values ('80000000-0000-0000-0000-000000000001', '80000000-0000-0000-0000-000000000002');
+
+do $$ begin
+  insert into public.mutes (muter_id, muted_id)
+  values ('80000000-0000-0000-0000-000000000001', '80000000-0000-0000-0000-000000000002');
+  raise exception 'check 34 FAILED: the same person was muted twice';
+exception when unique_violation then null; end $$;
+
+-- Muting on somebody else's behalf would be a way to cut them off from a person.
+do $$ begin
+  insert into public.mutes (muter_id, muted_id)
+  values ('80000000-0000-0000-0000-000000000003', '80000000-0000-0000-0000-000000000002');
+  raise exception 'check 34 FAILED: sam muted somebody as uma';
+exception when insufficient_privilege then null; end $$;
+
+-- Sam reads their own mute, and hidden_from() agrees with it.
+do $$ begin
+  if not exists (select 1 from public.mutes m
+                  where m.muter_id = '80000000-0000-0000-0000-000000000001'
+                    and m.muted_id = '80000000-0000-0000-0000-000000000002') then
+    raise exception 'check 34 FAILED: sam cannot see the mute sam just made';
+  end if;
+  if not public.hidden_from('80000000-0000-0000-0000-000000000001', '80000000-0000-0000-0000-000000000002') then
+    raise exception 'check 34 FAILED: hidden_from does not know about the mute';
+  end if;
+  -- One-sided: muting somebody does not hide the muter from them.
+  if public.hidden_from('80000000-0000-0000-0000-000000000002', '80000000-0000-0000-0000-000000000001') then
+    raise exception 'check 34 FAILED: a mute went both ways';
+  end if;
+end $$;
+
+-- "Do they know? No." Tess is the muted party and must not be able to find out,
+-- through the table or through the function -- which is exactly why hidden_from
+-- is security INVOKER: it cannot see what its caller cannot see. A definer
+-- version would answer this truthfully and publish the whole mute graph.
+do $$ begin
+  perform set_config('request.jwt.claim.sub', '80000000-0000-0000-0000-000000000002', true);
+  perform set_config('request.jwt.claims', '{"sub":"80000000-0000-0000-0000-000000000002","role":"authenticated"}', true);
+end $$;
+do $$ begin
+  if exists (select 1 from public.mutes) then
+    raise exception 'check 34 FAILED: the muted party can read the mute';
+  end if;
+  if public.hidden_from('80000000-0000-0000-0000-000000000001', '80000000-0000-0000-0000-000000000002') then
+    raise exception 'check 34 FAILED: hidden_from told the muted party they are muted';
+  end if;
+end $$;
+
+-- Nobody can unmute on somebody else's behalf either: a delete that reaches
+-- another person's row would undo a mute they still want.
+do $$ begin
+  delete from public.mutes;
+  if (select count(*) from public.mutes m0) <> 0 then
+    raise exception 'check 34 FAILED: unreachable';
+  end if;
+end $$;
+reset role;
+do $$ begin
+  if not exists (select 1 from public.mutes
+                  where muter_id = '80000000-0000-0000-0000-000000000001') then
+    raise exception 'check 34 FAILED: tess deleted a mute that was not hers';
+  end if;
+  if has_function_privilege('anon', 'public.hidden_from(uuid, uuid)', 'execute') then
+    raise exception 'check 34 FAILED: a signed-out caller can ask about mutes';
+  end if;
+end $$;
+\echo check 34 ok: a mute is the muter''s alone, one-sided, and invisible to the muted
+
+-- 35. The home timeline drops a muted person's peels AND their reposts.
+-- Filtering in the app instead would hand back short pages and a cursor that
+-- skips, so this is the check that says the filter is where the page size is.
+insert into public.peels (id, title, user_id)
+values ('81000000-0000-0000-0000-000000000001', 'sam says hello', '80000000-0000-0000-0000-000000000001'),
+       ('81000000-0000-0000-0000-000000000002', 'tess says hello', '80000000-0000-0000-0000-000000000002'),
+       ('81000000-0000-0000-0000-000000000003', 'uma says hello', '80000000-0000-0000-0000-000000000003');
+-- Tess repeels Uma's peel: the peel is fine, the person putting it in front of
+-- Sam is not.
+insert into public.reposts (peel_id, user_id)
+values ('81000000-0000-0000-0000-000000000003', '80000000-0000-0000-0000-000000000002');
+
+set local role authenticated;
+do $$ begin
+  perform set_config('request.jwt.claim.sub', '80000000-0000-0000-0000-000000000001', true);
+  perform set_config('request.jwt.claims', '{"sub":"80000000-0000-0000-0000-000000000001","role":"authenticated"}', true);
+end $$;
+do $$
+declare ids uuid[];
+begin
+  select array_agg(t.peel_id order by t.peel_id) into ids
+    from public.home_timeline(false, null, 100) t
+   where t.peel_id in ('81000000-0000-0000-0000-000000000001',
+                       '81000000-0000-0000-0000-000000000002',
+                       '81000000-0000-0000-0000-000000000003');
+  if '81000000-0000-0000-0000-000000000002'::uuid = any (ids) then
+    raise exception 'check 35 FAILED: a muted person''s peel is still in the feed';
+  end if;
+  if not ('81000000-0000-0000-0000-000000000001'::uuid = any (ids)) then
+    raise exception 'check 35 FAILED: a mute swallowed the reader''s own peel';
+  end if;
+  -- Uma's peel is still there once, as Uma's -- but not a second time as Tess's repeel.
+  if not ('81000000-0000-0000-0000-000000000003'::uuid = any (ids)) then
+    raise exception 'check 35 FAILED: a mute swallowed an unmuted person''s peel';
+  end if;
+  if exists (select 1 from public.home_timeline(false, null, 100) t
+              where t.repost_by = '80000000-0000-0000-0000-000000000002') then
+    raise exception 'check 35 FAILED: a muted person''s repeel is still in the feed';
+  end if;
+end $$;
+reset role;
+
+-- And the muted person's own peel is untouched for everybody else, which is the
+-- line between muting somebody and blocking them.
+set local role authenticated;
+do $$ begin
+  perform set_config('request.jwt.claim.sub', '80000000-0000-0000-0000-000000000003', true);
+  perform set_config('request.jwt.claims', '{"sub":"80000000-0000-0000-0000-000000000003","role":"authenticated"}', true);
+end $$;
+do $$ begin
+  if not exists (select 1 from public.home_timeline(false, null, 100) t
+                  where t.peel_id = '81000000-0000-0000-0000-000000000002') then
+    raise exception 'check 35 FAILED: sam''s mute hid tess from uma as well';
+  end if;
+  if not exists (select 1 from public.peels where id = '81000000-0000-0000-0000-000000000002') then
+    raise exception 'check 35 FAILED: a mute took the peel out of the table, not just the feed';
+  end if;
+end $$;
+reset role;
+\echo check 35 ok: the feed drops a muted person''s peels and repeels, and only for the muter
+
+-- 36. The bell says nothing about somebody you muted.
+-- Every notification is "actor did something to user", so every trigger asks the
+-- same question. The triggers are security definer, which is what lets
+-- hidden_from() read the RECIPIENT'S mutes while the ACTOR holds the session.
+set local role authenticated;
+do $$ begin
+  perform set_config('request.jwt.claim.sub', '80000000-0000-0000-0000-000000000002', true);
+  perform set_config('request.jwt.claims', '{"sub":"80000000-0000-0000-0000-000000000002","role":"authenticated"}', true);
+end $$;
+
+-- Tess likes, repeels, follows, replies to and mentions Sam. Sam muted Tess.
+insert into public.likes (peel_id, user_id)
+values ('81000000-0000-0000-0000-000000000001', '80000000-0000-0000-0000-000000000002');
+insert into public.reposts (peel_id, user_id)
+values ('81000000-0000-0000-0000-000000000001', '80000000-0000-0000-0000-000000000002');
+insert into public.follows (follower_id, followee_id)
+values ('80000000-0000-0000-0000-000000000002', '80000000-0000-0000-0000-000000000001');
+insert into public.peels (id, title, user_id, parent_id)
+values ('81000000-0000-0000-0000-000000000004', 'replying to sam', '80000000-0000-0000-0000-000000000002',
+        '81000000-0000-0000-0000-000000000001');
+insert into public.peels (id, title, user_id)
+values ('81000000-0000-0000-0000-000000000005', 'hey @samverify', '80000000-0000-0000-0000-000000000002');
+insert into public.peels (id, title, user_id, quote_id)
+values ('81000000-0000-0000-0000-000000000006', 'quoting sam', '80000000-0000-0000-0000-000000000002',
+        '81000000-0000-0000-0000-000000000001');
+
+reset role;
+do $$
+declare leaked text;
+begin
+  select string_agg(n.type, ', ' order by n.type) into leaked
+    from public.notifications n
+   where n.user_id = '80000000-0000-0000-0000-000000000001'
+     and n.actor_id = '80000000-0000-0000-0000-000000000002';
+  if leaked is not null then
+    raise exception 'check 36 FAILED: a muted person rang the bell: %', leaked;
+  end if;
+end $$;
+
+-- The same six actions towards Uma, who muted nobody, still all arrive -- so the
+-- check above is proving a mute, not a broken trigger. Uma gets a second peel of
+-- her own to be repeeled: check 35 already used the first one, and inheriting
+-- another check's rows is how a test starts passing for the wrong reason.
+insert into public.peels (id, title, user_id)
+values ('81000000-0000-0000-0000-00000000000a', 'uma says hello again', '80000000-0000-0000-0000-000000000003');
+
+set local role authenticated;
+do $$ begin
+  perform set_config('request.jwt.claim.sub', '80000000-0000-0000-0000-000000000002', true);
+  perform set_config('request.jwt.claims', '{"sub":"80000000-0000-0000-0000-000000000002","role":"authenticated"}', true);
+end $$;
+insert into public.likes (peel_id, user_id)
+values ('81000000-0000-0000-0000-000000000003', '80000000-0000-0000-0000-000000000002');
+insert into public.reposts (peel_id, user_id)
+values ('81000000-0000-0000-0000-00000000000a', '80000000-0000-0000-0000-000000000002');
+insert into public.follows (follower_id, followee_id)
+values ('80000000-0000-0000-0000-000000000002', '80000000-0000-0000-0000-000000000003');
+insert into public.peels (id, title, user_id, parent_id)
+values ('81000000-0000-0000-0000-000000000007', 'replying to uma', '80000000-0000-0000-0000-000000000002',
+        '81000000-0000-0000-0000-000000000003');
+insert into public.peels (id, title, user_id)
+values ('81000000-0000-0000-0000-000000000008', 'hey @umaverify', '80000000-0000-0000-0000-000000000002');
+insert into public.peels (id, title, user_id, quote_id)
+values ('81000000-0000-0000-0000-000000000009', 'quoting uma', '80000000-0000-0000-0000-000000000002',
+        '81000000-0000-0000-0000-000000000003');
+reset role;
+do $$
+declare got text; want text := 'follow, like, mention, quote, reply, repost';
+begin
+  select string_agg(distinct n.type, ', ' order by n.type) into got
+    from public.notifications n
+   where n.user_id = '80000000-0000-0000-0000-000000000003'
+     and n.actor_id = '80000000-0000-0000-0000-000000000002';
+  if got is distinct from want then
+    raise exception 'check 36 FAILED: an unmuted person''s notifications did not all arrive. got: %, want: %', got, want;
+  end if;
+end $$;
+\echo check 36 ok: a muted person rings no bell, and an unmuted one rings every one
 
 rollback;
 \echo ALL CHECKS PASSED
