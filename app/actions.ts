@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { firstPreviewLink } from "@/lib/link-preview";
+import { recordLinkPreview } from "@/lib/link-preview-fetch";
 import { objectPath, parseMedia } from "@/lib/media";
 import { parseTitle } from "@/lib/peel";
 import { parseHandle, parseProfile } from "@/lib/profile";
@@ -45,11 +47,24 @@ export async function addPeel(_prev: ActionResult, formData: FormData): Promise<
 
   const { supabase, user } = await viewer();
 
-  const { data: peel, error } = await supabase
-    .from("peels")
-    .insert({ title: parsed.title, user_id: user.id, parent_id: parentId, quote_id: quoteId })
-    .select("id")
-    .single();
+  // A link in the text gets a card. The fetch runs beside the insert rather than
+  // after it -- the two are independent, since the preview is keyed by the url
+  // and not by this peel -- so posting costs whichever of the two is slower and
+  // never the sum of them. It has a three-second ceiling and swallows
+  // everything: a slow or hostile page means no card, never a failed post.
+  //
+  // Nothing is fetched for a peel that carries media or a quote, because the
+  // card would have nowhere to go; attachPreviews skips exactly the same ones.
+  const link = media.length === 0 && quoteId === null ? firstPreviewLink(parsed.title) : null;
+
+  const [{ data: peel, error }] = await Promise.all([
+    supabase
+      .from("peels")
+      .insert({ title: parsed.title, user_id: user.id, parent_id: parentId, quote_id: quoteId })
+      .select("id")
+      .single(),
+    link === null ? Promise.resolve() : recordLinkPreview(supabase, link),
+  ]);
   if (error || !peel) return { error: "Couldn't post that peel. Try again." };
 
   if (media.length > 0) {

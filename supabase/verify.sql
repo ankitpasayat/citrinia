@@ -73,15 +73,15 @@ do $$ begin
 end $$;
 \echo check 5 ok: peels and notifications in supabase_realtime publication, notifications logged whole
 
--- 6. RLS enabled on every table, 30 policies, API roles have the grants their policies assume.
+-- 6. RLS enabled on every table, 32 policies, API roles have the grants their policies assume.
 do $$ begin
   if exists (select 1 from pg_tables where schemaname = 'public'
-               and tablename in ('profiles','peels','likes','follows','reposts','bookmarks','peel_media','notifications','username_history','reports','mutes','blocks')
+               and tablename in ('profiles','peels','likes','follows','reposts','bookmarks','peel_media','notifications','username_history','reports','mutes','blocks','link_previews')
                and not rowsecurity) then
     raise exception 'check 6 FAILED: RLS not enabled on every table';
   end if;
-  if (select count(*) from pg_policies where schemaname = 'public') <> 30 then
-    raise exception 'check 6 FAILED: expected 30 policies, found %', (select count(*) from pg_policies where schemaname = 'public');
+  if (select count(*) from pg_policies where schemaname = 'public') <> 32 then
+    raise exception 'check 6 FAILED: expected 32 policies, found %', (select count(*) from pg_policies where schemaname = 'public');
   end if;
   if not has_table_privilege('authenticated', 'public.peels', 'insert') or not has_table_privilege('anon', 'public.profiles', 'select') then
     raise exception 'check 6 FAILED: API roles lack table grants';
@@ -1187,6 +1187,8 @@ begin
     'authenticated likes DELETE'             || E'\n' ||
     'authenticated likes INSERT'             || E'\n' ||
     'authenticated likes SELECT'             || E'\n' ||
+    'authenticated link_previews INSERT'     || E'\n' ||
+    'authenticated link_previews SELECT'     || E'\n' ||
     'authenticated mutes DELETE'             || E'\n' ||
     'authenticated mutes INSERT'             || E'\n' ||
     'authenticated mutes SELECT'             || E'\n' ||
@@ -2123,6 +2125,119 @@ do $$ begin
   end if;
 end $$;
 \echo check 42 ok: one search behind both tabs, terms stay literal, tags match whole, mutes drop out
+
+--------------------------------------------------------------------------------
+-- 43. Link previews: readable by everyone signed in, writable once, and never
+--     rewritable -- which is what makes a row nobody can be sure of harmless.
+--------------------------------------------------------------------------------
+
+do $$ begin
+  if not exists (select 1 from pg_class where oid = 'public.link_previews'::regclass and relrowsecurity) then
+    raise exception 'check 43 FAILED: RLS is not on for link_previews';
+  end if;
+  -- anon cannot read peels, so it has no card to draw and no business here.
+  if has_table_privilege('anon', 'public.link_previews', 'select')
+     or has_table_privilege('anon', 'public.link_previews', 'insert')
+     or has_table_privilege('anon', 'public.link_previews', 'update')
+     or has_table_privilege('anon', 'public.link_previews', 'delete') then
+    raise exception 'check 43 FAILED: anon has privileges on link_previews';
+  end if;
+  if not has_table_privilege('authenticated', 'public.link_previews', 'select')
+     or not has_table_privilege('authenticated', 'public.link_previews', 'insert') then
+    raise exception 'check 43 FAILED: a signed-in reader cannot read or record a preview';
+  end if;
+  -- The whole trust argument rests on this half: the row cannot be changed
+  -- after it is written, so the first fetch of a url is the one everybody sees.
+  if has_table_privilege('authenticated', 'public.link_previews', 'update')
+     or has_table_privilege('authenticated', 'public.link_previews', 'delete') then
+    raise exception 'check 43 FAILED: a signed-in person can rewrite or remove a link preview';
+  end if;
+end $$;
+
+set local role authenticated;
+do $$ begin
+  perform set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000001', true);
+  perform set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-000000000001","role":"authenticated"}', true);
+end $$;
+
+insert into public.link_previews (url, title, description, image_url)
+values ('https://ada.dev/notes', 'Ada''s notes', 'Mostly citrus.', 'https://ada.dev/card.png');
+-- A page that gave up nothing still earns its row, or every peel that mentions
+-- it goes and knocks on it again.
+insert into public.link_previews (url) values ('https://ada.dev/bare');
+-- The loopback exception, which is how the e2e suite previews a page it serves.
+insert into public.link_previews (url, title) values ('http://127.0.0.1:3211/og', 'served by the suite');
+
+do $$ begin
+  if (select title from public.link_previews where url = 'https://ada.dev/notes') <> 'Ada''s notes' then
+    raise exception 'check 43 FAILED: the row that was written is not the row that reads back';
+  end if;
+  if (select count(*) from public.link_previews where url = 'https://ada.dev/bare' and title is null) <> 1 then
+    raise exception 'check 43 FAILED: a page with no tags did not get its row';
+  end if;
+end $$;
+
+-- Insert-once: the same url again collides rather than overwriting, and neither
+-- an update nor a delete is open to anybody.
+do $$ begin
+  insert into public.link_previews (url, title) values ('https://ada.dev/notes', 'not what the page says');
+  raise exception 'check 43 FAILED: a second row for the same url went in';
+exception when unique_violation then null; end $$;
+do $$ begin
+  update public.link_previews set title = 'rewritten' where url = 'https://ada.dev/notes';
+  raise exception 'check 43 FAILED: a link preview was rewritten';
+exception when insufficient_privilege then null; end $$;
+do $$ begin
+  delete from public.link_previews where url = 'https://ada.dev/notes';
+  raise exception 'check 43 FAILED: a link preview was deleted';
+exception when insufficient_privilege then null; end $$;
+
+-- The url and the picture are the two fields that become attributes in somebody
+-- else's browser, so the scheme is the database's business and not only the app's.
+do $$ begin
+  insert into public.link_previews (url) values ('http://evil.example/x');
+  raise exception 'check 43 FAILED: a plain http url was stored';
+exception when check_violation then null; end $$;
+do $$ begin
+  insert into public.link_previews (url) values ('javascript:alert(1)');
+  raise exception 'check 43 FAILED: a javascript: url was stored';
+exception when check_violation then null; end $$;
+do $$ begin
+  insert into public.link_previews (url, image_url) values ('https://ada.dev/a', 'javascript:alert(1)');
+  raise exception 'check 43 FAILED: a javascript: picture was stored';
+exception when check_violation then null; end $$;
+do $$ begin
+  insert into public.link_previews (url, image_url) values ('https://ada.dev/b', 'http://evil.example/pixel.gif');
+  raise exception 'check 43 FAILED: a plain http picture was stored';
+exception when check_violation then null; end $$;
+
+-- The lengths the card is drawn to. An empty string is not a title.
+do $$ begin
+  insert into public.link_previews (url, title) values ('https://ada.dev/c', repeat('x', 201));
+  raise exception 'check 43 FAILED: a title over 200 characters was stored';
+exception when check_violation then null; end $$;
+do $$ begin
+  insert into public.link_previews (url, title) values ('https://ada.dev/d', '');
+  raise exception 'check 43 FAILED: an empty title was stored';
+exception when check_violation then null; end $$;
+do $$ begin
+  insert into public.link_previews (url, description) values ('https://ada.dev/e', repeat('x', 401));
+  raise exception 'check 43 FAILED: a description over 400 characters was stored';
+exception when check_violation then null; end $$;
+
+-- One fetch serves everybody: the next person signed in reads the same row.
+do $$ begin
+  perform set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000002', true);
+  perform set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-000000000002","role":"authenticated"}', true);
+end $$;
+do $$ begin
+  if (select count(*) from public.link_previews where url = 'https://ada.dev/notes') <> 1 then
+    raise exception 'check 43 FAILED: a preview somebody else fetched is invisible';
+  end if;
+end $$;
+reset role;
+\echo check 43 ok: link previews are shared, written once, and never rewritten
+
 
 rollback;
 \echo ALL CHECKS PASSED

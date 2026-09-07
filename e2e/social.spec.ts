@@ -3,6 +3,7 @@
 // where that one left it -- ada's peel with its reply, bob's peel, bob following
 // ada, and bob renamed "Bob Peeler" by mvp test 7 -- so it runs last (see the
 // `social` project in playwright.config.ts).
+import { createServer, type Server } from "node:http";
 import { deflateSync } from "node:zlib";
 import { BASE_URL } from "../playwright.config.ts";
 import { actionWrite, card, expect, REMOTE_IMAGE, shot, subscribed, test, type Page } from "./fixtures.ts";
@@ -17,6 +18,53 @@ import {
   restAsGuest,
   restAsService,
 } from "./db.ts";
+
+// Slice 9: a page for a link card to be about, served from this machine for the
+// length of the run. The app follows a loopback url only when
+// LINK_PREVIEW_TEST_ORIGIN names this exact origin -- the e2e command in the
+// README exports it, and production has no such exception at all.
+const OG_PORT = 3211;
+const OG_ORIGIN = `http://127.0.0.1:${OG_PORT}`;
+const OG_TITLE = "Marmalade, the long read";
+const OG_DESCRIPTION = "Everything that happens between a fruit and a jar.";
+const BARE_TITLE = "A page that never heard of Open Graph";
+/** How often the page with the tags was actually fetched. One, however often it is shared. */
+let ogFetches = 0;
+let ogServer: Server;
+
+test.beforeAll(async () => {
+  ogServer = createServer((request, response) => {
+    switch ((request.url ?? "/").split("?")[0]) {
+      case "/og":
+        ogFetches += 1;
+        response.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+        return response.end(`<!doctype html><html><head>
+          <meta property="og:title" content="${OG_TITLE}">
+          <meta property="og:description" content="${OG_DESCRIPTION}">
+          <meta property="og:image" content="/card.svg">
+        </head><body>the page itself</body></html>`);
+      case "/bare":
+        response.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+        return response.end(`<html><head><title>${BARE_TITLE}</title></head><body>hello</body></html>`);
+      case "/card.svg":
+        response.writeHead(200, { "content-type": "image/svg+xml" });
+        return response.end(
+          '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 90"><rect width="160" height="90" fill="#E8C547"/></svg>',
+        );
+      default:
+        response.writeHead(404);
+        return response.end();
+    }
+  });
+  await new Promise<void>((resolve, reject) => {
+    ogServer.once("error", reject);
+    ogServer.listen(OG_PORT, "127.0.0.1", resolve);
+  });
+});
+
+test.afterAll(async () => {
+  await new Promise<void>((resolve) => ogServer.close(() => resolve()));
+});
 
 declare global {
   interface Window {
@@ -1542,4 +1590,60 @@ test("22. explore leads with what the day is talking about", async ({ open }) =>
   } finally {
     await removeExtras(zesty.map((person) => person.id));
   }
+});
+
+test("23. a link in a peel gets a card, fetched once and drawn from the url", async ({ open }) => {
+  const linked = `the notes are here ${OG_ORIGIN}/og`;
+  const bare = `and this one says nothing about itself ${OG_ORIGIN}/bare`;
+  const shared = `worth reading twice ${OG_ORIGIN}/og`;
+
+  const ada = await open("ada");
+  await ada.goto("/");
+  await ada.getByRole("button", { name: "New peel", exact: true }).click();
+  await ada.getByRole("textbox", { name: "Your peel" }).fill(linked);
+  let posted = actionWrite(ada);
+  await ada.getByRole("button", { name: "Peel it" }).click();
+  await posted;
+
+  const peel = card(ada, linked);
+  await expect(peel).toHaveCount(1);
+
+  // The url in the body is a link now, and it leaves the app rather than routing.
+  const inBody = peel.getByRole("link", { name: `${OG_ORIGIN}/og` });
+  await expect(inBody).toHaveAttribute("href", `${OG_ORIGIN}/og`);
+  await expect(inBody).toHaveAttribute("target", "_blank");
+
+  // The card under it is what the page said about itself -- except the site
+  // line and the href, which are read off the url and cannot be forged.
+  const preview = peel.getByRole("link", { name: new RegExp(OG_TITLE) });
+  await expect(preview).toHaveAttribute("href", `${OG_ORIGIN}/og`);
+  await expect(preview).toContainText("127.0.0.1");
+  await expect(preview).toContainText(OG_DESCRIPTION);
+  await expect(preview.locator("img")).toHaveAttribute("src", `${OG_ORIGIN}/card.svg`);
+  expect(ogFetches, "the page was read once").toBe(1);
+
+  // A page with no Open Graph tags gives the compact row: its own title, and
+  // no picture above it.
+  await ada.getByRole("button", { name: "New peel", exact: true }).click();
+  await ada.getByRole("textbox", { name: "Your peel" }).fill(bare);
+  posted = actionWrite(ada);
+  await ada.getByRole("button", { name: "Peel it" }).click();
+  await posted;
+
+  const compact = card(ada, bare).getByRole("link", { name: new RegExp(BARE_TITLE) });
+  await expect(compact).toContainText("127.0.0.1");
+  await expect(compact.locator("img")).toHaveCount(0);
+
+  // Somebody else shares the same link: the same card, and nobody knocks on the
+  // page a second time. That is the whole point of keying the table on the url.
+  const bob = await open("bob");
+  await bob.goto("/");
+  await bob.getByRole("button", { name: "New peel", exact: true }).click();
+  await bob.getByRole("textbox", { name: "Your peel" }).fill(shared);
+  posted = actionWrite(bob);
+  await bob.getByRole("button", { name: "Peel it" }).click();
+  await posted;
+
+  await expect(card(bob, shared).getByRole("link", { name: new RegExp(OG_TITLE) })).toBeVisible();
+  expect(ogFetches, "a link shared twice is fetched once").toBe(1);
 });

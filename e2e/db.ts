@@ -36,6 +36,10 @@ export async function resetData(): Promise<void> {
   // otherwise hand the next run a feed with a person missing from it.
   await rest("mutes?muter_id=not.is.null", { method: "DELETE", token });
   await rest("blocks?blocker_id=not.is.null", { method: "DELETE", token });
+  // A link preview outlives the peel that fetched it -- that is the point of
+  // keying on the url -- so the next run would find one already there and never
+  // knock on the page the suite is serving.
+  await rest("link_previews?url=not.is.null", { method: "DELETE", token });
   for (const user of Object.values(USERS)) {
     await rest(`profiles?username=eq.${user.username}`, {
       method: "PATCH",

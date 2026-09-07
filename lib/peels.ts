@@ -2,6 +2,7 @@
 // UI gets (author, counts, viewer flags, media, quote) is identical everywhere.
 // Server-only: pass the request's Supabase client in.
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { firstPreviewLink } from "./link-preview.ts";
 
 export type PeelFilter = {
   /** null → top-level peels only; a string → replies of that peel; undefined → no parent filter. */
@@ -164,9 +165,12 @@ export async function fetchPeels(
 
   const replies = await replyCounts(supabase, data.map((row) => row.id));
   const quotes = await fetchQuotes(supabase, viewerId, data);
-  return data
-    .map((row) => shape(row, viewerId, replies.get(row.id) ?? 0, quotes))
-    .filter((peel) => peel !== null);
+  return attachPreviews(
+    supabase,
+    data
+      .map((row) => shape(row, viewerId, replies.get(row.id) ?? 0, quotes))
+      .filter((peel) => peel !== null),
+  );
 }
 
 /** One peel by id with the same meta, or null when it is gone (or the id is not a peel id). */
@@ -181,7 +185,10 @@ export async function fetchPeel(
   if (!data) return null;
   const replies = await replyCounts(supabase, [data.id]);
   const quotes = await fetchQuotes(supabase, viewerId, [data]);
-  return shape(data, viewerId, replies.get(data.id) ?? 0, quotes);
+  const peel = shape(data, viewerId, replies.get(data.id) ?? 0, quotes);
+  if (peel === null) return null;
+  const [withPreview] = await attachPreviews(supabase, [peel]);
+  return withPreview;
 }
 
 /**
@@ -678,6 +685,8 @@ function shape(
     user_has_bookmarked: bookmarks.length > 0,
     media: shapeMedia(row.media),
     quote: (row.quote_id && quotes.get(row.quote_id)) || null,
+    // Filled in by attachPreviews, which needs a round trip shape() cannot make.
+    preview: null,
   };
 }
 
@@ -692,6 +701,45 @@ function shapeMedia(media: EmbeddedMedia[] | null | undefined): PeelMedia[] {
       width,
       height,
     }));
+}
+
+/**
+ * The link cards for a page of peels: one read of link_previews, keyed by the
+ * urls the bodies already carry.
+ *
+ * Which link gets a card is decided by firstPreviewLink -- the same function the
+ * server action used on the way in, which is what lets link_previews have no
+ * column pointing back at a peel. A peel that already carries media or a quote
+ * is skipped: that space is spoken for, and there is no sense reading a row
+ * nothing will draw.
+ *
+ * A card that will not load is a missing card, not a broken feed, so an error
+ * here returns the peels exactly as they came.
+ */
+async function attachPreviews(
+  supabase: SupabaseClient<Database>,
+  peels: PeelUnionAuthor[],
+): Promise<PeelUnionAuthor[]> {
+  const wanted = new Map<string, string>();
+  for (const peel of peels) {
+    if (peel.media.length > 0 || peel.quote !== null) continue;
+    const url = firstPreviewLink(peel.title);
+    if (url !== null) wanted.set(peel.id, url);
+  }
+  if (wanted.size === 0) return peels;
+
+  const { data, error } = await supabase
+    .from("link_previews")
+    .select("url, title, description, image_url")
+    .in("url", [...new Set(wanted.values())]);
+  if (error || !data) return peels;
+
+  const byUrl = new Map(data.map((row) => [row.url, row]));
+  return peels.map((peel) => {
+    const url = wanted.get(peel.id);
+    const preview = url === undefined ? undefined : byUrl.get(url);
+    return preview ? { ...peel, preview } : peel;
+  });
 }
 
 /** Reply counts for a page of peels: one extra query, reduced to id → count.

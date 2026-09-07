@@ -17,6 +17,7 @@ import { BookmarkButton } from "./bookmark-button";
 import { Button } from "./button";
 import { FlagIcon, LinkIcon, MoreIcon, PinIcon, RepeatIcon, ReplyIcon, ShareIcon, TrashIcon } from "./icons";
 import { chipStyles, LikeChip } from "./like-chip";
+import { LinkPreviewCard } from "./link-preview-card";
 import { menuStyles, useMenu } from "./menu";
 import { MediaGrid } from "./media-grid";
 import { QuoteCard } from "./quote-card";
@@ -172,6 +173,9 @@ export function PeelCard({
 
         <RichText text={peel.title} />
         <MediaGrid media={peel.media} href={threadHref} authorName={author.name} embed={embed} />
+        {/* One embedded card per peel: pictures and a quoted peel both own this
+            space, and lib/peels.ts leaves `preview` null when either is here. */}
+        {peel.preview && <LinkPreviewCard preview={peel.preview} />}
         {peel.quote && <QuoteCard quote={peel.quote} />}
 
         <div {...stylex.props(styles.acts)}>

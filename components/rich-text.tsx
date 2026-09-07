@@ -1,6 +1,7 @@
 // A peel's body. The text is plain, so the only markup is what lib/text.ts finds
-// in it: @handles go to a profile, #hashtags go to that tag on Explore. Line
-// breaks are the author's, so they are kept. Server-safe.
+// in it: @handles go to a profile, #hashtags go to that tag on Explore, and a
+// link goes where it says. Line breaks are the author's, so they are kept.
+// Server-safe.
 import * as stylex from "@stylexjs/stylex";
 import Link from "next/link";
 import { Fragment } from "react";
@@ -18,6 +19,22 @@ export function RichText({ text, style }: { text: string; style?: stylex.StyleXS
             <Link key={index} href={`/u/${token.handle}`} {...stylex.props(styles.link)}>
               {token.value}
             </Link>
+          );
+        }
+        // A link out of the app, so a plain <a> rather than next/link: there is
+        // nothing to prefetch. The text stays exactly as it was typed -- shortening
+        // somebody's url is a way of showing them something they did not write.
+        if (token.type === "link") {
+          return (
+            <a
+              key={index}
+              href={token.value}
+              target="_blank"
+              rel="noopener noreferrer nofollow"
+              {...stylex.props(styles.link)}
+            >
+              {token.value}
+            </a>
           );
         }
         if (token.type === "hashtag") {

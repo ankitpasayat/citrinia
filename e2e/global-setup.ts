@@ -13,6 +13,7 @@ const LATER_TABLES = [
   "reports",
   "mutes",
   "blocks",
+  "link_previews",
 ];
 
 /**

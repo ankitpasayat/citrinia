@@ -1,4 +1,5 @@
 import { Database as DB } from "@/lib/database.types";
+import type { LinkPreview } from "@/lib/link-preview";
 
 type PeelRow = DB["public"]["Tables"]["peels"]["Row"];
 type ProfileRow = DB["public"]["Tables"]["profiles"]["Row"];
@@ -28,6 +29,12 @@ declare global {
     media: PeelMedia[];
     /** The peel this one quotes, one level deep: a quote's own quote is null. */
     quote: PeelUnionAuthor | null;
+    /**
+     * The card for the first link in the body -- null when there is no link, when
+     * nobody has fetched one yet, or when the peel already carries media or a
+     * quote, which own that space instead.
+     */
+    preview: LinkPreview | null;
     /** Set only on a timeline row that is somebody's repost of this peel. */
     reposted_by?: Profile | null;
   };

@@ -68,7 +68,8 @@ users, in one narrative on one database:
 - `e2e/social.spec.ts` — repeel, quote, bookmarks, notifications and the unread
   badge, @mentions and #hashtags, YouTube links, the media picker and the
   upload a composted peel takes with it, cursor pagination, the "N new peels"
-  announcement, who to follow, and the ancestors above an opened reply.
+  announcement, who to follow, the ancestors above an opened reply, and the card
+  a link gets under it.
 
 GitHub OAuth cannot be completed headlessly, so the suite runs against a
 **local** Supabase stack and mints its sessions with the password grant
@@ -89,6 +90,11 @@ npx supabase db reset
 eval "$(npx supabase status -o env | grep -E '^(API_URL|PUBLISHABLE_KEY)=')"
 export NEXT_PUBLIC_SUPABASE_URL="$API_URL" NEXT_PUBLIC_SUPABASE_ANON_KEY="$PUBLISHABLE_KEY"
 pnpm build
+# The link-preview test serves the page it previews from 127.0.0.1:3211, which
+# the fetcher's address guard refuses unless this names it. Set for the suite and
+# nowhere else -- production has no such exception, and that is asserted in
+# lib/link-preview-fetch.test.ts.
+export LINK_PREVIEW_TEST_ORIGIN=http://127.0.0.1:3211
 pnpm exec next start -p 3210     # port 3210, so `pnpm dev` can keep 3000
 
 # 3. The suite.

@@ -5,6 +5,7 @@
 import * as stylex from "@stylexjs/stylex";
 import { colors } from "@/app/tokens.stylex";
 import { youtubeId } from "@/lib/media";
+import { tokenize } from "@/lib/text";
 
 /** nocookie, lazy: nothing is fetched from YouTube until the player scrolls near. */
 export function YouTubeEmbed({ id, title }: { id: string; title: string }) {
@@ -23,13 +24,15 @@ export function YouTubeEmbed({ id, title }: { id: string; title: string }) {
 }
 
 /**
- * The first YouTube link in some text, or null. https only, because peel_media
- * rejects anything else. Trailing punctuation is the sentence's, not the url's.
+ * The first YouTube link in some text, or null. The links are the ones the body
+ * renders -- one grammar for what counts as a url, so the player and the text
+ * always agree about where one ends. https only, because peel_media rejects
+ * anything else.
  */
 export function youtubeUrlIn(text: string): string | null {
-  for (const match of text.match(/https:\/\/\S+/g) ?? []) {
-    const url = match.replace(/[.,;:!?)\]}'"]+$/, "");
-    if (youtubeId(url) !== null) return url;
+  for (const token of tokenize(text)) {
+    if (token.type !== "link" || !token.value.startsWith("https://")) continue;
+    if (youtubeId(token.value) !== null) return token.value;
   }
   return null;
 }

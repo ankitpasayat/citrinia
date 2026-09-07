@@ -144,6 +144,30 @@ export type Database = {
           }
         ]
       }
+      link_previews: {
+        Row: {
+          description: string | null
+          fetched_at: string
+          image_url: string | null
+          title: string | null
+          url: string
+        }
+        Insert: {
+          description?: string | null
+          fetched_at?: string
+          image_url?: string | null
+          title?: string | null
+          url: string
+        }
+        Update: {
+          description?: string | null
+          fetched_at?: string
+          image_url?: string | null
+          title?: string | null
+          url?: string
+        }
+        Relationships: []
+      }
       mutes: {
         Row: {
           created_at: string
