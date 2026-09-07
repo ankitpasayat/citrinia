@@ -10,13 +10,13 @@
 import * as stylex from "@stylexjs/stylex";
 import Link from "next/link";
 import { startTransition, useId, useRef, useState, useSyncExternalStore } from "react";
-import { deletePeel } from "@/app/actions";
+import { deletePeel, setPinnedPeel } from "@/app/actions";
 import { bp, colors, fonts, shape } from "@/app/tokens.stylex";
 import { formatRelative, fullTime } from "@/lib/relative-time";
 import { Avatar } from "./avatar";
 import { BookmarkButton } from "./bookmark-button";
 import { Button } from "./button";
-import { LinkIcon, MoreIcon, RepeatIcon, ReplyIcon, ShareIcon, TrashIcon } from "./icons";
+import { LinkIcon, MoreIcon, PinIcon, RepeatIcon, ReplyIcon, ShareIcon, TrashIcon } from "./icons";
 import { chipStyles, LikeChip } from "./like-chip";
 import { MediaGrid } from "./media-grid";
 import { QuoteCard } from "./quote-card";
@@ -45,11 +45,17 @@ export function PeelCard({
   onOptimisticRepost,
   onOptimisticBookmark,
   onQuote,
+  pinned = false,
 }: {
   peel: PeelUnionAuthor;
   viewerId: string;
   /** On the peel page: YouTube plays inline and the pictures stop linking here. */
   embed?: boolean;
+  /**
+   * This card is the one leading its author's profile. Only the profile page
+   * knows that, which is also the only place the menu can offer to undo it.
+   */
+  pinned?: boolean;
   onOptimisticLike: (next: PeelUnionAuthor) => void;
   onOptimisticRemove: (id: string) => void;
   onOptimisticRepost: (next: PeelUnionAuthor) => void;
@@ -115,6 +121,14 @@ export function PeelCard({
     }
   }
 
+  function onPin() {
+    menu.current?.hidePopover();
+    startTransition(async () => {
+      await setPinnedPeel(pinned ? null : peel.id);
+      toast(pinned ? "Unpinned" : "Pinned to your profile");
+    });
+  }
+
   function onDelete() {
     if (!confirming) {
       setConfirming(true);
@@ -130,6 +144,14 @@ export function PeelCard({
 
   return (
     <article {...stylex.props(styles.card)}>
+      {/* Why this peel is at the top of a profile rather than in date order. */}
+      {pinned && (
+        <p {...stylex.props(styles.repeeled)}>
+          <PinIcon filled />
+          Pinned
+        </p>
+      )}
+
       {/* Why this peel is on your timeline at all: somebody put it back. */}
       {reposter && (
         <p {...stylex.props(styles.repeeled)}>
@@ -216,6 +238,10 @@ export function PeelCard({
             {mine && (
               <>
                 <hr {...stylex.props(styles.rule)} />
+                <button type="button" onClick={onPin} {...stylex.props(styles.menuItem)}>
+                  <PinIcon filled={pinned} />
+                  {pinned ? "Unpin from profile" : "Pin to profile"}
+                </button>
                 <button
                   type="button"
                   onClick={onDelete}

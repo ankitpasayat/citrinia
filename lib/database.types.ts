@@ -262,6 +262,7 @@ export type Database = {
           id: string
           location: string
           name: string
+          pinned_peel_id: string | null
           username: string
           website: string
         }
@@ -273,6 +274,7 @@ export type Database = {
           id: string
           location?: string
           name: string
+          pinned_peel_id?: string | null
           username: string
           website?: string
         }
@@ -284,6 +286,7 @@ export type Database = {
           id?: string
           location?: string
           name?: string
+          pinned_peel_id?: string | null
           username?: string
           website?: string
         }
@@ -293,6 +296,13 @@ export type Database = {
             columns: ["id"]
             isOneToOne: true
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_pinned_peel_id_fkey"
+            columns: ["pinned_peel_id"]
+            isOneToOne: false
+            referencedRelation: "peels"
             referencedColumns: ["id"]
           }
         ]

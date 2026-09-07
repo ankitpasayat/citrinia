@@ -12,6 +12,10 @@ export type PeelFilter = {
   authorIds?: string[];
   /** Exactly these peels, in whatever order the query returns them. */
   ids?: string[];
+  /** Everything but this one. The Media tab's pinned peel is already above it. */
+  excludeId?: string;
+  /** Only peels carrying an attachment: the Media tab. */
+  hasMedia?: boolean;
   search?: string;
   limit?: number;
   /** Keyset cursor from `encodeCursor`: only rows strictly after that one, newest first. */
@@ -25,6 +29,13 @@ export type PeelFilter = {
 // reposts and bookmarks add more peels↔profiles paths, so the author embed names its foreign key.
 const SELECT =
   "*, author:profiles!peels_user_id_fkey(*), likes(user_id), reposts(user_id), bookmarks(user_id), media:peel_media(kind, url, alt, width, height, position)";
+
+// The same shape with the media embed turned into a filter: `!inner` drops
+// peels that carry no attachment. A second literal rather than a built string,
+// for the same reason the first one is a literal -- supabase-js reads the row
+// shape off the source text, and a concatenation reaches that parser as `string`.
+const SELECT_WITH_MEDIA =
+  "*, author:profiles!peels_user_id_fkey(*), likes(user_id), reposts(user_id), bookmarks(user_id), media:peel_media!inner(kind, url, alt, width, height, position)";
 
 /** How many peels a timeline page asks for when nothing else is said. */
 export const PAGE_SIZE = 20;
@@ -99,13 +110,14 @@ export async function fetchPeels(
   if (filter.authorIds && filter.authorIds.length === 0) return [];
   if (filter.ids && filter.ids.length === 0) return [];
 
-  let query = supabase.from("peels").select(SELECT);
+  let query = supabase.from("peels").select(filter.hasMedia ? SELECT_WITH_MEDIA : SELECT);
   if (filter.parentId === null) query = query.is("parent_id", null);
   else if (typeof filter.parentId === "string") query = query.eq("parent_id", filter.parentId);
   else if (filter.repliesOnly) query = query.not("parent_id", "is", null);
   if (filter.authorId) query = query.eq("user_id", filter.authorId);
   if (filter.authorIds) query = query.in("user_id", filter.authorIds);
   if (filter.ids) query = query.in("id", filter.ids);
+  if (filter.excludeId) query = query.neq("id", filter.excludeId);
   const before = cursor(filter.before);
   if (before) query = query.or(olderThan("created_at", "id", before));
   // The term is literal text: escape the regex metacharacters so "2*3" does not match every peel.

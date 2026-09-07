@@ -219,6 +219,25 @@ export async function updateProfile(_prev: ActionResult, formData: FormData): Pr
   return {};
 }
 
+/**
+ * Lead your profile with one peel, or stop. Idempotent, and the database is what
+ * enforces that the peel is yours -- pinned_peel_must_be_yours() -- so a crafted
+ * call gets an error rather than a stranger's peel over your name.
+ */
+export async function setPinnedPeel(peelId: string | null): Promise<ActionResult> {
+  if (peelId !== null && !UUID.test(peelId)) return { error: "Couldn't pin that peel." };
+
+  const { supabase, user } = await viewer();
+  const { error } = await supabase
+    .from("profiles")
+    .update({ pinned_peel_id: peelId })
+    .eq("id", user.id);
+  if (error) return { error: "Couldn't pin that peel. Try again." };
+
+  revalidatePath("/", "layout");
+  return {};
+}
+
 export async function signOut(): Promise<void> {
   const supabase = await createClient();
   await supabase.auth.signOut();

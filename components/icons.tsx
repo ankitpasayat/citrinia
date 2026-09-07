@@ -230,3 +230,12 @@ export function CalendarIcon(p: IconProps) {
     </Svg>
   );
 }
+
+export function PinIcon({ filled, ...p }: IconProps & { filled?: boolean }) {
+  return (
+    <Svg {...p}>
+      <path {...stroke} fill={filled ? "currentColor" : "none"} d="M9 3h6l-1 6 4 3v2H6v-2l4-3z" />
+      <path {...stroke} d="M12 14v7" />
+    </Svg>
+  );
+}

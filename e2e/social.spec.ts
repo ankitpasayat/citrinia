@@ -889,3 +889,116 @@ test("14. bob's profile says where he is, where else to find him, and since when
   await expect(banner).toHaveCount(0);
   await expect.poll(() => listUploads(bobApi.id, "avatars")).toEqual(before);
 });
+
+const PIN_FIRST = "the peel worth leading with";
+const PIN_SECOND = "no, this one is better";
+const NO_PICTURE = "just words, no picture";
+const WITH_PICTURE = "words and a picture";
+
+test("15. ada leads her profile with one peel, and only ever her own", async ({ open }) => {
+  const adaApi = await restAs("ada");
+  const bobApi = await restAs("bob");
+  const service = restAsService();
+
+  // Own ground: two peels of ada's and nothing pinned, whatever ran before.
+  await service.update(`profiles?id=eq.${adaApi.id}`, { pinned_peel_id: null });
+  const [first] = await service.insert<{ id: string }>("peels", {
+    title: PIN_FIRST,
+    user_id: adaApi.id,
+    parent_id: null,
+  });
+  await service.insert("peels", { title: PIN_SECOND, user_id: adaApi.id, parent_id: null });
+
+  const ada = await open("ada");
+  await ada.goto("/u/ada");
+  await expect(ada.getByText("Pinned")).toHaveCount(0);
+
+  // The pin lives in the peel's own menu.
+  await card(ada, PIN_FIRST).getByRole("button", { name: "More" }).click();
+  const pinning = actionWrite(ada);
+  await ada.getByRole("button", { name: "Pin to profile" }).click();
+  await pinning;
+
+  // It leads the profile, says why it is out of order, and is not also down in
+  // the list underneath: one card, not two.
+  await expect(card(ada, PIN_FIRST).getByText("Pinned")).toBeVisible();
+  await expect(card(ada, PIN_FIRST)).toHaveCount(1);
+  await shot(ada, "profile-pinned");
+
+  // A profile leads with one peel, so pinning another replaces it rather than
+  // collecting them.
+  await card(ada, PIN_SECOND).getByRole("button", { name: "More" }).click();
+  const repinning = actionWrite(ada);
+  await ada.getByRole("button", { name: "Pin to profile" }).click();
+  await repinning;
+  await expect(card(ada, PIN_SECOND).getByText("Pinned")).toBeVisible();
+  await expect(ada.getByText("Pinned")).toHaveCount(1);
+
+  // The card that is pinned is the only one offering to undo it.
+  await card(ada, PIN_SECOND).getByRole("button", { name: "More" }).click();
+  const unpinning = actionWrite(ada);
+  await ada.getByRole("button", { name: "Unpin from profile" }).click();
+  await unpinning;
+  await expect(ada.getByText("Pinned")).toHaveCount(0);
+  // Unpinned, it is back in the list rather than gone from the profile.
+  await expect(card(ada, PIN_SECOND)).toHaveCount(1);
+
+  // The pin only reaches your own peels, and the database is what says so --
+  // this goes straight at PostgREST, past the app entirely.
+  await expect(
+    bobApi.update(`profiles?id=eq.${bobApi.id}`, { pinned_peel_id: first.id }),
+  ).rejects.toThrow(/pinned peel must be one of your own/);
+  const [bobRow] = await service.select<{ pinned_peel_id: string | null }>(
+    `profiles?id=eq.${bobApi.id}&select=pinned_peel_id`,
+  );
+  expect(bobRow.pinned_peel_id).toBeNull();
+});
+
+test("16. the Media tab is the peels with something on them", async ({ open }) => {
+  const bobApi = await restAs("bob");
+  const service = restAsService();
+
+  // Own ground: one peel of bob's with a picture, one without.
+  const [plain] = await service.insert<{ id: string }>("peels", {
+    title: NO_PICTURE,
+    user_id: bobApi.id,
+    parent_id: null,
+  });
+  const [illustrated] = await service.insert<{ id: string }>("peels", {
+    title: WITH_PICTURE,
+    user_id: bobApi.id,
+    parent_id: null,
+  });
+  await service.insert("peel_media", {
+    peel_id: illustrated.id,
+    position: 0,
+    kind: "image",
+    url: REMOTE_IMAGE,
+    alt: "orange square",
+    width: 64,
+    height: 64,
+  });
+
+  const bob = await open("bob");
+  await bob.goto("/u/bob");
+  // Peels is everything he wrote, picture or not.
+  await expect(card(bob, WITH_PICTURE)).toHaveCount(1);
+  await expect(card(bob, NO_PICTURE)).toHaveCount(1);
+
+  await bob.getByRole("link", { name: "Media", exact: true }).click();
+  await expect(bob).toHaveURL(`${BASE_URL}/u/bob?tab=media`);
+  await expect(card(bob, WITH_PICTURE)).toHaveCount(1);
+  await expect(card(bob, WITH_PICTURE).getByRole("img", { name: "orange square" })).toBeVisible();
+  // The whole point of the tab: the peel with nothing on it is not here.
+  await expect(card(bob, NO_PICTURE)).toHaveCount(0);
+  await shot(bob, "profile-media-tab");
+
+  // Somebody with nothing to show gets the tab's own empty state, not the
+  // profile's, and it is worded for a visitor rather than for the owner.
+  await service.remove(`peel_media?peel_id=eq.${illustrated.id}`);
+  await bob.goto("/u/bob?tab=media");
+  await expect(bob.getByText("No pictures yet")).toBeVisible();
+  await expect(bob.getByText("Attach one to a peel and it turns up here.")).toBeVisible();
+
+  await service.remove(`peels?id=in.(${plain.id},${illustrated.id})`);
+});

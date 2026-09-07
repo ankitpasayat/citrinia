@@ -981,5 +981,45 @@ do $$ begin
 end $$;
 \echo check 28 ok: profile fields take https or nothing, joined is the signup date, and the handle stays ungranted
 
+-- 29. The pin: a profile leads with one of its own peels, and only its own.
+do $$ begin
+  update public.profiles set pinned_peel_id = (select id from public.peels where user_id = '00000000-0000-0000-0000-000000000002' limit 1)
+   where id = '00000000-0000-0000-0000-000000000001';
+  raise exception 'check 29 FAILED: ada pinned one of bob''s peels';
+exception when check_violation then null; end $$;
+
+-- Your own is fine, and composting it puts the profile back rather than taking
+-- it down: the reference is "set null", not "cascade".
+do $$
+declare mine uuid;
+begin
+  insert into public.peels (title, user_id) values ('worth leading with', '00000000-0000-0000-0000-000000000001')
+    returning id into mine;
+  update public.profiles set pinned_peel_id = mine where id = '00000000-0000-0000-0000-000000000001';
+  if (select pinned_peel_id from public.profiles where id = '00000000-0000-0000-0000-000000000001') <> mine then
+    raise exception 'check 29 FAILED: pinning your own peel did not stick';
+  end if;
+
+  delete from public.peels where id = mine;
+  if not exists (select 1 from public.profiles
+                  where id = '00000000-0000-0000-0000-000000000001' and pinned_peel_id is null) then
+    raise exception 'check 29 FAILED: composting the pinned peel did not unpin it';
+  end if;
+end $$;
+
+-- Nothing pinned is the ordinary state, so null has to be storable.
+update public.profiles set pinned_peel_id = null where id = :'ada';
+
+-- The pin is the owner's to set, and nobody else's.
+do $$ begin
+  if not has_column_privilege('authenticated', 'public.profiles', 'pinned_peel_id', 'update') then
+    raise exception 'check 29 FAILED: authenticated cannot pin its own peel';
+  end if;
+  if has_column_privilege('anon', 'public.profiles', 'pinned_peel_id', 'update') then
+    raise exception 'check 29 FAILED: a signed-out reader can pin a peel';
+  end if;
+end $$;
+\echo check 29 ok: a pinned peel must be your own, and composting it only unpins it
+
 rollback;
 \echo ALL CHECKS PASSED

@@ -38,6 +38,7 @@ export function PeelList({
   live = true,
   embed = false,
   olderHref,
+  pinned = false,
 }: {
   peels: PeelUnionAuthor[];
   viewerId: string;
@@ -55,6 +56,11 @@ export function PeelList({
   embed?: boolean;
   /** Where "Show older peels" goes. Omit (or null) when there is no next page. */
   olderHref?: string | null;
+  /**
+   * Every card in this list leads its author's profile. In practice that is a
+   * list of one: the pinned peel above a profile's own timeline.
+   */
+  pinned?: boolean;
 }) {
   const [shown, patch] = useOptimistic<PeelUnionAuthor[], Patch>(peels, (current, change) =>
     change.type === "remove"
@@ -175,6 +181,7 @@ export function PeelList({
           peel={peel}
           viewerId={viewerId}
           embed={embed}
+          pinned={pinned}
           onOptimisticLike={(next) => patch({ type: "replace", peel: next })}
           onOptimisticRemove={(id) => patch({ type: "remove", id })}
           onOptimisticRepost={(next) => patch({ type: "replace", peel: next })}

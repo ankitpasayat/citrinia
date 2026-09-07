@@ -6,7 +6,7 @@ import { PeelList } from "@/components/peel-list";
 import { ProfileCard } from "@/components/profile-card";
 import { ProfileTabs, parseProfileTab, type ProfileTab } from "@/components/profile-tabs";
 import { ShowOlder } from "@/components/show-older";
-import { PAGE_SIZE, encodeCursor, fetchLikedBy, fetchPeels, fetchRepliesBy } from "@/lib/peels";
+import { PAGE_SIZE, encodeCursor, fetchLikedBy, fetchPeel, fetchPeels, fetchRepliesBy } from "@/lib/peels";
 import { createClient } from "@/lib/supabase/server";
 
 type Props = {
@@ -21,6 +21,11 @@ const EMPTY: Record<ProfileTab, { title: string; self: string; other: string }> 
     title: "No replies yet",
     self: "Reply to a peel and it lands here.",
     other: "Nothing to say so far.",
+  },
+  media: {
+    title: "No pictures yet",
+    self: "Attach one to a peel and it turns up here.",
+    other: "Nothing with a picture on it yet.",
   },
   likes: {
     title: "No likes yet",
@@ -66,8 +71,12 @@ export default async function ProfilePage({ params, searchParams }: Props) {
 
   const isSelf = profile.id === user.id;
 
+  // The pin leads the profile's own timeline and nothing else: it is not a
+  // reply, not a like, and by page two the reader has gone past it.
+  const pinnedId = tab === "peels" && !before ? profile.pinned_peel_id : null;
+
   // Counts are head requests, so nothing but the number crosses the wire.
-  const [peelCount, followers, following, follow, peels, viewer] = await Promise.all([
+  const [peelCount, followers, following, follow, peels, viewer, pinned] = await Promise.all([
     supabase
       .from("peels")
       .select("id", { count: "exact", head: true })
@@ -88,10 +97,16 @@ export default async function ProfilePage({ params, searchParams }: Props) {
         : fetchPeels(supabase, user.id, {
             authorId: profile.id,
             parentId: null,
+            // Media is the same list with the attachment as the filter.
+            hasMedia: tab === "media" || undefined,
+            // The pinned peel is already above this list; it does not appear
+            // twice, and it is left out of every page rather than just the first.
+            excludeId: tab === "peels" ? (profile.pinned_peel_id ?? undefined) : undefined,
             before,
             limit: PAGE_SIZE,
           }),
     supabase.from("profiles").select("username").eq("id", user.id).maybeSingle(),
+    pinnedId === null ? null : fetchPeel(supabase, user.id, pinnedId),
   ]);
 
   const older = peels.length === PAGE_SIZE ? await cursor(supabase, tab, profile.id, peels) : null;
@@ -112,6 +127,8 @@ export default async function ProfilePage({ params, searchParams }: Props) {
         />
 
         <ProfileTabs username={profile.username} tab={tab} />
+
+        {pinned && <PeelList peels={[pinned]} viewerId={user.id} live={false} pinned />}
 
         <PeelList
           peels={peels}
