@@ -8,13 +8,17 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   MAX_BIO,
+  MAX_HANDLE,
   MAX_LOCATION,
   MAX_NAME,
   MAX_WEBSITE,
+  MIN_HANDLE,
   displayWebsite,
+  parseHandle,
   parseProfile,
   parseWebsite,
 } from "./profile.ts";
+import { tokenize } from "./text.ts";
 
 type Parsed = { name: string; bio: string; location: string; website: string };
 
@@ -27,6 +31,12 @@ function parsed(fields: { name: string } & Partial<Parsed>): Parsed {
 function ok(result: ReturnType<typeof parseProfile>): Parsed {
   if ("error" in result) assert.fail(`expected a valid profile, got: ${result.error}`);
   return result;
+}
+
+/** Unwraps a handle the spec says must be valid. */
+function okHandle(result: ReturnType<typeof parseHandle>): string {
+  if ("error" in result) assert.fail(`expected a valid handle, got: ${result.error}`);
+  return result.handle;
 }
 
 /** Unwraps a link the spec says must be valid. */
@@ -210,4 +220,37 @@ test("a stored link is shown without its scheme or a trailing slash", () => {
   assert.equal(displayWebsite("https://ada.example/notes"), "ada.example/notes");
   assert.equal(displayWebsite("https://ada.example/notes/"), "ada.example/notes");
   assert.equal(displayWebsite(""), "");
+});
+
+// Spec: a handle is 3 to 20 characters of [a-z0-9_], lower case, and that range
+// is exactly what `@handle` matches in lib/text.ts — a handle outside it could
+// never be mentioned. A typed "@" and any capitals are meant, not refused.
+test("handle limits are the ones a mention can match", () => {
+  assert.equal(MIN_HANDLE, 3);
+  assert.equal(MAX_HANDLE, 20);
+  // The mention token in lib/text.ts is @[A-Za-z0-9_]{3,20}; if that ever moves,
+  // these move with it or handles stop being addressable.
+  assert.deepEqual(tokenize("@ada_lovelace hi").map((t) => t.type), ["mention", "text"]);
+  assert.deepEqual(okHandle(parseHandle("Ada_Lovelace")), "ada_lovelace");
+});
+
+test("a handle is lower-cased, and a typed @ is not part of it", () => {
+  assert.equal(okHandle(parseHandle("ADA")), "ada");
+  assert.equal(okHandle(parseHandle("@ada")), "ada");
+  assert.equal(okHandle(parseHandle("  @Ada  ")), "ada");
+  assert.equal(okHandle(parseHandle("@@ada")), "ada");
+});
+
+test("a handle that no mention could match is refused", () => {
+  for (const raw of ["", "  ", "ab", "@ab", "a".repeat(21), "ada lovelace", "ada-lovelace", "adá", "ada!", null, 42]) {
+    const got = parseHandle(raw);
+    assert.ok("error" in got, `expected ${JSON.stringify(raw)} to be refused`);
+  }
+});
+
+test("a handle at either boundary is fine", () => {
+  assert.equal(okHandle(parseHandle("a".repeat(3))), "aaa");
+  assert.equal(okHandle(parseHandle("a".repeat(20))), "a".repeat(20));
+  assert.equal(okHandle(parseHandle("___")), "___");
+  assert.equal(okHandle(parseHandle("123")), "123");
 });

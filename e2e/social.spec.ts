@@ -1002,3 +1002,81 @@ test("16. the Media tab is the peels with something on them", async ({ open }) =
 
   await service.remove(`peels?id=in.(${plain.id},${illustrated.id})`);
 });
+
+test("17. ada changes her handle, and the old one still finds her", async ({ open }) => {
+  const adaApi = await restAs("ada");
+  const service = restAsService();
+
+  // Own ground: ada is @ada and has let go of nothing, whatever ran before.
+  await service.update(`profiles?id=eq.${adaApi.id}`, { username: "ada" });
+  await service.remove(`username_history?profile_id=eq.${adaApi.id}`);
+
+  const ada = await open("ada");
+  // All of it inside a try: a rename left in place would greet the next run as
+  // a missing account, and the suite would not get as far as its first test.
+  try {
+    await ada.goto("/u/ada");
+    await ada.getByRole("button", { name: "Edit profile" }).click();
+    const sheet = ada.getByRole("dialog");
+    const handle = sheet.getByRole("textbox", { name: "Handle" });
+    const save = sheet.getByRole("button", { name: "Save" });
+
+    // A handle no mention could match never reaches the database.
+    await handle.fill("no");
+    await save.click();
+    await expect(sheet.getByText("A handle is 3 to 20 characters.")).toBeVisible();
+    await expect(sheet).toBeVisible();
+
+    // One somebody is using is refused by the database, which is the only thing
+    // that can know: the check and the taking have to be the same statement.
+    await handle.fill("bob");
+    await save.click();
+    await expect(sheet.getByText("That handle is taken.")).toBeVisible();
+
+    // Typed with capitals, stored lower case, because that is what a mention of
+    // it will go looking for.
+    await handle.fill("Ada_Lovelace");
+    await save.click();
+    await expect(sheet).toBeHidden();
+    await expect(ada).toHaveURL(`${BASE_URL}/u/ada_lovelace`);
+    // Scoped to the profile head: the new handle is on every card she wrote,
+    // and in the sheet's own note about it.
+    await expect(
+      ada.getByRole("heading", { level: 1 }).locator("..").getByText("@ada_lovelace"),
+    ).toBeVisible();
+
+    // Every link ever written to the old handle still arrives -- the profile,
+    // the tab somebody linked, and the lists hanging off it.
+    await ada.goto("/u/ada");
+    await expect(ada).toHaveURL(`${BASE_URL}/u/ada_lovelace`);
+    await ada.goto("/u/ada?tab=likes");
+    await expect(ada).toHaveURL(`${BASE_URL}/u/ada_lovelace?tab=likes`);
+    await ada.goto("/u/ada/followers");
+    await expect(ada).toHaveURL(`${BASE_URL}/u/ada_lovelace/followers`);
+
+    // Nobody else may take what she has only just let go of.
+    const bob = await open("bob");
+    await bob.goto("/u/bob");
+    await bob.getByRole("button", { name: "Edit profile" }).click();
+    const bobSheet = bob.getByRole("dialog");
+    await bobSheet.getByRole("textbox", { name: "Handle" }).fill("ada");
+    await bobSheet.getByRole("button", { name: "Save" }).click();
+    await expect(bobSheet.getByText(/on hold for another \d+ day/)).toBeVisible();
+    // Refused whole: bob is still bob.
+    await expect(bob).toHaveURL(`${BASE_URL}/u/bob`);
+
+    // The hold never applies to the person who left it, so ada can undo all of
+    // this -- and once she has, the handle she borrowed forwards back.
+    await ada.goto("/u/ada_lovelace");
+    await ada.getByRole("button", { name: "Edit profile" }).click();
+    await sheet.getByRole("textbox", { name: "Handle" }).fill("ada");
+    await sheet.getByRole("button", { name: "Save" }).click();
+    await expect(sheet).toBeHidden();
+    await expect(ada).toHaveURL(`${BASE_URL}/u/ada`);
+    await ada.goto("/u/ada_lovelace");
+    await expect(ada).toHaveURL(`${BASE_URL}/u/ada`);
+  } finally {
+    await service.update(`profiles?id=eq.${adaApi.id}`, { username: "ada" });
+    await service.remove(`username_history?profile_id=eq.${adaApi.id}`);
+  }
+});

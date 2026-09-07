@@ -5,9 +5,13 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { objectPath, parseMedia } from "@/lib/media";
 import { parseTitle } from "@/lib/peel";
-import { parseProfile } from "@/lib/profile";
+import { parseHandle, parseProfile } from "@/lib/profile";
 
-export type ActionResult = { error?: string };
+export type ActionResult = {
+  error?: string;
+  /** Set when a save changed the handle, so the browser can follow the profile. */
+  username?: string;
+};
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -213,10 +217,48 @@ export async function updateProfile(_prev: ActionResult, formData: FormData): Pr
   const banner = formData.get("banner_url");
   if (typeof banner === "string") patch.banner_url = banner;
 
+  // The handle goes first and on its own: it is the one field the owner cannot
+  // write directly (username is granted to nobody), because taking one has to
+  // check who holds it, who held it recently, and leave the old one forwarding.
+  // Doing it first also means a refused handle saves nothing else, which is
+  // what somebody who typed a taken handle expects.
+  const rawHandle = formData.get("username");
+  let renamed: string | undefined;
+  if (typeof rawHandle === "string") {
+    const wanted = parseHandle(rawHandle);
+    if ("error" in wanted) return { error: wanted.error };
+
+    const { data: current } = await supabase
+      .from("profiles")
+      .select("username")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (current && current.username !== wanted.handle) {
+      const { data, error: renameError } = await supabase.rpc("change_username", {
+        new_username: wanted.handle,
+      });
+      // The database's own words: "that handle is taken", "on hold until ...".
+      if (renameError) return { error: message(renameError.message) };
+      renamed = data ?? wanted.handle;
+    }
+  }
+
   const { error } = await supabase.from("profiles").update(patch).eq("id", user.id);
   if (error) return { error: "Couldn't save your profile. Try again." };
   revalidatePath("/", "layout");
-  return {};
+  return renamed ? { username: renamed } : {};
+}
+
+/**
+ * A Postgres error message as something to read. change_username() raises the
+ * sentence it wants shown; anything else is a fault, not an explanation.
+ */
+function message(raw: string): string {
+  const said = raw.trim();
+  return /^(that handle|a handle|sign in)/.test(said)
+    ? `${said.charAt(0).toUpperCase()}${said.slice(1)}.`
+    : "Couldn't change your handle. Try again.";
 }
 
 /**

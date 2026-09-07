@@ -41,14 +41,31 @@ export async function resetData(): Promise<void> {
   }
 }
 
-/** Create ada and bob if this is a fresh stack. The signup trigger writes their profiles. */
+/** The fixture accounts by email — the one key a test cannot change. */
+async function idsByEmail(): Promise<Map<string, string>> {
+  const { apiUrl, serviceRoleKey } = localEnv();
+  const response = await fetch(`${apiUrl}/auth/v1/admin/users?per_page=200`, {
+    headers: { apikey: serviceRoleKey, Authorization: `Bearer ${serviceRoleKey}` },
+  });
+  if (!response.ok) throw new Error(`Could not list users: ${response.status}`);
+  const { users } = (await response.json()) as { users: { id: string; email: string }[] };
+  return new Map(users.map((user) => [user.email, user.id]));
+}
+
+/**
+ * Create ada and bob if this is a fresh stack, and put their handles back if a
+ * previous run changed one. The signup trigger writes their profiles.
+ *
+ * Identity here is the email, not the handle: a handle is the person's to change
+ * now, so a run that renamed ada and failed before putting her back would
+ * otherwise look like a missing account and try to sign her up twice.
+ */
 export async function ensureUsers(): Promise<void> {
   const { apiUrl, serviceRoleKey } = localEnv();
-  const existing = await rest("profiles?select=username", { token: serviceRoleKey });
-  const usernames = new Set(((await existing.json()) as { username: string }[]).map((row) => row.username));
+  const existing = await idsByEmail();
 
   for (const user of Object.values(USERS)) {
-    if (usernames.has(user.username)) continue;
+    if (existing.has(user.email)) continue;
     const response = await fetch(`${apiUrl}/auth/v1/admin/users`, {
       method: "POST",
       headers: {
@@ -67,6 +84,20 @@ export async function ensureUsers(): Promise<void> {
     if (!response.ok) {
       throw new Error(`Could not seed ${user.email}: ${response.status} ${await response.text()}`);
     }
+  }
+
+  // Whatever a previous run renamed, this is the handle the suite expects. The
+  // forwarding rows go with it, or /u/ada would still redirect somewhere else.
+  const ids = await idsByEmail();
+  for (const user of Object.values(USERS)) {
+    const id = ids.get(user.email);
+    if (id === undefined) throw new Error(`No auth user for ${user.email} after signup.`);
+    await rest(`username_history?profile_id=eq.${id}`, { method: "DELETE", token: serviceRoleKey });
+    await rest(`profiles?id=eq.${id}`, {
+      method: "PATCH",
+      token: serviceRoleKey,
+      body: JSON.stringify({ username: user.username }),
+    });
   }
 
   // The trigger runs after the insert; make sure both profiles landed.

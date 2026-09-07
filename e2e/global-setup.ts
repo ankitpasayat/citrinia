@@ -4,7 +4,7 @@ import { ensureUsers, resetData } from "./db.ts";
 import { localEnv } from "./env.ts";
 
 /** Everything 20260907000000_social.sql adds, and nothing the earlier files did. */
-const SOCIAL_TABLES = ["reposts", "bookmarks", "peel_media", "notifications"];
+const SOCIAL_TABLES = ["reposts", "bookmarks", "peel_media", "notifications", "username_history"];
 
 /**
  * `supabase start` restores the stack's own cached snapshot, which is whatever
@@ -34,6 +34,16 @@ async function assertSchema(): Promise<void> {
     body: JSON.stringify({ of_peel: "00000000-0000-0000-0000-000000000000" }),
   });
   if (!ancestors.ok) throw stale("The `peel_ancestors` function");
+
+  // The rename is a function too, and username is granted to nobody -- without
+  // it the edit sheet can save everything except the one field it added.
+  const rename = await fetch(`${apiUrl}/rest/v1/rpc/change_username`, {
+    method: "POST",
+    headers: { ...headers, "Content-Type": "application/json" },
+    body: JSON.stringify({ new_username: "" }),
+  });
+  // 404 is "no such function"; a 4xx from its own validation means it is there.
+  if (rename.status === 404) throw stale("The `change_username` function");
 
   // Uploads go to Storage, which the migration provisions through a function
   // that reports rather than raises -- so its bucket is worth its own check.

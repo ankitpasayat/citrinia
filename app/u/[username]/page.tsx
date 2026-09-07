@@ -6,7 +6,15 @@ import { PeelList } from "@/components/peel-list";
 import { ProfileCard } from "@/components/profile-card";
 import { ProfileTabs, parseProfileTab, type ProfileTab } from "@/components/profile-tabs";
 import { ShowOlder } from "@/components/show-older";
-import { PAGE_SIZE, encodeCursor, fetchLikedBy, fetchPeel, fetchPeels, fetchRepliesBy } from "@/lib/peels";
+import {
+  PAGE_SIZE,
+  encodeCursor,
+  fetchLikedBy,
+  fetchPeel,
+  fetchPeels,
+  fetchRepliesBy,
+  resolveHandle,
+} from "@/lib/peels";
 import { createClient } from "@/lib/supabase/server";
 
 type Props = {
@@ -62,12 +70,15 @@ export default async function ProfilePage({ params, searchParams }: Props) {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("username", username)
-    .maybeSingle();
-  if (!profile) notFound();
+  const found = await resolveHandle(supabase, username);
+  if (!found) notFound();
+  // A handle they used to have: send the reader to the one they have now, and
+  // keep the tab they asked for.
+  if ("movedTo" in found) {
+    const query = rawTab ? `?tab=${encodeURIComponent(rawTab)}` : "";
+    redirect(`/u/${encodeURIComponent(found.movedTo)}${query}`);
+  }
+  const profile = found.profile;
 
   const isSelf = profile.id === user.id;
 

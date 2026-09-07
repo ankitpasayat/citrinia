@@ -9,7 +9,7 @@ import { useActionState, useId, useState } from "react";
 import { updateProfile, type ActionResult } from "@/app/actions";
 import { colors, fonts } from "@/app/tokens.stylex";
 import { countChars } from "@/lib/peel";
-import { MAX_BIO, MAX_LOCATION, MAX_NAME, MAX_WEBSITE } from "@/lib/profile";
+import { MAX_BIO, MAX_HANDLE, MAX_LOCATION, MAX_NAME, MAX_WEBSITE } from "@/lib/profile";
 import { Button } from "./button";
 import { HelpText, Input, Textarea } from "./field";
 import { Pill } from "./pill";
@@ -22,11 +22,13 @@ export function EditProfileButton({ profile }: { profile: Profile }) {
   const bioId = useId();
   const locationId = useId();
   const websiteId = useId();
+  const handleId = useId();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(profile.name);
   const [bio, setBio] = useState(profile.bio);
   const [location, setLocation] = useState(profile.location);
   const [website, setWebsite] = useState(profile.website);
+  const [handle, setHandle] = useState(profile.username);
   const [avatar, setAvatar] = useState<PictureChoice>(null);
   const [banner, setBanner] = useState<PictureChoice>(null);
 
@@ -49,6 +51,9 @@ export function EditProfileButton({ profile }: { profile: Profile }) {
 
     const result = await updateProfile(prev, formData);
     if (!result.error) {
+      // A handle change moves the profile: the url in the address bar is an old
+      // handle now, and it would only redirect back here on the next load.
+      if (result.username) router.replace(`/u/${encodeURIComponent(result.username)}`);
       // Only once the row that pointed at them is saved, and only ever our own
       // objects — a GitHub avatar is not ours to delete, and forgetPicture knows.
       if (avatar !== null) void forgetPicture(profile.avatar_url);
@@ -67,6 +72,7 @@ export function EditProfileButton({ profile }: { profile: Profile }) {
     setBio(profile.bio);
     setLocation(profile.location);
     setWebsite(profile.website);
+    setHandle(profile.username);
     setAvatar(null);
     setBanner(null);
     setOpen(true);
@@ -129,6 +135,26 @@ export function EditProfileButton({ profile }: { profile: Profile }) {
             value={bio}
             onChange={(event) => setBio(event.target.value)}
           />
+
+          <label htmlFor={handleId} {...stylex.props(styles.label, styles.labelGap)}>
+            Handle
+          </label>
+          <Input
+            id={handleId}
+            name="username"
+            onSurface
+            maxLength={MAX_HANDLE}
+            value={handle}
+            onChange={(event) => setHandle(event.target.value)}
+            autoComplete="username"
+            spellCheck={false}
+            autoCapitalize="none"
+          />
+          <HelpText>
+            {handle.toLowerCase() === profile.username
+              ? "People find you at @" + profile.username + "."
+              : `@${profile.username} will keep pointing here.`}
+          </HelpText>
 
           <label htmlFor={locationId} {...stylex.props(styles.label, styles.labelGap)}>
             Location

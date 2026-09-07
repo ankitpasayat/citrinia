@@ -12,7 +12,7 @@ import { ArrowLeftIcon } from "@/components/icons";
 import { PersonList } from "@/components/person-list";
 import { Segmented } from "@/components/segmented";
 import { ShowOlder } from "@/components/show-older";
-import { fetchFollowList, type FollowSide } from "@/lib/peels";
+import { fetchFollowList, resolveHandle, type FollowSide } from "@/lib/peels";
 import { createClient } from "@/lib/supabase/server";
 
 /** The copy for a side with nobody on it, read about yourself or about somebody else. */
@@ -44,12 +44,11 @@ export async function FollowPage({
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("username", username)
-    .maybeSingle();
-  if (!profile) notFound();
+  const found = await resolveHandle(supabase, username);
+  if (!found) notFound();
+  // An old handle forwards here too, onto the same side of the same list.
+  if ("movedTo" in found) redirect(`/u/${encodeURIComponent(found.movedTo)}/${side}`);
+  const profile = found.profile;
 
   const [{ people, older }, viewer] = await Promise.all([
     fetchFollowList(supabase, user.id, profile.id, side, before),

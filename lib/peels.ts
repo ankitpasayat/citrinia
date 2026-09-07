@@ -355,6 +355,34 @@ export async function fetchSuggestedProfiles(
 }
 
 /** Which half of a follow a list shows: who follows this profile, or who it follows. */
+/**
+ * Who is at `/u/<handle>`: the profile, or the handle they moved to, or nothing.
+ *
+ * A handle somebody has let go of keeps pointing at them (username_history), so
+ * every link ever written to an old handle still arrives -- until somebody else
+ * takes that handle, at which point change_username() drops the forwarding row
+ * and the handle belongs to whoever holds it now. Live profiles are checked
+ * first for exactly that reason: the current owner always wins.
+ */
+export async function resolveHandle(
+  supabase: SupabaseClient<Database>,
+  handle: string,
+): Promise<{ profile: Profile } | { movedTo: string } | null> {
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("username", handle)
+    .maybeSingle();
+  if (profile) return { profile };
+
+  const { data: old } = await supabase
+    .from("username_history")
+    .select("profile:profiles!username_history_profile_id_fkey(username)")
+    .eq("username", handle.toLowerCase())
+    .maybeSingle();
+  return old?.profile ? { movedTo: old.profile.username } : null;
+}
+
 export type FollowSide = "followers" | "following";
 
 /** One row of a list of people: the profile, and where the viewer stands with it. */

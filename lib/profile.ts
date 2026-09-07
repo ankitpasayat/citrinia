@@ -9,6 +9,30 @@ export const MAX_LOCATION = 30;
 /** Including the `https://` we store, because the column counts that too. */
 export const MAX_WEBSITE = 100;
 
+// A handle is 3 to 20 of [a-z0-9_], lower case. That is not a house style: it
+// is exactly what `@handle` matches in lib/text.ts, and change_username() in
+// the database enforces the same thing. A handle outside it would be one that
+// nobody could mention and no mention could resolve.
+export const MIN_HANDLE = 3;
+export const MAX_HANDLE = 20;
+const HANDLE = /^[a-z0-9_]+$/;
+
+/**
+ * The handle we will ask the database for, or why we will not ask. Case and a
+ * leading @ are the two things people type without meaning them, so both are
+ * taken off rather than refused.
+ */
+export function parseHandle(raw: unknown): { handle: string } | { error: string } {
+  const handle = (typeof raw === "string" ? raw : "").trim().replace(/^@+/, "").toLowerCase();
+  if (handle.length < MIN_HANDLE || handle.length > MAX_HANDLE) {
+    return { error: `A handle is ${MIN_HANDLE} to ${MAX_HANDLE} characters.` };
+  }
+  if (!HANDLE.test(handle)) {
+    return { error: "A handle is letters, numbers and underscores only." };
+  }
+  return { handle };
+}
+
 /** Runs of two or more line breaks (blank lines may hold spaces or tabs). */
 const BLANK_LINES = /\n[ \t]*(?:\n[ \t]*)+/g;
 

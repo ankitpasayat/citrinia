@@ -253,6 +253,32 @@ export type Database = {
           }
         ]
       }
+      username_history: {
+        Row: {
+          profile_id: string
+          released_at: string
+          username: string
+        }
+        Insert: {
+          profile_id: string
+          released_at?: string
+          username: string
+        }
+        Update: {
+          profile_id?: string
+          released_at?: string
+          username?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "username_history_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string
@@ -345,6 +371,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      change_username: {
+        Args: {
+          new_username: string
+        }
+        Returns: string
+      }
       home_timeline: {
         Args: {
           following_only?: boolean

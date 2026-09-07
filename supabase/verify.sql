@@ -73,15 +73,15 @@ do $$ begin
 end $$;
 \echo check 5 ok: peels and notifications in supabase_realtime publication, notifications logged whole
 
--- 6. RLS enabled on every table, 22 policies, API roles have the grants their policies assume.
+-- 6. RLS enabled on every table, 23 policies, API roles have the grants their policies assume.
 do $$ begin
   if exists (select 1 from pg_tables where schemaname = 'public'
-               and tablename in ('profiles','peels','likes','follows','reposts','bookmarks','peel_media','notifications')
+               and tablename in ('profiles','peels','likes','follows','reposts','bookmarks','peel_media','notifications','username_history')
                and not rowsecurity) then
     raise exception 'check 6 FAILED: RLS not enabled on every table';
   end if;
-  if (select count(*) from pg_policies where schemaname = 'public') <> 22 then
-    raise exception 'check 6 FAILED: expected 22 policies, found %', (select count(*) from pg_policies where schemaname = 'public');
+  if (select count(*) from pg_policies where schemaname = 'public') <> 23 then
+    raise exception 'check 6 FAILED: expected 23 policies, found %', (select count(*) from pg_policies where schemaname = 'public');
   end if;
   if not has_table_privilege('authenticated', 'public.peels', 'insert') or not has_table_privilege('anon', 'public.profiles', 'select') then
     raise exception 'check 6 FAILED: API roles lack table grants';
@@ -1020,6 +1020,144 @@ do $$ begin
   end if;
 end $$;
 \echo check 29 ok: a pinned peel must be your own, and composting it only unpins it
+
+-- 30. Renaming: one case, one owner, a 30-day hold on the handle you let go,
+--     and an old handle that still points at you.
+do $$ begin
+  if not exists (select 1 from pg_indexes
+                  where schemaname = 'public' and indexname = 'profiles_username_unique') then
+    raise exception 'check 30 FAILED: nothing stops two profiles sharing a handle';
+  end if;
+end $$;
+
+-- Handles are stored lower case, whatever the provider sent.
+insert into auth.users (id, instance_id, aud, role, email, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
+values ('60000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+        'eve@example.com', '{"provider":"github"}', '{"user_name":"EveWithCaps","avatar_url":"https://e.example/e.png"}',
+        now(), now());
+do $$ begin
+  if (select username from public.profiles where id = '60000000-0000-0000-0000-000000000001') <> 'evewithcaps' then
+    raise exception 'check 30 FAILED: a capitalised login was stored as-is, so no mention of it could resolve';
+  end if;
+end $$;
+
+-- Two profiles cannot hold the same handle in different cases.
+do $$ begin
+  update public.profiles set username = 'ADA' where id = '60000000-0000-0000-0000-000000000001';
+  raise exception 'check 30 FAILED: EveWithCaps took ada''s handle by capitalising it';
+exception when unique_violation then null; end $$;
+
+-- change_username() acts for the caller, so the checks below run as one. Both
+-- GUCs, because auth.uid() reads the older singular one on some images and the
+-- json one on others -- and a check that silently runs as the previous test's
+-- user proves nothing (this one did, until it was caught).
+set local role authenticated;
+do $$ begin
+  perform set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000001', true);
+  perform set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-000000000001","role":"authenticated"}', true);
+end $$;
+
+do $$ begin
+  perform public.change_username('no');
+  raise exception 'check 30 FAILED: a two-character handle was accepted';
+exception when check_violation then null; end $$;
+do $$ begin
+  perform public.change_username('nope!');
+  raise exception 'check 30 FAILED: a handle with punctuation was accepted';
+exception when check_violation then null; end $$;
+do $$ begin
+  perform public.change_username(repeat('a', 21));
+  raise exception 'check 30 FAILED: a 21-character handle was accepted';
+exception when check_violation then null; end $$;
+do $$ begin
+  perform public.change_username('bob');
+  raise exception 'check 30 FAILED: ada took a handle somebody is using';
+exception when unique_violation then null; end $$;
+
+-- Asking for the handle you already have changes nothing, and above all does
+-- not record it as released. Two things guarantee that -- the early return and
+-- the delete below it -- so removing either one alone leaves this green; it
+-- goes red when both are gone, which is what makes it worth asserting.
+do $$ begin
+  if public.change_username('ADA') <> 'ada' then
+    raise exception 'check 30 FAILED: renaming to your own handle did not leave it alone';
+  end if;
+  if exists (select 1 from public.username_history where username = 'ada') then
+    raise exception 'check 30 FAILED: renaming to your own handle put it on hold';
+  end if;
+end $$;
+
+-- The rename itself: stored lower case, and the old handle now leads here.
+do $$ begin
+  if public.change_username('Ada_Lovelace') <> 'ada_lovelace' then
+    raise exception 'check 30 FAILED: the new handle came back in the wrong case';
+  end if;
+  if (select username from public.profiles where id = '00000000-0000-0000-0000-000000000001') <> 'ada_lovelace' then
+    raise exception 'check 30 FAILED: the profile kept its old handle';
+  end if;
+  if not exists (select 1 from public.username_history
+                  where username = 'ada' and profile_id = '00000000-0000-0000-0000-000000000001') then
+    raise exception 'check 30 FAILED: the handle ada was let go without leaving a forwarding address';
+  end if;
+end $$;
+
+-- Taking your own old handle back is always allowed, and stops it forwarding.
+do $$ begin
+  perform public.change_username('ada');
+  if exists (select 1 from public.username_history where username = 'ada') then
+    raise exception 'check 30 FAILED: reclaiming a handle left it forwarding to itself';
+  end if;
+  if not exists (select 1 from public.username_history where username = 'ada_lovelace') then
+    raise exception 'check 30 FAILED: ada_lovelace was let go without leaving a forwarding address';
+  end if;
+end $$;
+
+-- The hold is one-sided: bob cannot have what ada just let go of.
+do $$ begin
+  perform set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000002', true);
+  perform set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-000000000002","role":"authenticated"}', true);
+end $$;
+do $$ begin
+  perform public.change_username('ada_lovelace');
+  raise exception 'check 30 FAILED: bob took a handle that was released moments ago';
+exception when check_violation then null; end $$;
+
+-- Thirty days and a moment later, it is anybody's.
+reset role;
+update public.username_history set released_at = now() - interval '30 days 1 minute'
+ where username = 'ada_lovelace';
+set local role authenticated;
+do $$ begin
+  perform set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000002', true);
+  perform set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-000000000002","role":"authenticated"}', true);
+end $$;
+do $$ begin
+  if public.change_username('ada_lovelace') <> 'ada_lovelace' then
+    raise exception 'check 30 FAILED: an expired hold still blocked the handle';
+  end if;
+end $$;
+
+-- The history is readable (the redirect is a read) and writable by nobody: a
+-- forwarding address you could forge is a way to take somebody else's traffic.
+do $$ begin
+  if not has_table_privilege('authenticated', 'public.username_history', 'select') then
+    raise exception 'check 30 FAILED: the redirect cannot read the history';
+  end if;
+  if has_table_privilege('authenticated', 'public.username_history', 'insert')
+     or has_table_privilege('authenticated', 'public.username_history', 'update')
+     or has_table_privilege('authenticated', 'public.username_history', 'delete') then
+    raise exception 'check 30 FAILED: a client can forge a forwarding address';
+  end if;
+  if has_column_privilege('authenticated', 'public.profiles', 'username', 'update') then
+    raise exception 'check 30 FAILED: username is writable without going through change_username';
+  end if;
+  if has_function_privilege('anon', 'public.change_username(text)', 'execute') then
+    raise exception 'check 30 FAILED: a signed-out caller can rename somebody';
+  end if;
+end $$;
+
+reset role;
+\echo check 30 ok: handles are lower case and unique, a rename forwards the old one, and the hold is one-sided
 
 rollback;
 \echo ALL CHECKS PASSED
