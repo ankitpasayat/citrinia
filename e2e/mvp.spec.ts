@@ -125,8 +125,8 @@ test("5. bob follows ada, and Following fills up", async ({ open }) => {
   await bob.goto("/");
   await expect(bob.getByRole("article")).toHaveCount(1);
   await expect(card(bob, PEEL)).toBeVisible();
-  // Someone else's peel has no dots menu.
-  await expect(card(bob, PEEL).getByRole("button", { name: "More" })).toHaveCount(0);
+  // Someone else's peel has the dots menu too; what is in it is test 11's business.
+  await expect(card(bob, PEEL).getByRole("button", { name: "More" })).toHaveCount(1);
 
   await bob.goto("/?tab=following");
   await expect(bob.getByText("Follow people to fill this up.")).toBeVisible();
@@ -307,7 +307,10 @@ test("11. ada deletes her own peel, and it is gone for everyone", async ({ open 
   const bob = await open("bob");
   await bob.goto("/");
   await expect(card(bob, "delete me")).toHaveCount(0);
-  // Bob owns one of these two peels and not the other; only his has the menu.
+  // Bob owns one of these two peels and not the other. Both carry a menu; only
+  // the one he wrote offers to delete it.
   await expect(card(bob, BOB_PEEL).getByRole("button", { name: "More" })).toHaveCount(1);
-  await expect(card(bob, PEEL).getByRole("button", { name: "More" })).toHaveCount(0);
+  await card(bob, PEEL).getByRole("button", { name: "More" }).click();
+  await expect(bob.getByRole("button", { name: "Copy link" })).toBeVisible();
+  await expect(bob.getByRole("button", { name: "Delete peel" })).toHaveCount(0);
 });

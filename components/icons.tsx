@@ -194,3 +194,22 @@ export function ImageIcon(p: IconProps) {
     </Svg>
   );
 }
+
+export function LinkIcon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path
+        {...stroke}
+        d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"
+      />
+    </Svg>
+  );
+}
+
+export function ShareIcon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path {...stroke} d="M12 3v12M8 7l4-4 4 4M5 13v6a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-6" />
+    </Svg>
+  );
+}

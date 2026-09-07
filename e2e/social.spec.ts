@@ -4,8 +4,16 @@
 // ada, and bob renamed "Bob Peeler" by mvp test 7 -- so it runs last (see the
 // `social` project in playwright.config.ts).
 import { deflateSync } from "node:zlib";
+import { BASE_URL } from "../playwright.config.ts";
 import { actionWrite, card, expect, REMOTE_IMAGE, shot, subscribed, test, type Page } from "./fixtures.ts";
 import { listMedia, mediaUrl, peelAs, restAs, restAsService } from "./db.ts";
+
+declare global {
+  interface Window {
+    /** What the stubbed share sheet was handed, in the browser that has one. */
+    shared?: { title: string; url: string }[];
+  }
+}
 
 // What mvp.spec.ts leaves behind. Asserted in test 1, so a change over there
 // fails here with a reason rather than a mystery.
@@ -31,6 +39,7 @@ const THREAD_REPLY = "one more from the thread";
 const CHAIN_ROOT = "what is the correct number of oranges";
 const CHAIN_MIDDLE = "one more than you have";
 const CHAIN_LEAF = "that is not a number, bob";
+const SHAREABLE = "a peel worth passing on";
 
 /** How many older peels test 8 bulk-loads. PAGE_SIZE in lib/peels.ts is 20. */
 const OLDER = 25;
@@ -659,4 +668,57 @@ test("11. a reply opens with the peels it answers above it, oldest first", async
   await expect(fromRoot).toHaveCount(2);
   await expect(fromRoot.nth(0)).toHaveAttribute("href", `/p/${rootId}`);
   await expect(fromRoot.nth(1)).toHaveAttribute("href", `/p/${middleId}`);
+});
+
+test("12. every peel has a menu: copy the link, or hand it to the share sheet", async ({
+  open,
+}) => {
+  const id = await peelAs("ada", SHAREABLE);
+  const url = `${BASE_URL}/p/${id}`;
+
+  // Whether a browser has a share sheet is a build detail of that browser, so
+  // each half of this test states which kind it is standing in rather than
+  // asking Chromium and hoping. First: one without.
+  const bob = await open("bob");
+  await bob.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+  await bob.addInitScript(() => {
+    Object.defineProperty(navigator, "share", { configurable: true, value: undefined });
+  });
+  await bob.goto("/");
+
+  // Somebody else's peel has the menu now. Copy link is the whole of it here:
+  // no share sheet to offer, and nothing of his to delete.
+  await peelCard(bob, id).getByRole("button", { name: "More" }).click();
+  await expect(bob.getByRole("button", { name: "Copy link" })).toBeVisible();
+  await expect(bob.getByRole("button", { name: "Share…" })).toHaveCount(0);
+  await expect(bob.getByRole("button", { name: "Delete peel" })).toHaveCount(0);
+  await bob.getByRole("button", { name: "Copy link" }).click();
+
+  // What lands on the clipboard is the absolute link to that one peel,
+  expect(await bob.evaluate(() => navigator.clipboard.readText())).toBe(url);
+  // and the toast says so in the live region, then takes itself away again.
+  await expect(bob.getByRole("status")).toHaveText("Link copied");
+  await shot(bob, "toast-link-copied");
+  await expect(bob.getByText("Link copied")).toHaveCount(0, { timeout: 6_000 });
+
+  // Second: a browser with a sheet. The item appears, and is handed the peel.
+  const phone = await open("bob");
+  await phone.addInitScript(() => {
+    window.shared = [];
+    Object.defineProperty(navigator, "share", {
+      configurable: true,
+      value: (data: { title: string; url: string }) => {
+        window.shared?.push(data);
+        return Promise.resolve();
+      },
+    });
+  });
+  await phone.goto(`/p/${id}`);
+  await peelCard(phone, id).getByRole("button", { name: "More" }).click();
+  await phone.getByRole("button", { name: "Share…" }).click();
+  expect(await phone.evaluate(() => window.shared)).toEqual([
+    { title: "Ada Lovelace on Citrinia", url },
+  ]);
+  // Handing it over is not something to announce: the sheet is the feedback.
+  await expect(phone.getByRole("status")).toBeEmpty();
 });

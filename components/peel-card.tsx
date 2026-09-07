@@ -3,27 +3,38 @@
 // One peel. Avatar and name go to the profile, the timestamp and the pictures go
 // to the thread, and the actions row sits underneath. The body is no longer one
 // big link -- it has @handles and #hashtags in it now, and an <a> cannot hold
-// another <a>. Your own peels get a dots menu whose delete asks once before it
+// another <a>. Every peel gets a dots menu -- copy the link, hand it to the
+// system share sheet -- and your own adds a delete that asks once before it
 // fires. Popovers live in the top layer with no anchor of their own, so the menu
 // is measured off its trigger when it opens.
 import * as stylex from "@stylexjs/stylex";
 import Link from "next/link";
-import { startTransition, useId, useRef, useState } from "react";
+import { startTransition, useId, useRef, useState, useSyncExternalStore } from "react";
 import { deletePeel } from "@/app/actions";
 import { bp, colors, fonts, shape } from "@/app/tokens.stylex";
 import { formatRelative, fullTime } from "@/lib/relative-time";
 import { Avatar } from "./avatar";
 import { BookmarkButton } from "./bookmark-button";
 import { Button } from "./button";
-import { MoreIcon, RepeatIcon, ReplyIcon, TrashIcon } from "./icons";
+import { LinkIcon, MoreIcon, RepeatIcon, ReplyIcon, ShareIcon, TrashIcon } from "./icons";
 import { chipStyles, LikeChip } from "./like-chip";
 import { MediaGrid } from "./media-grid";
 import { QuoteCard } from "./quote-card";
 import { RepostButton } from "./repost-button";
 import { RichText } from "./rich-text";
+import { toast } from "./toast";
 
 const MENU_WIDTH = 220;
 const GAP = 8;
+
+// Whether this browser has a share sheet at all: phones, tablets and the
+// Capacitor shell do, most desktops do not, and where it does not exist Copy
+// link is the whole story. Read through useSyncExternalStore (a store that never
+// changes) rather than an effect, so the server and the first client render
+// agree on "no" and hydration stays quiet.
+const noSubscribe = () => () => {};
+const hasShare = () => typeof navigator !== "undefined" && typeof navigator.share === "function";
+const noShareOnServer = () => false;
 
 export function PeelCard({
   peel,
@@ -50,11 +61,13 @@ export function PeelCard({
   const menu = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState({ top: GAP, right: GAP });
   const [confirming, setConfirming] = useState(false);
+  const canShare = useSyncExternalStore(noSubscribe, hasShare, noShareOnServer);
 
   const author = peel.author;
   const profileHref = `/u/${author.username}`;
   const threadHref = `/p/${peel.id}`;
   const reposter = peel.reposted_by;
+  const mine = peel.user_id === viewerId;
 
   function onMenuToggle(event: React.ToggleEvent<HTMLDivElement>) {
     if (event.newState !== "open") {
@@ -73,6 +86,33 @@ export function PeelCard({
       top: Math.min(Math.max(GAP, rect.bottom + GAP), maxTop),
       right: Math.min(Math.max(GAP, window.innerWidth - rect.right), maxRight),
     });
+  }
+
+  /** The link people paste: absolute, because it is leaving the app. */
+  function peelUrl(): string {
+    return new URL(threadHref, window.location.origin).href;
+  }
+
+  async function onCopy() {
+    menu.current?.hidePopover();
+    try {
+      await navigator.clipboard.writeText(peelUrl());
+      toast("Link copied");
+    } catch {
+      // Every surface this ships on is a secure context, so a failure here is a
+      // refused permission, not a missing API. Silence would look like success.
+      toast("Couldn't copy the link", "bad");
+    }
+  }
+
+  async function onShare() {
+    menu.current?.hidePopover();
+    try {
+      await navigator.share({ title: `${author.name} on Citrinia`, url: peelUrl() });
+    } catch (error) {
+      // Closing the sheet rejects too, and changing your mind is not a failure.
+      if ((error as Error).name !== "AbortError") toast("Couldn't open the share sheet", "bad");
+    }
   }
 
   function onDelete() {
@@ -150,26 +190,43 @@ export function PeelCard({
             <BookmarkButton peel={peel} onOptimisticBookmark={onOptimisticBookmark} />
           </span>
 
-          {peel.user_id === viewerId && (
-            <>
-              <Button ref={trigger} variant="icon" aria-label="More" popoverTarget={menuId}>
-                <MoreIcon />
-              </Button>
-              <div
-                ref={menu}
-                id={menuId}
-                popover="auto"
-                onToggle={onMenuToggle}
-                {...stylex.props(styles.menu)}
-                style={pos}
-              >
-                <button type="button" onClick={onDelete} {...stylex.props(styles.menuItem)}>
+          <Button ref={trigger} variant="icon" aria-label="More" popoverTarget={menuId}>
+            <MoreIcon />
+          </Button>
+          <div
+            ref={menu}
+            id={menuId}
+            popover="auto"
+            onToggle={onMenuToggle}
+            {...stylex.props(styles.menu)}
+            style={pos}
+          >
+            <button type="button" onClick={onCopy} {...stylex.props(styles.menuItem)}>
+              <LinkIcon />
+              Copy link
+            </button>
+
+            {canShare && (
+              <button type="button" onClick={onShare} {...stylex.props(styles.menuItem)}>
+                <ShareIcon />
+                Share…
+              </button>
+            )}
+
+            {mine && (
+              <>
+                <hr {...stylex.props(styles.rule)} />
+                <button
+                  type="button"
+                  onClick={onDelete}
+                  {...stylex.props(styles.menuItem, styles.danger)}
+                >
                   <TrashIcon />
                   {confirming ? "Really delete? Tap again" : "Delete peel"}
                 </button>
-              </div>
-            </>
-          )}
+              </>
+            )}
+          </div>
         </div>
       </div>
     </article>
@@ -255,6 +312,9 @@ const styles = stylex.create({
     left: "auto",
     marginBlock: 0,
     marginInline: 0,
+    // No `display` here, ever: the UA hides a closed popover with `display: none`,
+    // and an author rule of any kind beats it -- which paints every card's menu
+    // open over the page. The rows stack on their own, as the account menu's do.
     minWidth: MENU_WIDTH,
     maxWidth: "calc(100vw - 16px)",
     paddingBlock: 8,
@@ -276,7 +336,8 @@ const styles = stylex.create({
     fontFamily: fonts.body,
     fontWeight: 800,
     fontSize: "0.875rem",
-    color: colors.danger,
+    lineHeight: 1,
+    color: colors.ink,
     backgroundColor: {
       default: "transparent",
       [bp.hover]: { default: "transparent", ":hover": colors.chip },
@@ -293,5 +354,15 @@ const styles = stylex.create({
     outlineWidth: 3,
     outlineColor: colors.amber,
     outlineOffset: -3,
+  },
+  danger: { color: colors.danger },
+  rule: {
+    borderWidth: 0,
+    borderTopWidth: 2,
+    borderTopStyle: "solid",
+    borderTopColor: colors.chip,
+    marginBlock: 4,
+    marginInline: 0,
+    width: "100%",
   },
 });

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import * as stylex from "@stylexjs/stylex";
 import "./globals.css";
 import { RegisterSw } from "@/components/register-sw";
+import { Toaster } from "@/components/toast";
 import { colors, fonts } from "./tokens.stylex";
 import { themeClassNames, THEME_STORAGE_KEY } from "./themes";
 
@@ -37,6 +38,8 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         <RegisterSw />
         {children}
+        {/* One live region for the whole app; anything can raise a toast into it. */}
+        <Toaster />
       </body>
     </html>
   );
