@@ -36,8 +36,8 @@ export function FeedShell({
         <SideNav username={username} onCompose={() => setOpen(true)} />
         <div {...stylex.props(styles.middle)}>{children}</div>
         <aside {...stylex.props(styles.aside)}>
-          {/* The search screen already leads with its own form. */}
-          {pathname !== "/search" && <SearchForm autoFocus={false} />}
+          {/* Explore already leads with its own form. */}
+          {pathname !== "/explore" && <SearchForm autoFocus={false} />}
           {aside}
         </aside>
       </div>

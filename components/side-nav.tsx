@@ -27,7 +27,7 @@ export function SideNav({ username, onCompose }: { username: string; onCompose: 
       <Item href="/" label="Feed" on={isOn(pathname, "/")}>
         <HomeIcon style={styles.icon} />
       </Item>
-      <Item href="/search" label="Search" on={isOn(pathname, "/search")}>
+      <Item href="/explore" label="Explore" on={isOn(pathname, "/explore")}>
         <SearchIcon style={styles.icon} />
       </Item>
       <Item href="/notifications" label="Alerts" on={isOn(pathname, "/notifications")}>

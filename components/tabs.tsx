@@ -1,6 +1,6 @@
 "use client";
 
-// The bottom bar: Feed, Search, the compose button, Alerts, You. Fixed to the
+// The bottom bar: Feed, Explore, the compose button, Alerts, You. Fixed to the
 // viewport, inset to the column's gutters. Phones only: from the tablet
 // breakpoint the side rail (side-nav.tsx) takes over and this hides.
 import * as stylex from "@stylexjs/stylex";
@@ -27,7 +27,7 @@ export function Tabs({ username, onCompose }: { username: string; onCompose: () 
         <HomeIcon style={styles.icon} />
       </Tab>
 
-      <Tab href="/search" label="Search" on={isOn(pathname, "/search")}>
+      <Tab href="/explore" label="Explore" on={isOn(pathname, "/explore")}>
         <SearchIcon style={styles.icon} />
       </Tab>
 

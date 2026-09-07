@@ -62,6 +62,10 @@ const BOB_THREAD = "bob starts something for ada to answer";
 const CAROL_PEEL = "carol has candied peel opinions";
 const BOB_BEFORE_BLOCK = "bob peels before any of this";
 
+// Test 22: one tag three people use, and one tag one person uses three times.
+const ZEST = "zest is the best part";
+const LOUD = "saying it again";
+
 const CHAIN_ROOT = "what is the correct number of oranges";
 const CHAIN_MIDDLE = "one more than you have";
 const CHAIN_LEAF = "that is not a number, bob";
@@ -384,7 +388,7 @@ test("5. handles and hashtags are links; an address is not a mention", async ({ 
   );
   await expect(mention.getByRole("link", { name: "#citrus", exact: true })).toHaveAttribute(
     "href",
-    "/search?q=%23citrus",
+    "/explore?q=%23citrus",
   );
   // Posting refreshed the feed, so the peel he just wrote is already on it: his
   // own insert is not something to announce back to him.
@@ -651,9 +655,9 @@ test("10. with nobody followed, bob is offered somebody to follow", async ({ ope
   await bobApi.remove(`follows?follower_id=eq.${bobApi.id}&followee_id=eq.${adaApi.id}`);
 
   const bob = await open("bob");
-  await bob.goto("/search");
-  const onSearch = bob.getByRole("heading", { name: "Who to follow" }).locator("..");
-  await expect(onSearch.getByRole("link", { name: /Ada Lovelace/ })).toHaveAttribute(
+  await bob.goto("/explore");
+  const onExplore = bob.getByRole("heading", { name: "Who to follow" }).locator("..");
+  await expect(onExplore.getByRole("link", { name: /Ada Lovelace/ })).toHaveAttribute(
     "href",
     "/u/ada",
   );
@@ -672,7 +676,7 @@ test("10. with nobody followed, bob is offered somebody to follow", async ({ ope
   await bob.goto("/u/ada");
   await expect(bob.getByRole("button", { name: "Following" })).toBeVisible();
   // And she is no longer somebody to suggest.
-  await bob.goto("/search");
+  await bob.goto("/explore");
   await expect(bob.getByRole("link", { name: /Ada Lovelace/ })).toHaveCount(0);
 });
 
@@ -1316,9 +1320,9 @@ test("20. bob mutes ada: she leaves his feed, his replies and his bell, but not 
   // Search drops her peels but still finds her, which is how he reaches the
   // profile to undo it. The person row is named in full: a bare "@ada" also
   // matches the mention link inside somebody's peel, which is a different link.
-  await bob.goto("/search?q=marmalade");
+  await bob.goto("/explore?q=marmalade");
   await expect(card(bob, MUTED_PEEL)).toHaveCount(0);
-  await bob.goto("/search?q=ada");
+  await bob.goto("/explore?q=ada");
   await expect(bob.getByRole("link", { name: "Ada Lovelace @ada" })).toBeVisible();
 
   // The bell says nothing. Everything bob already had from ada is cleared first,
@@ -1451,5 +1455,55 @@ test("21. bob blocks carol: she is told, the follows go, and neither can reach t
     ).toEqual([]);
   } finally {
     await removeExtras([carol.id]);
+  }
+});
+
+
+test("22. explore leads with what the day is talking about", async ({ open }) => {
+  // Three throwaway people so a tag can actually spread; the ranking rule is
+  // about how many of them used it, which two accounts cannot show.
+  const zesty = await makeExtras(3, "zest");
+  const service = restAsService();
+  try {
+    for (const person of zesty) {
+      await service.insert("peels", { title: `${ZEST} #zest`, user_id: person.id });
+    }
+    // The same tag three times from one of them. Volume, not reach.
+    for (let n = 1; n <= 3; n++) {
+      await service.insert("peels", { title: `${LOUD} #loud (${n})`, user_id: zesty[0].id });
+    }
+
+    const bob = await open("bob");
+
+    // Every link ever shared out of the old screen still lands, query and all.
+    await bob.goto("/search?q=%23zest");
+    await expect(bob).toHaveURL(`${BASE_URL}/explore?q=%23zest`);
+
+    await bob.goto("/explore");
+    const trends = bob.getByRole("heading", { name: "Trending today" }).locator("..");
+    await expect(trends.getByRole("link", { name: /^#zest\b/ })).toContainText(
+      "3 peels from 3 people",
+    );
+    await expect(trends.getByRole("link", { name: /^#loud\b/ })).toContainText(
+      "3 peels from 1 person",
+    );
+
+    // Reach beats volume: the tag three people used sits above the tag one
+    // person used three times. Positions, because the numbers alone would pass
+    // with the two rows in either order.
+    const order = await trends.getByRole("link").allInnerTexts();
+    const zest = order.findIndex((row) => row.startsWith("#zest"));
+    const loud = order.findIndex((row) => row.startsWith("#loud"));
+    expect(zest, "#zest is listed").toBeGreaterThanOrEqual(0);
+    expect(zest, "a tag three people used outranks a tag one person used three times").toBeLessThan(
+      loud,
+    );
+
+    // And the row is the way in to the tag's own results.
+    await trends.getByRole("link", { name: /^#zest\b/ }).click();
+    await expect(bob).toHaveURL(`${BASE_URL}/explore?q=%23zest`);
+    await expect(card(bob, `${ZEST} #zest`).first()).toBeVisible();
+  } finally {
+    await removeExtras(zesty.map((person) => person.id));
   }
 });

@@ -1,5 +1,5 @@
 // A peel's body. The text is plain, so the only markup is what lib/text.ts finds
-// in it: @handles go to a profile, #hashtags go to a search for the tag. Line
+// in it: @handles go to a profile, #hashtags go to that tag on Explore. Line
 // breaks are the author's, so they are kept. Server-safe.
 import * as stylex from "@stylexjs/stylex";
 import Link from "next/link";
@@ -24,7 +24,7 @@ export function RichText({ text, style }: { text: string; style?: stylex.StyleXS
           return (
             <Link
               key={index}
-              href={`/search?q=${encodeURIComponent(token.value)}`}
+              href={`/explore?q=${encodeURIComponent(token.value)}`}
               {...stylex.props(styles.link)}
             >
               {token.value}

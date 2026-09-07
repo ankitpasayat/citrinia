@@ -1858,5 +1858,147 @@ end $$;
 reset role;
 \echo check 40 ok: no follow crosses a block, and unblocking restores the peels but not the follows
 
+-- 41. Trending: what the day is talking about, ranked on people rather than volume.
+-- Its own ground: Xan, Yuki and Zoe, and tags nothing else in this file uses
+-- (no other check writes a `#` at all, so what comes back is only from here).
+insert into auth.users (id, instance_id, aud, role, email, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
+values ('a0000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+        'xan@example.com', '{"provider":"github"}', '{"user_name":"xanverify","avatar_url":""}', now(), now()),
+       ('a0000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+        'yuki@example.com', '{"provider":"github"}', '{"user_name":"yukiverify","avatar_url":""}', now(), now()),
+       ('a0000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+        'zoe@example.com', '{"provider":"github"}', '{"user_name":"zoeverify","avatar_url":""}', now(), now());
+
+insert into public.peels (id, title, user_id) values
+  -- Two people, one tag.
+  ('a1000000-0000-0000-0000-000000000001', 'rain on the roof #verifymonsoon', 'a0000000-0000-0000-0000-000000000001'),
+  ('a1000000-0000-0000-0000-000000000002', 'the auto has a boat mode #verifymonsoon', 'a0000000-0000-0000-0000-000000000002'),
+  -- One person, three peels: volume must not beat reach.
+  ('a1000000-0000-0000-0000-000000000003', '#verifysolo one', 'a0000000-0000-0000-0000-000000000003'),
+  ('a1000000-0000-0000-0000-000000000004', '#verifysolo two', 'a0000000-0000-0000-0000-000000000003'),
+  ('a1000000-0000-0000-0000-000000000005', '#verifysolo three', 'a0000000-0000-0000-0000-000000000003'),
+  -- One person, one peel, but people answered it: the tie-break among the ones.
+  ('a1000000-0000-0000-0000-000000000006', 'listen to this #verifyliked', 'a0000000-0000-0000-0000-000000000001'),
+  -- The same tag twice in one peel is one use of it.
+  ('a1000000-0000-0000-0000-000000000007', '#verifytwice and #verifytwice again', 'a0000000-0000-0000-0000-000000000001'),
+  -- Tied on everything, so only the tag itself can order them -- which is what
+  -- keeps the list from reshuffling between two loads of the same page.
+  ('a1000000-0000-0000-0000-000000000008', '#verifyalpha', 'a0000000-0000-0000-0000-000000000001'),
+  ('a1000000-0000-0000-0000-000000000009', '#verifybeta', 'a0000000-0000-0000-0000-000000000001'),
+  -- A sigil glued to a word is not a tag; same rule as lib/text.ts.
+  ('a1000000-0000-0000-0000-00000000000a', 'C#verifysharp is a language', 'a0000000-0000-0000-0000-000000000001'),
+  -- Outside the window.
+  ('a1000000-0000-0000-0000-00000000000b', '#verifyold news', 'a0000000-0000-0000-0000-000000000001');
+update public.peels set created_at = now() - interval '40 hours'
+ where id = 'a1000000-0000-0000-0000-00000000000b';
+
+-- What #verifyliked drew: two likes and a reply, i.e. a weight of three.
+insert into public.likes (peel_id, user_id) values
+  ('a1000000-0000-0000-0000-000000000006', 'a0000000-0000-0000-0000-000000000002'),
+  ('a1000000-0000-0000-0000-000000000006', 'a0000000-0000-0000-0000-000000000003');
+insert into public.peels (title, user_id, parent_id)
+values ('i am listening', 'a0000000-0000-0000-0000-000000000002', 'a1000000-0000-0000-0000-000000000006');
+
+set local role authenticated;
+do $$ begin
+  perform set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000001', true);
+  perform set_config('request.jwt.claims', '{"sub":"a0000000-0000-0000-0000-000000000001","role":"authenticated"}', true);
+end $$;
+
+do $$
+declare
+  ordered jsonb;
+  pos jsonb;
+begin
+  -- row_number() over () with no sort node between it and the function call
+  -- numbers the rows in the order the function returned them, which is the
+  -- thing under test here.
+  select jsonb_object_agg(t.tag, jsonb_build_array(t.pos, t.peels, t.people))
+    into ordered
+    from (select tag, peels, people, row_number() over () as pos from public.trending(24, 200)) t;
+  pos := ordered;
+
+  if pos -> 'verifymonsoon' ->> 1 <> '2' or pos -> 'verifymonsoon' ->> 2 <> '2' then
+    raise exception 'check 41 FAILED: two people, two peels, counted as %', pos -> 'verifymonsoon';
+  end if;
+  if pos -> 'verifysolo' ->> 1 <> '3' or pos -> 'verifysolo' ->> 2 <> '1' then
+    raise exception 'check 41 FAILED: three peels by one person counted as %', pos -> 'verifysolo';
+  end if;
+  if pos -> 'verifytwice' ->> 1 <> '1' then
+    raise exception 'check 41 FAILED: the same tag twice in one peel counted twice';
+  end if;
+  if pos ? 'verifysharp' then
+    raise exception 'check 41 FAILED: C#verifysharp was read as a hashtag';
+  end if;
+  if pos ? 'verifyold' then
+    raise exception 'check 41 FAILED: a peel from 40 hours ago is trending today';
+  end if;
+
+  -- Reach beats volume: two people beat one person's three peels.
+  if (pos -> 'verifymonsoon' ->> 0)::int >= (pos -> 'verifysolo' ->> 0)::int then
+    raise exception 'check 41 FAILED: a tag one person used three times outranked a tag two people used';
+  end if;
+  -- Among the one-person tags, the one people answered comes first.
+  if (pos -> 'verifyliked' ->> 0)::int >= (pos -> 'verifysolo' ->> 0)::int then
+    raise exception 'check 41 FAILED: likes and replies did not break the tie between one-author tags';
+  end if;
+  -- And tags tied on all three land in an order that is the same every time.
+  if not ((pos -> 'verifyalpha' ->> 0)::int < (pos -> 'verifybeta' ->> 0)::int
+          and (pos -> 'verifybeta' ->> 0)::int < (pos -> 'verifytwice' ->> 0)::int) then
+    raise exception 'check 41 FAILED: tags tied on every count came back in an undecided order';
+  end if;
+end $$;
+
+-- A mute takes the muted person's tags out of the muter's trending, and nobody
+-- else's. hidden_from() is invoker, so this is the reader's own answer.
+set local role authenticated;
+do $$ begin
+  perform set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000002', true);
+  perform set_config('request.jwt.claims', '{"sub":"a0000000-0000-0000-0000-000000000002","role":"authenticated"}', true);
+end $$;
+insert into public.mutes (muter_id, muted_id)
+values ('a0000000-0000-0000-0000-000000000002', 'a0000000-0000-0000-0000-000000000001');
+do $$
+declare mine jsonb;
+begin
+  select jsonb_object_agg(t.tag, t.peels) into mine from public.trending(24, 200) t;
+  if mine ? 'verifyliked' or mine ? 'verifytwice' then
+    raise exception 'check 41 FAILED: a muted person''s tags are still trending for the muter';
+  end if;
+  if (mine ->> 'verifymonsoon')::int <> 1 then
+    raise exception 'check 41 FAILED: the muter still counts the muted person''s peel in a shared tag';
+  end if;
+end $$;
+delete from public.mutes where muter_id = 'a0000000-0000-0000-0000-000000000002';
+
+-- Back as Xan, who muted nobody: the tag is two again.
+do $$ begin
+  perform set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000001', true);
+  perform set_config('request.jwt.claims', '{"sub":"a0000000-0000-0000-0000-000000000001","role":"authenticated"}', true);
+end $$;
+do $$
+declare mine jsonb;
+begin
+  select jsonb_object_agg(t.tag, t.peels) into mine from public.trending(24, 200) t;
+  if (mine ->> 'verifymonsoon')::int <> 2 then
+    raise exception 'check 41 FAILED: somebody else''s mute changed what is trending for Xan';
+  end if;
+  -- A silly window is the default rather than an error, and a silly row count
+  -- is clamped: this is a public entry point and neither may raise.
+  perform public.trending(null, null);
+  perform public.trending(0, 0);
+  perform public.trending(100000, 100000);
+end $$;
+reset role;
+
+do $$ begin
+  if has_function_privilege('anon', 'public.trending(int, int)', 'execute')
+     or not has_function_privilege('authenticated', 'public.trending(int, int)', 'execute') then
+    raise exception 'check 41 FAILED: trending execute grants are wrong';
+  end if;
+end $$;
+\echo check 41 ok: trending ranks people over volume, breaks ties the same way twice, and honours a mute
+
+
 rollback;
 \echo ALL CHECKS PASSED

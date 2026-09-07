@@ -11,6 +11,7 @@ import { SearchIcon } from "@/components/icons";
 import { PeelList } from "@/components/peel-list";
 import { LivePill } from "@/components/pill";
 import { TimelineToggle } from "@/components/timeline-toggle";
+import { Trending } from "@/components/trending";
 import { WhoToFollow } from "@/components/who-to-follow";
 import { fetchTimeline } from "@/lib/peels";
 import { createClient } from "@/lib/supabase/server";
@@ -56,12 +57,20 @@ export default async function Home({
       : `/?${following ? "tab=following&" : ""}before=${encodeURIComponent(nextBefore)}`;
 
   return (
-    <FeedShell username={profile.username} aside={<WhoToFollow viewerId={user.id} n={5} />}>
+    <FeedShell
+      username={profile.username}
+      aside={
+        <>
+          <WhoToFollow viewerId={user.id} n={5} />
+          <Trending n={3} />
+        </>
+      }
+    >
       <Column>
         <Band>
           <Link
-            href="/search"
-            aria-label="Search"
+            href="/explore"
+            aria-label="Explore"
             {...stylex.props(buttonStyles.base, buttonStyles.variants.icon, styles.bandIcon)}
           >
             <SearchIcon />

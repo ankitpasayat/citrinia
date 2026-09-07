@@ -170,7 +170,7 @@ test("5. bob follows ada, and Following fills up", async ({ open }) => {
 test("6. search finds people and peels, and user text stays literal", async ({ open }) => {
   const page = await open("bob");
 
-  await page.goto("/search?q=ada");
+  await page.goto("/explore?q=ada");
   await expect(page.getByRole("heading", { name: "People" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Ada Lovelace @ada" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Peels" })).toBeVisible();
@@ -180,12 +180,12 @@ test("6. search finds people and peels, and user text stays literal", async ({ o
   // "%" is a LIKE wildcard and "*" is both a regex and a PostgREST-rewritten one:
   // escaped properly, neither matches anything, and neither 500s.
   for (const q of ["%", "*"]) {
-    await page.goto(`/search?q=${encodeURIComponent(q)}`);
+    await page.goto(`/explore?q=${encodeURIComponent(q)}`);
     await expect(page.getByRole("heading", { name: "No peels match" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "People" })).toHaveCount(0);
   }
 
-  await page.goto("/search?q=lovel");
+  await page.goto("/explore?q=lovel");
   await expect(page.getByRole("heading", { name: "People" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Ada Lovelace @ada" })).toBeVisible();
 });

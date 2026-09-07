@@ -549,11 +549,32 @@ export type Database = {
           depth: number
         }[]
       }
+      search_peels: {
+        Args: {
+          term: string
+          top?: boolean
+          max_rows?: number
+        }
+        Returns: {
+          peel_id: string
+        }[]
+      }
       seed_triggers: {
         Args: {
           enabled: boolean
         }
         Returns: undefined
+      }
+      trending: {
+        Args: {
+          hours?: number
+          max_rows?: number
+        }
+        Returns: {
+          tag: string
+          peels: number
+          people: number
+        }[]
       }
     }
     Enums: {

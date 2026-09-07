@@ -49,7 +49,7 @@ export const PAGE_SIZE = 20;
 
 /**
  * A search term as a POSIX regex that matches itself, for PostgREST's `imatch`
- * (Postgres `~*`). Shared with the people search in app/search/page.tsx.
+ * (Postgres `~*`). Shared with the people search in app/explore/page.tsx.
  *
  * `ilike` cannot carry a literal term: PostgREST rewrites every `*` in a
  * like/ilike operand to `%` with no escape, so `ilike.%*%` matches every row.
@@ -347,6 +347,29 @@ export async function countUnreadNotifications(
     .is("read_at", null);
   if (error) throw new Error(`Couldn't count notifications: ${error.message}`);
   return count ?? 0;
+}
+
+/** One row of the trending list: the tag without its `#`, and the two numbers behind it. */
+export type Trend = { tag: string; peels: number; people: number };
+
+/**
+ * What the day is talking about. `trending()` does the grouping and the ranking
+ * in SQL -- see 20260917000000_trending.sql for why the primary sort is distinct
+ * authors rather than peels, and what breaks the ties that rule leaves.
+ *
+ * It runs as the reader, so a blocked person's tags are already gone (the peels
+ * policy) and a muted person's too (hidden_from). That means the list is per
+ * viewer and cannot be cached across them, which at this size is not a cost
+ * worth paying to avoid: the window is a day, and the index is the day's.
+ */
+export async function fetchTrending(
+  supabase: SupabaseClient<Database>,
+  n: number = 5,
+  hours: number = 24,
+): Promise<Trend[]> {
+  const { data, error } = await supabase.rpc("trending", { hours, max_rows: n });
+  if (error) throw new Error(`Couldn't load what's trending: ${error.message}`);
+  return data ?? [];
 }
 
 /** People to follow: profiles the viewer does not already follow, most-followed first. */

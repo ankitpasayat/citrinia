@@ -9,14 +9,16 @@ import { Column } from "@/components/column";
 import { FeedShell } from "@/components/feed-shell";
 import { PeelList } from "@/components/peel-list";
 import { SearchForm } from "@/components/search-form";
+import { Trending } from "@/components/trending";
 import { WhoToFollow } from "@/components/who-to-follow";
 import { bp, colors, fonts, shape } from "@/app/tokens.stylex";
 
-export const metadata: Metadata = { title: "Search" };
+export const metadata: Metadata = { title: "Explore" };
 
 const PEEL_LIMIT = 30;
 const PEOPLE_LIMIT = 10;
 const SUGGESTIONS = 8;
+const TRENDS = 5;
 
 /**
  * `q` is user text, not a pattern: escape the regex metacharacters, then wrap the
@@ -33,7 +35,7 @@ function searchFilter(q: string): string {
   return `username.imatch.${quoted},name.imatch.${quoted}`;
 }
 
-export default async function Search({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
+export default async function Explore({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -67,8 +69,12 @@ export default async function Search({ searchParams }: { searchParams: Promise<{
         <SearchForm q={q} />
 
         {q === "" ? (
-          /* Nothing to search for yet: offer people instead of an empty block. */
-          <WhoToFollow viewerId={user.id} n={SUGGESTIONS} />
+          /* Nothing searched for yet: the day's tags, then people to follow --
+             the two ways in that do not need the reader to know a word first. */
+          <>
+            <Trending n={TRENDS} />
+            <WhoToFollow viewerId={user.id} n={SUGGESTIONS} />
+          </>
         ) : (
           <>
             {people && people.length > 0 && (
