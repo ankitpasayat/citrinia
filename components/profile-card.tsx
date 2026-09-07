@@ -4,7 +4,7 @@
 import * as stylex from "@stylexjs/stylex";
 import Link from "next/link";
 import { signOut } from "@/app/actions";
-import { colors, fonts, shape } from "@/app/tokens.stylex";
+import { bp, colors, fonts, shape } from "@/app/tokens.stylex";
 import { Avatar } from "./avatar";
 import { Button, buttonStyles } from "./button";
 import { EditProfileButton } from "./edit-profile-sheet";
@@ -21,11 +21,17 @@ type Props = {
 };
 
 export function ProfileCard({ profile, counts, isSelf, isFollowing }: Props) {
+  const base = `/u/${encodeURIComponent(profile.username)}`;
   // "1 peel", not "1 peels". "following" has no singular to get wrong.
-  const items: [number, string][] = [
-    [counts.peels, counts.peels === 1 ? "peel" : "peels"],
-    [counts.followers, counts.followers === 1 ? "follower" : "followers"],
-    [counts.following, "following"],
+  // The two follow counts are the way to those lists; the peel count is a fact.
+  const items: { n: number; label: string; href?: string }[] = [
+    { n: counts.peels, label: counts.peels === 1 ? "peel" : "peels" },
+    {
+      n: counts.followers,
+      label: counts.followers === 1 ? "follower" : "followers",
+      href: `${base}/followers`,
+    },
+    { n: counts.following, label: "following", href: `${base}/following` },
   ];
 
   return (
@@ -38,12 +44,26 @@ export function ProfileCard({ profile, counts, isSelf, isFollowing }: Props) {
         {profile.bio !== "" && <p {...stylex.props(styles.bio)}>{profile.bio}</p>}
 
         <p {...stylex.props(styles.counts)}>
-          {items.map(([n, label], i) => (
-            <span key={label} {...stylex.props(styles.count)}>
-              {i > 0 && <span {...stylex.props(styles.dot)} aria-hidden="true">·</span>}
-              <b {...stylex.props(styles.number)}>{n.toLocaleString("en-US")}</b> {label}
-            </span>
-          ))}
+          {items.map((item, i) => {
+            const said = (
+              <>
+                <b {...stylex.props(styles.number)}>{item.n.toLocaleString("en-US")}</b> {item.label}
+              </>
+            );
+            return (
+              <span key={item.label} {...stylex.props(styles.count)}>
+                {i > 0 && <span {...stylex.props(styles.dot)} aria-hidden="true">·</span>}
+                {/* The whole count reads as the link, so it is named "12 followers". */}
+                {item.href ? (
+                  <Link href={item.href} {...stylex.props(styles.countLink)}>
+                    {said}
+                  </Link>
+                ) : (
+                  said
+                )}
+              </span>
+            );
+          })}
         </p>
       </div>
 
@@ -133,6 +153,19 @@ const styles = stylex.create({
   count: { whiteSpace: "nowrap" },
   dot: { marginInlineEnd: 6, color: colors.muted },
   number: { fontWeight: 800, color: colors.ink },
+  countLink: {
+    color: "inherit",
+    textDecorationLine: {
+      default: "none",
+      [bp.hover]: { default: "none", ":hover": "underline" },
+    },
+    textUnderlineOffset: 3,
+    borderRadius: 6,
+    outlineStyle: { default: "none", ":focus-visible": "solid" },
+    outlineWidth: 3,
+    outlineColor: colors.amber,
+    outlineOffset: 2,
+  },
   acts: {
     gridColumn: "1 / -1",
     display: "flex",

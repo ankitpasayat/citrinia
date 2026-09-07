@@ -6,7 +6,7 @@
 import { deflateSync } from "node:zlib";
 import { BASE_URL } from "../playwright.config.ts";
 import { actionWrite, card, expect, REMOTE_IMAGE, shot, subscribed, test, type Page } from "./fixtures.ts";
-import { listMedia, mediaUrl, peelAs, restAs, restAsService } from "./db.ts";
+import { listMedia, makeExtras, mediaUrl, peelAs, removeExtras, restAs, restAsService } from "./db.ts";
 
 declare global {
   interface Window {
@@ -43,6 +43,8 @@ const SHAREABLE = "a peel worth passing on";
 
 /** How many older peels test 8 bulk-loads. PAGE_SIZE in lib/peels.ts is 20. */
 const OLDER = 25;
+/** How many throwaway followers test 13 makes: one more than a page of 20. */
+const PIPS = 21;
 const olderTitle = (n: number) => `older peel ${String(n).padStart(2, "0")}`;
 
 // app/tokens.stylex.ts, light values. Playwright's default colorScheme is light.
@@ -74,6 +76,13 @@ function repeelChip(scope: ReturnType<typeof card>) {
 /** One row of the notifications screen, by what it says. */
 function alert(page: Page, said: string) {
   return page.getByRole("link").filter({ hasText: `${BOB} ${said}` });
+}
+
+/** The throwaway people listed on the page, in order, by where their row points. */
+function pipHrefs(page: Page): Promise<string[]> {
+  return page
+    .locator('a[href^="/u/pip"]')
+    .evaluateAll((links) => links.map((link) => (link as HTMLAnchorElement).getAttribute("href") ?? ""));
 }
 
 /** The peel ids on the page, in order, straight off the timestamp links. */
@@ -721,4 +730,85 @@ test("12. every peel has a menu: copy the link, or hand it to the share sheet", 
   ]);
   // Handing it over is not something to announce: the sheet is the feedback.
   await expect(phone.getByRole("status")).toBeEmpty();
+});
+
+test("13. followers and following are lists of their own, and they page", async ({ open }) => {
+  const bobApi = await restAs("bob");
+  const adaApi = await restAs("ada");
+
+  // This test states its own ground rather than inheriting it, and states it
+  // lopsided on purpose: ada follows bob and bob does not follow back, so the
+  // two sides of the same profile cannot both be right by accident.
+  await bobApi.remove(`follows?follower_id=eq.${bobApi.id}&followee_id=eq.${adaApi.id}`);
+  await adaApi.remove(`follows?follower_id=eq.${adaApi.id}&followee_id=eq.${bobApi.id}`);
+  await adaApi.insert("follows", { follower_id: adaApi.id, followee_id: bobApi.id });
+
+  const bob = await open("bob");
+  await bob.goto("/u/ada");
+
+  // The count in the profile head is the way in, and it names the list it opens.
+  await bob.getByRole("link", { name: "1 following" }).click();
+  await expect(bob).toHaveURL(`${BASE_URL}/u/ada/following`);
+  // By name, not by href: the navigation's own "You" points at /u/bob as well.
+  await expect(bob.getByRole("link", { name: /@bob\b/ })).toBeVisible();
+  // Nobody follows themselves: bob's own row offers him no button.
+  await expect(bob.getByRole("button", { name: /^Follow(ing)?$/ })).toHaveCount(0);
+  await shot(bob, "following-list");
+
+  // The other side of the same profile is empty, and says so in ada's terms.
+  await bob.getByRole("link", { name: "Followers" }).click();
+  await expect(bob).toHaveURL(`${BASE_URL}/u/ada/followers`);
+  await expect(bob.getByText("Nobody follows them yet.")).toBeVisible();
+
+  const pips = await makeExtras(PIPS, "pip");
+  try {
+    // A page is 20, so 21 followers is one page and one straggler. pip01 and
+    // pip02 are given the same instant, and it is the oldest -- which puts a tie
+    // exactly on the boundary, where a cursor carrying only the time would step
+    // over one of the pair and never show them.
+    const start = Date.parse("2026-01-01T00:00:00.000Z");
+    await restAsService().insert(
+      "follows",
+      pips.map((pip, i) => ({
+        follower_id: pip.id,
+        followee_id: adaApi.id,
+        created_at: new Date(start + Math.max(i, 1) * 60_000).toISOString(),
+      })),
+    );
+
+    await bob.goto("/u/ada/followers");
+    // The count first: `evaluateAll` reads whatever is there and does not wait.
+    const rows = bob.locator('a[href^="/u/pip"]');
+    await expect(rows).toHaveCount(20);
+    const first = await pipHrefs(bob);
+    // Newest follow first: pip21 followed last.
+    expect(first[0]).toBe("/u/pip21");
+    await shot(bob, "followers-list");
+
+    await bob.getByRole("link", { name: "Show more people" }).click();
+    await expect(bob).toHaveURL(/\?before=/);
+    await expect(rows).toHaveCount(1);
+    const second = await pipHrefs(bob);
+    // The straggler is one of the tied pair, and which one is the id's business.
+    expect(second[0]).toMatch(/^\/u\/pip0[12]$/);
+    // One page and one straggler is the whole of it.
+    await expect(bob.getByRole("link", { name: "Show more people" })).toHaveCount(0);
+
+    // Nobody appears twice, and nobody fell down the gap between the two pages.
+    expect(new Set([...first, ...second]).size).toBe(PIPS);
+
+    // The button in a row is the real one: bob follows from the list, and it
+    // shows up on his own following page.
+    await bob.goto("/u/ada/followers");
+    const row = bob.locator('a[href="/u/pip21"]').locator("..");
+    const followed = actionWrite(bob);
+    await row.getByRole("button", { name: "Follow", exact: true }).click();
+    await expect(row.getByRole("button", { name: "Following" })).toBeVisible();
+    await followed;
+
+    await bob.goto("/u/bob/following");
+    await expect(bob.locator('a[href="/u/pip21"]')).toBeVisible();
+  } finally {
+    await removeExtras(pips.map((pip) => pip.id));
+  }
 });

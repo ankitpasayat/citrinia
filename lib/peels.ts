@@ -342,6 +342,70 @@ export async function fetchSuggestedProfiles(
     .slice(0, n);
 }
 
+/** Which half of a follow a list shows: who follows this profile, or who it follows. */
+export type FollowSide = "followers" | "following";
+
+/** One row of a list of people: the profile, and where the viewer stands with it. */
+export type Person = { profile: Profile; isFollowing: boolean; isSelf: boolean };
+
+/**
+ * One page of a profile's followers, or of the people it follows, newest follow
+ * first. `follows` has no surrogate key -- the pair is the row -- so the page
+ * boundary is (created_at, the other person's id), which is the same keyset
+ * shape every other list here pages on.
+ *
+ * Two round trips rather than an embed: which foreign key to follow changes with
+ * the side, and supabase-js only reads a `select()` written as one literal, so an
+ * embed would mean two copies of the whole query to keep the row shape typed.
+ */
+export async function fetchFollowList(
+  supabase: SupabaseClient<Database>,
+  viewerId: string,
+  profileId: string,
+  side: FollowSide,
+  before?: string,
+): Promise<{ people: Person[]; older: string | null }> {
+  // The person each row is about, and the one whose list this is.
+  const shown = side === "followers" ? "follower_id" : "followee_id";
+  const owner = side === "followers" ? "followee_id" : "follower_id";
+
+  let query = supabase.from("follows").select("*").eq(owner, profileId);
+  const from = cursor(before);
+  if (from) query = query.or(olderThan("created_at", shown, from));
+  const { data: rows, error } = await query
+    .order("created_at", { ascending: false })
+    .order(shown, { ascending: false })
+    .limit(PAGE_SIZE);
+  if (error) throw new Error(`Couldn't load ${side}: ${error.message}`);
+  if (!rows || rows.length === 0) return { people: [], older: null };
+
+  const ids = rows.map((row) => row[shown]);
+  const [profiles, mine] = await Promise.all([
+    supabase.from("profiles").select("*").in("id", ids),
+    // Which of them the viewer already follows, so each row's button opens right.
+    supabase.from("follows").select("followee_id").eq("follower_id", viewerId).in("followee_id", ids),
+  ]);
+  if (profiles.error) throw new Error(`Couldn't load ${side}: ${profiles.error.message}`);
+  if (mine.error) throw new Error(`Couldn't load ${side}: ${mine.error.message}`);
+
+  const byId = new Map((profiles.data ?? []).map((profile) => [profile.id, profile]));
+  const followed = new Set((mine.data ?? []).map((row) => row.followee_id));
+
+  // `.in()` answers in its own order, so the follow rows are what orders the page.
+  const people = ids
+    .map((id) => byId.get(id))
+    .filter((profile) => profile !== undefined)
+    .map((profile) => ({
+      profile,
+      isFollowing: followed.has(profile.id),
+      isSelf: profile.id === viewerId,
+    }));
+
+  const last = rows[rows.length - 1];
+  const older = rows.length === PAGE_SIZE ? encodeCursor(last.created_at, last[shown]) : null;
+  return { people, older };
+}
+
 type EmbeddedMedia = {
   kind: string;
   url: string;

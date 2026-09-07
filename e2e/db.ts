@@ -160,3 +160,51 @@ export async function listMedia(userId: string): Promise<string[]> {
 export function mediaUrl(path: string): string {
   return `${localEnv().apiUrl}/storage/v1/object/public/media/${path}`;
 }
+
+/**
+ * Throwaway accounts, made and unmade inside one test: a list only gets
+ * interesting past a page boundary, and PAGE_SIZE is 20. A real signup each,
+ * because a profile hangs off auth.users -- but no password, since nobody signs
+ * in as them and hashing one is the slow part. The trigger writes the profiles.
+ */
+export async function makeExtras(n: number, prefix: string): Promise<{ id: string; username: string }[]> {
+  const { apiUrl, serviceRoleKey } = localEnv();
+  const made: { id: string; username: string }[] = [];
+
+  for (let i = 1; i <= n; i++) {
+    const username = `${prefix}${String(i).padStart(2, "0")}`;
+    const response = await fetch(`${apiUrl}/auth/v1/admin/users`, {
+      method: "POST",
+      headers: {
+        apikey: serviceRoleKey,
+        Authorization: `Bearer ${serviceRoleKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: `${username}@citrinia.test`,
+        email_confirm: true,
+        // No avatar: initials render without a request going out for 21 pictures.
+        user_metadata: { name: `Pip ${username.slice(prefix.length)}`, user_name: username, avatar_url: "" },
+      }),
+    });
+    if (!response.ok) {
+      throw new Error(`Could not create ${username}: ${response.status} ${await response.text()}`);
+    }
+    made.push({ id: ((await response.json()) as { id: string }).id, username });
+  }
+  return made;
+}
+
+/** Undo `makeExtras`: deleting the account takes its profile and its follows with it. */
+export async function removeExtras(ids: string[]): Promise<void> {
+  const { apiUrl, serviceRoleKey } = localEnv();
+  for (const id of ids) {
+    const response = await fetch(`${apiUrl}/auth/v1/admin/users/${id}`, {
+      method: "DELETE",
+      headers: { apikey: serviceRoleKey, Authorization: `Bearer ${serviceRoleKey}` },
+    });
+    if (!response.ok) {
+      throw new Error(`Could not delete ${id}: ${response.status} ${await response.text()}`);
+    }
+  }
+}
