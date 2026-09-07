@@ -1317,12 +1317,12 @@ test("20. bob mutes ada: she leaves his feed, his replies and his bell, but not 
   await ada.goto(`/p/${thread}`);
   await expect(card(ada, MUTED_REPLY)).toBeVisible();
 
-  // Search drops her peels but still finds her, which is how he reaches the
-  // profile to undo it. The person row is named in full: a bare "@ada" also
+  // Search drops her peels but People still finds her, which is how he reaches
+  // the profile to undo it. The person row is named in full: a bare "@ada" also
   // matches the mention link inside somebody's peel, which is a different link.
   await bob.goto("/explore?q=marmalade");
   await expect(card(bob, MUTED_PEEL)).toHaveCount(0);
-  await bob.goto("/explore?q=ada");
+  await bob.goto("/explore?q=ada&tab=people");
   await expect(bob.getByRole("link", { name: "Ada Lovelace @ada" })).toBeVisible();
 
   // The bell says nothing. Everything bob already had from ada is cleared first,
@@ -1465,12 +1465,25 @@ test("22. explore leads with what the day is talking about", async ({ open }) =>
   const zesty = await makeExtras(3, "zest");
   const service = restAsService();
   try {
+    const tagged: string[] = [];
     for (const person of zesty) {
-      await service.insert("peels", { title: `${ZEST} #zest`, user_id: person.id });
+      const [row] = await service.insert<{ id: string }>("peels", {
+        title: `${ZEST} #zest, said ${person.username}`,
+        user_id: person.id,
+      });
+      tagged.push(row.id);
     }
+    // Says the word, carries a different tag. A search for #zest must not find
+    // it; a search for the bare word must.
+    await service.insert("peels", { title: `${ZEST} #zestfest`, user_id: zesty[1].id });
     // The same tag three times from one of them. Volume, not reach.
     for (let n = 1; n <= 3; n++) {
       await service.insert("peels", { title: `${LOUD} #loud (${n})`, user_id: zesty[0].id });
+    }
+    // The oldest of the three is the one people answered, so Top and Latest
+    // cannot agree: whichever order they share would mean one of them is broken.
+    for (const person of zesty.slice(1)) {
+      await service.insert("likes", { peel_id: tagged[0], user_id: person.id });
     }
 
     const bob = await open("bob");
@@ -1499,10 +1512,33 @@ test("22. explore leads with what the day is talking about", async ({ open }) =>
       loud,
     );
 
-    // And the row is the way in to the tag's own results.
+    // The row is the way in to the tag's own results, which open on Top.
     await trends.getByRole("link", { name: /^#zest\b/ }).click();
     await expect(bob).toHaveURL(`${BASE_URL}/explore?q=%23zest`);
-    await expect(card(bob, `${ZEST} #zest`).first()).toBeVisible();
+    await expect(bob.getByRole("link", { name: "Top" })).toHaveAttribute("aria-current", "page");
+
+    // All three, and only those: a hashtag matches a whole tag, so the peel
+    // that says "zest" under #zestfest is not one of them.
+    await expect(card(bob, ZEST)).toHaveCount(3);
+    await expect(card(bob, "#zestfest")).toHaveCount(0);
+    // Top leads with the one people answered, not the newest.
+    await expect(bob.getByRole("article").first()).toContainText("said zest01");
+
+    await bob.getByRole("link", { name: "Latest" }).click();
+    await expect(bob).toHaveURL(`${BASE_URL}/explore?q=%23zest&tab=latest`);
+    await expect(card(bob, ZEST)).toHaveCount(3);
+    await expect(bob.getByRole("article").first()).toContainText("said zest03");
+
+    // The same word without the sigil is an ordinary search, so it reaches the
+    // other tag too -- the two are different questions and answer differently.
+    await bob.goto("/explore?q=zest");
+    await expect(card(bob, "#zestfest")).toHaveCount(1);
+
+    // And the people behind the word are one tab away, with a way to follow them.
+    await bob.getByRole("link", { name: "People" }).click();
+    await expect(bob.getByRole("link", { name: "Pip 01 @zest01" })).toBeVisible();
+    await expect(bob.getByRole("button", { name: "Follow", exact: true })).toHaveCount(3);
+    await expect(card(bob, ZEST)).toHaveCount(0);
   } finally {
     await removeExtras(zesty.map((person) => person.id));
   }

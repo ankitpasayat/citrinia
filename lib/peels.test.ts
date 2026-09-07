@@ -21,6 +21,8 @@ import {
   fetchRepliesBy,
   fetchSuggestedProfiles,
   fetchTimeline,
+  searchPeels,
+  searchPeople,
 } from "./peels.ts";
 
 type Filter = [op: string, column: string, value: unknown];
@@ -275,19 +277,41 @@ test("an empty authorIds or ids list returns nothing without touching the databa
   assert.equal(calls.length, 0);
 });
 
-test("search matches the title anywhere in it", async () => {
-  const { client, calls } = fake({ peels: [] });
-  await fetchPeels(client, ADA.id, { search: "orange" });
-  const [, column, value] = calls[0].filters[0];
-  assert.equal(column, "title");
-  // Unanchored, so it matches anywhere in the title, and the term is untouched
-  // because it holds nothing a pattern could read as a wildcard.
-  assert.equal(value, "orange");
+test("searchPeels asks the database for the order, and keeps it", async () => {
+  // Spec: search_peels() decides both what matched and in what order. Top's
+  // order is an engagement ranking, and fetchPeels() answers in time order, so
+  // the ids have to be put back the way the function returned them -- otherwise
+  // Top silently becomes Latest.
+  const { client, rpcs, calls } = fake({
+    timeline: [
+      { peel_id: "p2", repost_by: null, sort_at: "" },
+      { peel_id: "p1", repost_by: null, sort_at: "" },
+    ],
+    peels: [peelRow({ id: "p1" }), peelRow({ id: "p2" })],
+  });
+
+  const found = await searchPeels(client, ADA.id, "#chai", true, 30);
+  assert.deepEqual(rpcs[0], {
+    name: "search_peels",
+    // The term goes through untouched: it is data to the function, not a pattern.
+    args: { term: "#chai", top: true, max_rows: 30 },
+  });
+  assert.deepEqual(
+    found.map((peel) => peel.id),
+    ["p2", "p1"],
+  );
+  assert.equal(calls[0].table, "peels");
 });
 
-test("a search term is literal text: no character in it acts as a wildcard", async () => {
-  // Spec: the reader typed a phrase, not a pattern. "50%" finds peels that say
-  // 50%, "2*3" finds peels that say 2*3 -- neither matches everything. ilike
+test("a search that matches nothing does not go looking for peels", async () => {
+  const { client, calls } = fake({ timeline: [], peels: [peelRow()] });
+  assert.deepEqual(await searchPeels(client, ADA.id, "nothing", false, 30), []);
+  assert.equal(calls.length, 0);
+});
+
+test("a people search is literal text: no character in it acts as a wildcard", async () => {
+  // Spec: the reader typed a name, not a pattern. "50%" finds people called
+  // 50%, "2*3" finds people called 2*3 -- neither matches everybody. ilike
   // cannot express this: PostgREST rewrites every "*" in a like/ilike operand to
   // "%" and offers no escape, so the filter has to be one that has no rewrite.
   const cases: [term: string, matches: string, misses: string][] = [
@@ -300,19 +324,25 @@ test("a search term is literal text: no character in it acts as a wildcard", asy
     ["a+b?", "a+b?", "aab"],
     ["x[0]{2}", "x[0]{2}", "x00"],
     ["c:\\tmp", "c:\\tmp", "c:tmp"],
+    // Nothing to escape: these have to survive the trip unchanged.
+    ["orange", "an orange", "a lemon"],
+    ['say "hi"', 'they say "hi" often', "they say hi often"],
   ];
 
   for (const [term, matches, misses] of cases) {
-    const { client, calls } = fake({ peels: [] });
-    await fetchPeels(client, ADA.id, { search: term });
-    const [op, column, value] = calls[0].filters[0];
-    assert.equal(column, "title", `search for ${term}`);
-    // The filter we send has to be a case-insensitive regex match, because that
-    // is the only substring operator PostgREST passes through unrewritten.
-    assert.equal(op, "imatch", `search for ${term}`);
-    const sent = new RegExp(String(value), "i");
-    assert.ok(sent.test(matches), `${term} must match ${JSON.stringify(matches)}`);
-    assert.ok(!sent.test(misses), `${term} must not match ${JSON.stringify(misses)}`);
+    const { client, calls } = fake({ profiles: [] });
+    await searchPeople(client, ADA.id, term);
+    const [op, , value] = calls[0].filters[0];
+    assert.equal(op, "or", `search for ${term}`);
+    // Both columns get the same pattern, and each is wrapped in PostgREST's
+    // double quotes so a comma or a parenthesis cannot break out of the or().
+    const sent = /^username\.imatch\."(.*)",name\.imatch\."\1"$/.exec(String(value));
+    assert.ok(sent, `both columns get one quoted pattern for ${term}: ${String(value)}`);
+    // Undo the quoting layer to get back the regex Postgres will be handed.
+    const pattern = sent[1].replace(/\\(["\\])/g, "$1");
+    const asRegex = new RegExp(pattern, "i");
+    assert.ok(asRegex.test(matches), `${term} must match ${JSON.stringify(matches)}`);
+    assert.ok(!asRegex.test(misses), `${term} must not match ${JSON.stringify(misses)}`);
   }
 });
 

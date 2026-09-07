@@ -1999,6 +1999,130 @@ do $$ begin
 end $$;
 \echo check 41 ok: trending ranks people over volume, breaks ties the same way twice, and honours a mute
 
+-- 42. search_peels: one function behind both tabs, and a term that stays a term.
+insert into public.peels (id, title, user_id) values
+  ('a2000000-0000-0000-0000-000000000001', 'a cup of #verifychai', 'a0000000-0000-0000-0000-000000000001'),
+  ('a2000000-0000-0000-0000-000000000002', 'another #VerifyChai please', 'a0000000-0000-0000-0000-000000000002'),
+  -- The longer tag must not answer for the shorter one.
+  ('a2000000-0000-0000-0000-000000000003', 'the #verifychaiwala arrives', 'a0000000-0000-0000-0000-000000000003'),
+  -- Characters that are a pattern in the wrong hands.
+  ('a2000000-0000-0000-0000-000000000004', 'two stars ** and a verifypattern', 'a0000000-0000-0000-0000-000000000001'),
+  ('a2000000-0000-0000-0000-000000000005', 'no stars at all, just verifypattern', 'a0000000-0000-0000-0000-000000000002'),
+  -- A second pair for the other half of the weight: this one is answered rather
+  -- than liked, so likes alone cannot rank it and the `+ replies` term has to.
+  ('a2000000-0000-0000-0000-000000000006', 'older verifyanswered', 'a0000000-0000-0000-0000-000000000001'),
+  ('a2000000-0000-0000-0000-000000000007', 'newer verifyanswered', 'a0000000-0000-0000-0000-000000000002');
+-- The older of each pair carries the engagement, so Top and Latest must disagree.
+update public.peels set created_at = now() - interval '3 hours'
+ where id in ('a2000000-0000-0000-0000-000000000004', 'a2000000-0000-0000-0000-000000000006');
+insert into public.likes (peel_id, user_id) values
+  ('a2000000-0000-0000-0000-000000000004', 'a0000000-0000-0000-0000-000000000002'),
+  ('a2000000-0000-0000-0000-000000000004', 'a0000000-0000-0000-0000-000000000003');
+insert into public.peels (title, user_id, parent_id) values
+  ('answering it', 'a0000000-0000-0000-0000-000000000002', 'a2000000-0000-0000-0000-000000000006'),
+  ('answering it too', 'a0000000-0000-0000-0000-000000000003', 'a2000000-0000-0000-0000-000000000006');
+
+set local role authenticated;
+do $$ begin
+  perform set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000001', true);
+  perform set_config('request.jwt.claims', '{"sub":"a0000000-0000-0000-0000-000000000001","role":"authenticated"}', true);
+end $$;
+
+do $$
+declare found uuid[];
+begin
+  -- A hashtag term matches whole tags only.
+  select array_agg(s.peel_id order by s.peel_id) into found
+    from public.search_peels('#verifychai', false, 30) s;
+  if found is distinct from array['a2000000-0000-0000-0000-000000000001',
+                                  'a2000000-0000-0000-0000-000000000002']::uuid[] then
+    raise exception 'check 42 FAILED: a hashtag search answered with %', found;
+  end if;
+
+  -- The same word without the sigil is an ordinary substring, so it reaches the
+  -- longer tag too. Both spellings of the tag come back: the match is case-blind.
+  if (select count(*) from public.search_peels('verifychai', false, 30)) <> 3 then
+    raise exception 'check 42 FAILED: a plain term did not match every peel containing it';
+  end if;
+
+  -- `**` is a regex, a LIKE pattern and a PostgREST rewrite all at once; here it
+  -- is two asterisks and nothing else.
+  select array_agg(s.peel_id) into found from public.search_peels('**', false, 30) s;
+  if found is distinct from array['a2000000-0000-0000-0000-000000000004']::uuid[] then
+    raise exception 'check 42 FAILED: `**` was treated as a pattern, answering %', found;
+  end if;
+
+  -- Nothing searched for is nothing found, not everything found.
+  if (select count(*) from public.search_peels('', false, 30)) <> 0
+     or (select count(*) from public.search_peels(null, false, 30)) <> 0 then
+    raise exception 'check 42 FAILED: an empty term matched peels';
+  end if;
+
+  -- Latest is newest first; Top is what people answered, which here is the
+  -- older of the two. The two tabs must not agree, or one of them is not doing
+  -- its job.
+  select array_agg(s.peel_id) into found from public.search_peels('verifypattern', false, 30) s;
+  if found is distinct from array['a2000000-0000-0000-0000-000000000005',
+                                  'a2000000-0000-0000-0000-000000000004']::uuid[] then
+    raise exception 'check 42 FAILED: Latest is not newest first, it answered %', found;
+  end if;
+  select array_agg(s.peel_id) into found from public.search_peels('verifypattern', true, 30) s;
+  if found is distinct from array['a2000000-0000-0000-0000-000000000004',
+                                  'a2000000-0000-0000-0000-000000000005']::uuid[] then
+    raise exception 'check 42 FAILED: Top did not rank on likes, it answered %', found;
+  end if;
+
+  -- The same again where the winner was answered rather than liked, so both
+  -- halves of the weight are load-bearing and neither can quietly drop out.
+  select array_agg(s.peel_id) into found from public.search_peels('verifyanswered', false, 30) s;
+  if found is distinct from array['a2000000-0000-0000-0000-000000000007',
+                                  'a2000000-0000-0000-0000-000000000006']::uuid[] then
+    raise exception 'check 42 FAILED: Latest is not newest first, it answered %', found;
+  end if;
+  select array_agg(s.peel_id) into found from public.search_peels('verifyanswered', true, 30) s;
+  if found is distinct from array['a2000000-0000-0000-0000-000000000006',
+                                  'a2000000-0000-0000-0000-000000000007']::uuid[] then
+    raise exception 'check 42 FAILED: Top did not rank on replies, it answered %', found;
+  end if;
+
+  -- The row count is the caller's, within bounds, and never an error.
+  if (select count(*) from public.search_peels('verifychai', false, 1)) <> 1 then
+    raise exception 'check 42 FAILED: max_rows was ignored';
+  end if;
+  perform public.search_peels('verifychai', null, null);
+  perform public.search_peels('verifychai', true, 100000);
+end $$;
+
+-- A muted author drops out of the results, and only for the person who muted
+-- them: this is the filter the app used to do afterwards, done where the page
+-- size is decided.
+set local role authenticated;
+do $$ begin
+  perform set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000003', true);
+  perform set_config('request.jwt.claims', '{"sub":"a0000000-0000-0000-0000-000000000003","role":"authenticated"}', true);
+end $$;
+insert into public.mutes (muter_id, muted_id)
+values ('a0000000-0000-0000-0000-000000000003', 'a0000000-0000-0000-0000-000000000001');
+do $$ begin
+  if exists (select 1 from public.search_peels('verifychai', false, 30) s
+              where s.peel_id = 'a2000000-0000-0000-0000-000000000001') then
+    raise exception 'check 42 FAILED: a muted person''s peel is still in the results';
+  end if;
+  if not exists (select 1 from public.search_peels('verifychai', false, 30) s
+                  where s.peel_id = 'a2000000-0000-0000-0000-000000000002') then
+    raise exception 'check 42 FAILED: a mute took somebody else''s peel with it';
+  end if;
+end $$;
+delete from public.mutes where muter_id = 'a0000000-0000-0000-0000-000000000003';
+reset role;
+
+do $$ begin
+  if has_function_privilege('anon', 'public.search_peels(text, boolean, int)', 'execute')
+     or not has_function_privilege('authenticated', 'public.search_peels(text, boolean, int)', 'execute') then
+    raise exception 'check 42 FAILED: search_peels execute grants are wrong';
+  end if;
+end $$;
+\echo check 42 ok: one search behind both tabs, terms stay literal, tags match whole, mutes drop out
 
 rollback;
 \echo ALL CHECKS PASSED

@@ -12,9 +12,10 @@ export type PeelFilter = {
   authorIds?: string[];
   /**
    * Authors to leave out: the people the viewer has muted. Only the lists a mute
-   * covers pass it -- the feed, the replies under a peel, search -- because a
-   * muted person's own profile still shows everything, which is the whole
-   * difference between muting them and blocking them.
+   * covers pass it -- the replies under a peel -- because a muted person's own
+   * profile still shows everything, which is the whole difference between muting
+   * them and blocking them. (The feed and the search do it in SQL instead, where
+   * the page size is decided.)
    */
   excludeAuthorIds?: string[];
   /** Exactly these peels, in whatever order the query returns them. */
@@ -23,7 +24,6 @@ export type PeelFilter = {
   excludeId?: string;
   /** Only peels carrying an attachment: the Media tab. */
   hasMedia?: boolean;
-  search?: string;
   limit?: number;
   /** Keyset cursor from `encodeCursor`: only rows strictly after that one, newest first. */
   before?: string;
@@ -49,7 +49,8 @@ export const PAGE_SIZE = 20;
 
 /**
  * A search term as a POSIX regex that matches itself, for PostgREST's `imatch`
- * (Postgres `~*`). Shared with the people search in app/explore/page.tsx.
+ * (Postgres `~*`). Only the people search needs it now -- peels are searched by
+ * `search_peels()`, which takes the term as data and never as a pattern.
  *
  * `ilike` cannot carry a literal term: PostgREST rewrites every `*` in a
  * like/ilike operand to `%` with no escape, so `ilike.%*%` matches every row.
@@ -152,9 +153,6 @@ export async function fetchPeels(
   if (filter.excludeId) query = query.neq("id", filter.excludeId);
   const before = cursor(filter.before);
   if (before) query = query.or(olderThan("created_at", "id", before));
-  // The term is literal text: escape the regex metacharacters so "2*3" does not match every peel.
-  if (filter.search) query = query.filter("title", "imatch", escapeRegex(filter.search));
-
   // The id breaks ties in the same direction, so a page boundary inside a tie
   // is a real place the next page can start from.
   const ascending = filter.ascending ?? false;
@@ -347,6 +345,64 @@ export async function countUnreadNotifications(
     .is("read_at", null);
   if (error) throw new Error(`Couldn't count notifications: ${error.message}`);
   return count ?? 0;
+}
+
+/**
+ * The peels a search finds. `search_peels()` decides both what matched and in
+ * what order -- see 20260917010000_search.sql -- and this hydrates the ids it
+ * returns through the same fetchPeels() every other list uses, so a result and a
+ * feed card are the same card.
+ *
+ * `top` ranks by the likes and replies each peel drew; otherwise it is newest
+ * first. The function's order is the page's order, so it is put back afterwards:
+ * fetchPeels() sorts by time, which is the wrong answer for Top.
+ */
+export async function searchPeels(
+  supabase: SupabaseClient<Database>,
+  viewerId: string,
+  term: string,
+  top: boolean,
+  limit: number = 30,
+): Promise<PeelUnionAuthor[]> {
+  const { data, error } = await supabase.rpc("search_peels", { term, top, max_rows: limit });
+  if (error) throw new Error(`Couldn't search peels: ${error.message}`);
+  const ids = (data ?? []).map((row) => row.peel_id);
+  if (ids.length === 0) return [];
+
+  const peels = await fetchPeels(supabase, viewerId, { ids });
+  const byId = new Map(peels.map((peel) => [peel.id, peel]));
+  // Skip any composted between the two reads: a shorter page beats an error.
+  return ids.map((id) => byId.get(id)).filter((peel) => peel !== undefined);
+}
+
+/**
+ * The people a search finds: handle or name, case-insensitively, anywhere in it.
+ *
+ * Deliberately NOT filtered by mute. Finding somebody is how a reader reaches
+ * the profile that has the Unmute button on it, so a muted person stays
+ * findable even though their peels are gone from the results beside them.
+ *
+ * `q` is user text, not a pattern: escape the regex metacharacters, then wrap
+ * the whole value in PostgREST's double quotes so a comma or a parenthesis
+ * cannot break out of the `or=(…)` logic tree. Verified against the live REST
+ * endpoint: the quoted form parses, the bare one answers 400 PGRST100.
+ */
+export async function searchPeople(
+  supabase: SupabaseClient<Database>,
+  viewerId: string,
+  term: string,
+  limit: number = 20,
+): Promise<Person[]> {
+  const quoted = `"${escapeRegex(term).replace(/["\\]/g, (c) => `\\${c}`)}"`;
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id")
+    .or(`username.imatch.${quoted},name.imatch.${quoted}`)
+    .limit(limit);
+  if (error) throw new Error(`Couldn't search people: ${error.message}`);
+  const ids = (data ?? []).map((row) => row.id);
+  if (ids.length === 0) return [];
+  return peopleByIds(supabase, viewerId, ids, "the people search");
 }
 
 /** One row of the trending list: the tag without its `#`, and the two numbers behind it. */
