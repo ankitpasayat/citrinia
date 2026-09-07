@@ -20,10 +20,18 @@ import { Tabs } from "./tabs";
 export function FeedShell({
   username,
   aside,
+  wide = false,
   children,
 }: {
   username: string;
   aside?: React.ReactNode;
+  /**
+   * Give the middle everything the rail does not take, and drop the aside.
+   * Messages is the one screen that asks: two panes side by side do not fit in
+   * 520px, and search in a third column beside a conversation is a column of
+   * nothing to do.
+   */
+  wide?: boolean;
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
@@ -36,14 +44,19 @@ export function FeedShell({
 
   return (
     <>
-      <div {...stylex.props(styles.shell)}>
+      <div {...stylex.props(wide ? styles.shellWide : styles.shell)}>
         <SideNav username={username} onCompose={() => setOpen(true)} />
         <div {...stylex.props(styles.middle)}>{children}</div>
-        <aside {...stylex.props(styles.aside)}>
-          {/* Explore already leads with its own form. */}
-          {pathname !== "/explore" && <SearchForm autoFocus={false} />}
-          {aside}
-        </aside>
+        {/* One style or the other, never both: StyleX orders overlapping media
+            rules its own way, and merging two column templates is how the
+            desktop rule started winning over the wide one. */}
+        {!wide && (
+          <aside {...stylex.props(styles.aside)}>
+            {/* Explore already leads with its own form. */}
+            {pathname !== "/explore" && <SearchForm autoFocus={false} />}
+            {aside}
+          </aside>
+        )}
       </div>
       {!inConversation && <Tabs onCompose={() => setOpen(true)} />}
       <ComposeSheet open={open} onClose={close} />
@@ -66,6 +79,21 @@ const styles = stylex.create({
     alignItems: "start",
     columnGap: { default: 0, [bp.desktop]: 40 },
     paddingInline: { default: 0, [bp.desktop]: 24 },
+  },
+  shellWide: {
+    display: { default: "block", [bp.tablet]: "grid" },
+    gridTemplateColumns: {
+      default: "76px minmax(0, 1fr)",
+      [bp.wide]: "232px minmax(0, 1fr)",
+    },
+    justifyContent: "center",
+    alignItems: "start",
+    columnGap: { default: 0, [bp.desktop]: 32 },
+    paddingInline: { default: 0, [bp.desktop]: 24 },
+    // Wide, but not endlessly: a conversation stretched across a 27-inch screen
+    // is one line of words per paragraph.
+    maxWidth: 1240,
+    marginInline: "auto",
   },
   middle: { minWidth: 0 },
   aside: {

@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
-import { Column } from "@/components/column";
 import { Conversation } from "@/components/conversation";
 import { ConversationHead } from "@/components/conversation-head";
-import { FeedShell } from "@/components/feed-shell";
 import { findConversationWith } from "@/lib/conversations";
 import { resolveHandle } from "@/lib/peels";
 import { createClient } from "@/lib/supabase/server";
@@ -37,20 +35,13 @@ export default async function ConversationWith({ params }: Props) {
   // Nobody messages themselves; send_message() refuses it too.
   if (other.id === user.id) redirect("/messages");
 
-  const [{ data: profile }, existing] = await Promise.all([
-    supabase.from("profiles").select("username").eq("id", user.id).single(),
-    findConversationWith(supabase, user.id, other.id),
-  ]);
-  if (!profile) throw new Error("No profile for the signed-in user.");
+  const existing = await findConversationWith(supabase, user.id, other.id);
   if (existing) redirect(`/messages/${existing.id}`);
 
   return (
-    <FeedShell username={profile.username}>
-      {/* No bar to clear: the composer sits on the bottom edge. */}
-      <Column withTabs={false}>
-        <ConversationHead other={other} />
-        <Conversation viewerId={user.id} other={other} conversationId={null} messages={[]} />
-      </Column>
-    </FeedShell>
+    <>
+      <ConversationHead other={other} />
+      <Conversation viewerId={user.id} other={other} conversationId={null} messages={[]} />
+    </>
   );
 }

@@ -245,7 +245,6 @@ export function Conversation({
         <div {...stylex.props(styles.box)}>
           <Textarea
             rows={1}
-            onSurface
             invalid={over}
             value={text}
             maxLength={MAX_BODY * 2}
@@ -290,7 +289,15 @@ export function Conversation({
 }
 
 const styles = stylex.create({
-  wrap: { display: "grid", gridTemplateRows: "minmax(0, 1fr) auto", gap: 12, minHeight: 0 },
+  // Grows to fill its pane, so the composer sits on the bottom edge rather than
+  // floating under the last message in the middle of an empty screen.
+  wrap: {
+    display: "grid",
+    gridTemplateRows: "minmax(0, 1fr) auto",
+    gap: 12,
+    minHeight: 0,
+    flexGrow: 1,
+  },
   list: {
     display: "grid",
     gap: 10,
@@ -345,7 +352,15 @@ const styles = stylex.create({
     textDecorationLine: "underline",
     cursor: "pointer",
   },
-  composer: { position: "sticky", bottom: 0, display: "grid", gap: 8 },
+  composer: {
+    position: "sticky",
+    bottom: 0,
+    display: "grid",
+    gap: 8,
+    // Opaque, so a long conversation scrolls under it rather than through it.
+    backgroundColor: colors.ground,
+    paddingTop: 10,
+  },
   box: { display: "grid", gridTemplateColumns: "minmax(0, 1fr) auto", alignItems: "end", gap: 10 },
   field: { minHeight: 52, maxHeight: 160, resize: "vertical" },
   send: { alignSelf: "end" },

@@ -144,6 +144,8 @@ export type Rest = {
   insert<T>(table: string, rows: unknown): Promise<T[]>;
   update(path: string, patch: unknown): Promise<void>;
   remove(path: string): Promise<void>;
+  /** Call a function. Messages are only ever written by one, so a fixture needs this. */
+  rpc<T>(name: string, args: unknown): Promise<T>;
 };
 
 function client(token: string, id: string): Rest {
@@ -166,6 +168,14 @@ function client(token: string, id: string): Rest {
     },
     async remove(path: string): Promise<void> {
       await rest(path, { method: "DELETE", token });
+    },
+    async rpc<T>(name: string, args: unknown): Promise<T> {
+      const response = await rest(`rpc/${name}`, {
+        method: "POST",
+        token,
+        body: JSON.stringify(args),
+      });
+      return (await response.json()) as T;
     },
   };
 }

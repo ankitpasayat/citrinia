@@ -1772,6 +1772,14 @@ test("25. the composer offers people after @, and the one ada picks gets the bel
 });
 
 // Slice 11: messages.
+/**
+ * Messages is two panes, and from 768px both are on screen at once -- so the
+ * words of a message are in the open conversation AND in the list beside it, as
+ * that row's preview. Every assertion about either says which pane it means.
+ */
+const openPane = (page: Page) => page.getByRole("region", { name: "Open conversation" });
+const listPane = (page: Page) => page.getByRole("region", { name: "Conversations" });
+
 /** Ada's row in bob's list: her name, so it cannot match the navigation. */
 const BOB_ROW_MATCH = "Ada Lovelace";
 const ADA_HELLO = "bob, are you awake";
@@ -1802,7 +1810,7 @@ test("26. ada writes to bob from his profile, and his answer arrives without a r
   // set for @ada and the rail.
   await ada.getByRole("link", { name: "Message", exact: true }).click();
   await expect(ada).toHaveURL(`${BASE_URL}/messages/with/bob`);
-  await expect(ada.getByText(`This is the start of your conversation with ${BOB}`)).toBeVisible();
+  await expect(openPane(ada).getByText(`This is the start of your conversation with ${BOB}`)).toBeVisible();
 
   // Opening a conversation is not starting one: the row is written by the first
   // message and by nothing else.
@@ -1820,7 +1828,7 @@ test("26. ada writes to bob from his profile, and his answer arrives without a r
 
   // Sent: the words are on the screen, the box is empty again, and the url has
   // become the conversation the message just made.
-  await expect(ada.getByText(ADA_HELLO)).toBeVisible();
+  await expect(openPane(ada).getByText(ADA_HELLO)).toBeVisible();
   await expect(box).toHaveValue("");
   await expect(ada).toHaveURL(new RegExp(`^${BASE_URL}/messages/[0-9a-f-]{36}$`));
 
@@ -1829,10 +1837,10 @@ test("26. ada writes to bob from his profile, and his answer arrives without a r
   // Bob follows ada, so it is an ordinary conversation rather than a request:
   // straight into his list, with the preview and a dot on it.
   await bob.reload();
-  const row = bob.getByRole("link").filter({ hasText: BOB_ROW_MATCH });
+  const row = listPane(bob).getByRole("link").filter({ hasText: BOB_ROW_MATCH });
   await expect(row).toHaveCount(1);
   await expect(row).toContainText(ADA_HELLO);
-  await expect(bob.getByRole("img", { name: "Unread", exact: true })).toHaveCount(1);
+  await expect(listPane(bob).getByRole("img", { name: "Unread", exact: true })).toHaveCount(1);
 
   // Opening it clears the dot and shows what she said. The read mark is waited
   // for as the request it makes, not as a dot that goes: toHaveCount(0) is true
@@ -1842,10 +1850,10 @@ test("26. ada writes to bob from his profile, and his answer arrives without a r
     response.url().includes("/rest/v1/rpc/mark_read"),
   );
   await row.click();
-  await expect(bob.getByText(ADA_HELLO)).toBeVisible();
+  await expect(openPane(bob).getByText(ADA_HELLO)).toBeVisible();
   await marked;
   await bob.goto("/messages");
-  await expect(bob.getByRole("img", { name: "Unread", exact: true })).toHaveCount(0);
+  await expect(listPane(bob).getByRole("img", { name: "Unread", exact: true })).toHaveCount(0);
 
   // Ada's page is left open on the conversation. Bob answers, and it lands
   // there with nothing reloaded.
@@ -1854,11 +1862,11 @@ test("26. ada writes to bob from his profile, and his answer arrives without a r
   await live;
 
   await bob.goto("/messages");
-  await bob.getByRole("link").filter({ hasText: BOB_ROW_MATCH }).click();
+  await listPane(bob).getByRole("link").filter({ hasText: BOB_ROW_MATCH }).click();
   await bob.getByRole("textbox", { name: "Message @ada" }).fill(BOB_ANSWER);
   await bob.getByRole("button", { name: "Send" }).click();
 
-  await expect(ada.getByText(BOB_ANSWER)).toBeVisible();
+  await expect(openPane(ada).getByText(BOB_ANSWER)).toBeVisible();
   await shot(ada, "conversation-mobile");
 });
 
@@ -1878,7 +1886,7 @@ test("27. a stranger's message waits in requests, and a block stops the next one
     const bob = await open("bob");
     await bob.goto("/messages");
     // Bob's inbox at the start: whatever test 26 left, and no request tab.
-    await expect(bob.getByRole("group", { name: "Messages" })).toHaveCount(0);
+    await expect(listPane(bob).getByRole("group", { name: "Messages" })).toHaveCount(0);
     const before = await bob.getByRole("img", { name: /unread conversation/ }).count();
 
     // Dara writes. She is a stranger, so it lands in requests -- and a request
@@ -1887,7 +1895,7 @@ test("27. a stranger's message waits in requests, and a block stops the next one
     await she.goto("/messages/with/bob");
     await she.getByRole("textbox", { name: "Message @bob" }).fill(DARA_ASK);
     await she.getByRole("button", { name: "Send" }).click();
-    await expect(she.getByText(DARA_ASK)).toBeVisible();
+    await expect(openPane(she).getByText(DARA_ASK)).toBeVisible();
 
     // She is told nothing about waiting: her side is an ordinary conversation.
     // The url is waited for first, so the banner has been given the chance to
@@ -1905,18 +1913,18 @@ test("27. a stranger's message waits in requests, and a block stops the next one
     await bob.reload();
     await counted;
     await expect(bob.getByRole("img", { name: /unread conversation/ })).toHaveCount(before);
-    await expect(bob.getByText(DARA_ASK)).toHaveCount(0);
+    await expect(listPane(bob).getByText(DARA_ASK)).toHaveCount(0);
 
     // It is on the Requests tab, with the three answers on it.
-    await bob.getByRole("link", { name: "Requests" }).click();
-    await expect(bob.getByText(DARA_ASK)).toBeVisible();
+    await listPane(bob).getByRole("link", { name: "Requests" }).click();
+    await expect(listPane(bob).getByText(DARA_ASK)).toBeVisible();
     await bob.getByRole("button", { name: "Accept" }).first().click();
     await expect(bob.getByRole("status")).toHaveText(`You'll hear from @${dara.username}`);
 
     // Accepted, it is an ordinary conversation: off the requests tab, in the
     // inbox, and now on the badge.
     await bob.goto("/messages");
-    await expect(bob.getByText(DARA_ASK)).toBeVisible();
+    await expect(listPane(bob).getByText(DARA_ASK)).toBeVisible();
     await expect(bob.getByRole("img", { name: /unread conversation/ })).toHaveCount(before + 1);
 
     // A block is the one thing that stops a message. Bob blocks ada; her next
@@ -1928,9 +1936,9 @@ test("27. a stranger's message waits in requests, and a block stops the next one
     await ada.goto("/messages/with/bob");
     await ada.getByRole("textbox", { name: "Message @bob" }).fill("still there?");
     await ada.getByRole("button", { name: "Send" }).click();
-    await expect(ada.getByText("You can't message @bob")).toBeVisible();
-    await expect(ada.getByText("Not sent")).toBeVisible();
-    await expect(ada.getByText("still there?")).toBeVisible();
+    await expect(openPane(ada).getByText("You can't message @bob")).toBeVisible();
+    await expect(openPane(ada).getByText("Not sent")).toBeVisible();
+    await expect(openPane(ada).getByText("still there?")).toBeVisible();
 
     await restAsService().remove(`blocks?blocker_id=eq.${bobApi.id}&blocked_id=eq.${adaApi.id}`);
     // The follow the block severed is put back, since test 26's ground and this
@@ -1939,4 +1947,58 @@ test("27. a stranger's message waits in requests, and a block stops the next one
   } finally {
     await removeExtras([dara.id]);
   }
+});
+
+const SPLIT_HELLO = "side by side, then";
+
+test("28. from 768 the list and the open conversation share one screen", async ({ open }) => {
+  // Its own ground. Running this alone, or after a run that binned everything,
+  // it would otherwise open a list with nothing in it and fail on a click --
+  // which is how the first version of this test "proved" four mutations red
+  // while proving nothing at all.
+  const bobApi = await restAs("bob");
+  const adaApi = await restAs("ada");
+  await bobApi.remove(`follows?follower_id=eq.${bobApi.id}&followee_id=eq.${adaApi.id}`);
+  await bobApi.insert("follows", { follower_id: bobApi.id, followee_id: adaApi.id });
+  await adaApi.rpc("send_message", { to_user: bobApi.id, body: SPLIT_HELLO });
+
+  const bob = await open("bob");
+  const list = listPane(bob);
+  const conversation = openPane(bob);
+
+  // Wide enough for both. The right-hand pane has something to say while
+  // nothing is open in it.
+  await bob.setViewportSize({ width: 900, height: 800 });
+  await bob.goto("/messages");
+  await expect(list).toBeVisible();
+  await expect(conversation).toBeVisible();
+  await expect(conversation.getByText("Pick a conversation")).toBeVisible();
+
+  // Opening one leaves the list where it was and puts the conversation beside
+  // it -- and the url still says which one is open, so the link means the same
+  // thing at either width.
+  await list.getByRole("link").filter({ hasText: BOB_ROW_MATCH }).click();
+  await expect(bob).toHaveURL(new RegExp(`^${BASE_URL}/messages/[0-9a-f-]{36}$`));
+  // The row it was opened from is still there beside it -- an empty list pane is
+  // still a visible one, so the row is what says the list survived.
+  await expect(list.getByRole("link").filter({ hasText: BOB_ROW_MATCH })).toBeVisible();
+  await expect(conversation.getByText(SPLIT_HELLO)).toBeVisible();
+  const listBox = await list.boundingBox();
+  const openBox = await conversation.boundingBox();
+  expect(listBox!.x + listBox!.width).toBeLessThanOrEqual(openBox!.x + 1);
+  // Nothing to go back to while the list is right there.
+  await expect(bob.getByRole("link", { name: "Back to messages" })).toBeHidden();
+  await shot(bob, "messages-split");
+
+  // Narrower, and it is one screen at a time again -- the same url, the same
+  // conversation, with the way back in the head.
+  await bob.setViewportSize({ width: 700, height: 800 });
+  await expect(list).toBeHidden();
+  await expect(conversation).toBeVisible();
+  const back = bob.getByRole("link", { name: "Back to messages" });
+  await expect(back).toBeVisible();
+  await back.click();
+  await expect(bob).toHaveURL(`${BASE_URL}/messages`);
+  await expect(list).toBeVisible();
+  await expect(conversation).toBeHidden();
 });
