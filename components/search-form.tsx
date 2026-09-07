@@ -1,15 +1,26 @@
 "use client";
 
-// A plain GET form: Enter navigates to /explore?q=…, so search works with no JS
-// and every result page is a real, shareable URL.
+// A plain GET form: Enter navigates to `action`?q=…, so search works with no JS
+// and every result page is a real, shareable URL. Explore is what it searches
+// unless somebody says otherwise -- /messages/new points it at itself.
 import * as stylex from "@stylexjs/stylex";
 import { colors } from "@/app/tokens.stylex";
 import { Input } from "./field";
 import { SearchIcon } from "./icons";
 
-export function SearchForm({ q = "", autoFocus = true }: { q?: string; autoFocus?: boolean }) {
+export function SearchForm({
+  q = "",
+  autoFocus = true,
+  action = "/explore",
+  label = "Search peels and people",
+}: {
+  q?: string;
+  autoFocus?: boolean;
+  action?: string;
+  label?: string;
+}) {
   return (
-    <form role="search" action="/explore" method="get" {...stylex.props(styles.form)}>
+    <form role="search" action={action} method="get" {...stylex.props(styles.form)}>
       <span {...stylex.props(styles.icon)}>
         <SearchIcon />
       </span>
@@ -18,8 +29,8 @@ export function SearchForm({ q = "", autoFocus = true }: { q?: string; autoFocus
         name="q"
         defaultValue={q}
         autoFocus={autoFocus}
-        placeholder="Search peels and people"
-        aria-label="Search peels and people"
+        placeholder={label}
+        aria-label={label}
         style={styles.input}
       />
     </form>

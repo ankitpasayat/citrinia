@@ -76,12 +76,12 @@ end $$;
 -- 6. RLS enabled on every table, 32 policies, API roles have the grants their policies assume.
 do $$ begin
   if exists (select 1 from pg_tables where schemaname = 'public'
-               and tablename in ('profiles','peels','likes','follows','reposts','bookmarks','peel_media','notifications','username_history','reports','mutes','blocks','link_previews')
+               and tablename in ('profiles','peels','likes','follows','reposts','bookmarks','peel_media','notifications','username_history','reports','mutes','blocks','link_previews','conversations','messages')
                and not rowsecurity) then
     raise exception 'check 6 FAILED: RLS not enabled on every table';
   end if;
-  if (select count(*) from pg_policies where schemaname = 'public') <> 32 then
-    raise exception 'check 6 FAILED: expected 32 policies, found %', (select count(*) from pg_policies where schemaname = 'public');
+  if (select count(*) from pg_policies where schemaname = 'public') <> 37 then
+    raise exception 'check 6 FAILED: expected 37 policies, found %', (select count(*) from pg_policies where schemaname = 'public');
   end if;
   if not has_table_privilege('authenticated', 'public.peels', 'insert') or not has_table_privilege('anon', 'public.profiles', 'select') then
     raise exception 'check 6 FAILED: API roles lack table grants';
@@ -125,7 +125,7 @@ do $$ begin
     raise exception 'check 6 FAILED: ensure_media_bucket is not locked down';
   end if;
 end $$;
-\echo check 6 ok: RLS on, 24 policies, grants present
+\echo check 6 ok: RLS on, 37 policies, grants present
 
 -- 7. RLS behaviour as an authenticated user: own peel ok, spoofed user_id blocked, own like ok, spoofed like blocked.
 set local role authenticated;
@@ -1181,6 +1181,9 @@ begin
     'authenticated bookmarks DELETE'         || E'\n' ||
     'authenticated bookmarks INSERT'         || E'\n' ||
     'authenticated bookmarks SELECT'         || E'\n' ||
+    'authenticated conversations DELETE'     || E'\n' ||
+    'authenticated conversations INSERT'     || E'\n' ||
+    'authenticated conversations SELECT'     || E'\n' ||
     'authenticated follows DELETE'           || E'\n' ||
     'authenticated follows INSERT'           || E'\n' ||
     'authenticated follows SELECT'           || E'\n' ||
@@ -1189,6 +1192,8 @@ begin
     'authenticated likes SELECT'             || E'\n' ||
     'authenticated link_previews INSERT'     || E'\n' ||
     'authenticated link_previews SELECT'     || E'\n' ||
+    'authenticated messages INSERT'          || E'\n' ||
+    'authenticated messages SELECT'          || E'\n' ||
     'authenticated mutes DELETE'             || E'\n' ||
     'authenticated mutes INSERT'             || E'\n' ||
     'authenticated mutes SELECT'             || E'\n' ||
@@ -2442,6 +2447,527 @@ do $$ begin
   end if;
 end $$;
 \echo check 44 ok: a thread posts as one chain, whole or not at all
+
+
+-- Messages, checks 45-50.
+--
+-- Note for everything below: verify.sql is ONE transaction, so now() is the same
+-- value in every statement of it. Any assertion of the form "this did not move"
+-- has to give the column a stamp from another year first, or it passes against
+-- code that moved it -- which is a check that cannot fail.
+
+-- 45. The shape: the pair is ordered and unique, both derived member columns
+--     have to name a member, and a body is 1..2000 characters.
+-- Its own ground: three accounts no earlier check has touched.
+insert into auth.users (id, instance_id, aud, role, email, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
+values ('b0000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+        'fern@example.com', '{"provider":"github"}', '{"user_name":"fernverify","avatar_url":""}', now(), now()),
+       ('b0000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+        'gus@example.com', '{"provider":"github"}', '{"user_name":"gusverify","avatar_url":""}', now(), now()),
+       ('b0000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+        'hana@example.com', '{"provider":"github"}', '{"user_name":"hanaverify","avatar_url":""}', now(), now());
+
+-- fern < gus < hana as uuids, which is what makes `a` fern in every pair below.
+do $$ begin
+  if not ('b0000000-0000-0000-0000-000000000001'::uuid < 'b0000000-0000-0000-0000-000000000002'::uuid
+          and 'b0000000-0000-0000-0000-000000000002'::uuid < 'b0000000-0000-0000-0000-000000000003'::uuid) then
+    raise exception 'check 45 FAILED: the fixtures are not in the order the rest of this check assumes';
+  end if;
+end $$;
+
+do $$ begin
+  insert into public.conversations (a, b, started_by, last_sender_id)
+  values ('b0000000-0000-0000-0000-000000000002', 'b0000000-0000-0000-0000-000000000001',
+          'b0000000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000001');
+  raise exception 'check 45 FAILED: an out-of-order pair was accepted';
+exception when check_violation then null; end $$;
+
+insert into public.conversations (id, a, b, started_by, last_sender_id)
+values ('b1000000-0000-0000-0000-000000000001',
+        'b0000000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000002',
+        'b0000000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000001');
+
+do $$ begin
+  insert into public.conversations (a, b, started_by, last_sender_id)
+  values ('b0000000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000002',
+          'b0000000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000001');
+  raise exception 'check 45 FAILED: a second conversation for the same pair was accepted';
+exception when unique_violation then null; end $$;
+
+do $$ begin
+  insert into public.conversations (a, b, started_by, last_sender_id)
+  values ('b0000000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000003',
+          'b0000000-0000-0000-0000-000000000002', 'b0000000-0000-0000-0000-000000000001');
+  raise exception 'check 45 FAILED: a conversation started by somebody who is not in it was accepted';
+exception when check_violation then null; end $$;
+
+do $$ begin
+  insert into public.conversations (a, b, started_by, last_sender_id)
+  values ('b0000000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000003',
+          'b0000000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000002');
+  raise exception 'check 45 FAILED: a last sender who is not in the conversation was accepted';
+exception when check_violation then null; end $$;
+
+do $$ begin
+  insert into public.conversations (a, b, started_by, last_sender_id, last_preview)
+  values ('b0000000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000003',
+          'b0000000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000001', repeat('x', 141));
+  raise exception 'check 45 FAILED: a 141-character preview was accepted';
+exception when check_violation then null; end $$;
+
+do $$ begin
+  insert into public.messages (conversation_id, sender_id, body)
+  values ('b1000000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000001', '');
+  raise exception 'check 45 FAILED: an empty message was accepted';
+exception when check_violation then null; end $$;
+do $$ begin
+  insert into public.messages (conversation_id, sender_id, body)
+  values ('b1000000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000001', repeat('x', 2001));
+  raise exception 'check 45 FAILED: a 2001-character message was accepted';
+exception when check_violation then null; end $$;
+
+-- The longest message that is meant to work, with a stamp from another year:
+-- the conversation must take ITS time, not the time of the write.
+insert into public.messages (conversation_id, sender_id, body, created_at)
+values ('b1000000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000001', repeat('x', 2000),
+        '2031-03-04 05:06:07+00');
+do $$
+declare c public.conversations%rowtype;
+begin
+  select * into strict c from public.conversations where id = 'b1000000-0000-0000-0000-000000000001';
+  if c.last_message_at <> '2031-03-04 05:06:07+00'::timestamptz then
+    raise exception 'check 45 FAILED: the conversation is stamped %, not with its message''s own time', c.last_message_at;
+  end if;
+  if c.last_preview <> repeat('x', 140) then
+    raise exception 'check 45 FAILED: the preview is % characters, not 140', char_length(c.last_preview);
+  end if;
+end $$;
+\echo check 45 ok: one ordered conversation per pair, members named, body 1..2000
+
+-- 46. send_message(): makes the conversation the first time and reuses it after,
+--     lands as a request unless they already follow you, refuses to talk to
+--     yourself, and is refused between two people a block separates.
+-- Its own ground: four fresh accounts, since the check counts conversations.
+insert into auth.users (id, instance_id, aud, role, email, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
+values ('b0000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+        'jo@example.com', '{"provider":"github"}', '{"user_name":"joverify","avatar_url":""}', now(), now()),
+       ('b0000000-0000-0000-0000-000000000012', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+        'kai@example.com', '{"provider":"github"}', '{"user_name":"kaiverify","avatar_url":""}', now(), now()),
+       ('b0000000-0000-0000-0000-000000000013', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+        'lee@example.com', '{"provider":"github"}', '{"user_name":"leeverify","avatar_url":""}', now(), now()),
+       ('b0000000-0000-0000-0000-000000000014', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+        'mira@example.com', '{"provider":"github"}', '{"user_name":"miraverify","avatar_url":""}', now(), now());
+-- lee follows jo; kai and mira have never heard of him.
+insert into public.follows (follower_id, followee_id)
+values ('b0000000-0000-0000-0000-000000000013', 'b0000000-0000-0000-0000-000000000011');
+
+set local role authenticated;
+do $$ begin
+  perform set_config('request.jwt.claim.sub', 'b0000000-0000-0000-0000-000000000011', true);
+  perform set_config('request.jwt.claims', '{"sub":"b0000000-0000-0000-0000-000000000011","role":"authenticated"}', true);
+end $$;
+
+do $$
+declare wrote public.messages; c public.conversations%rowtype;
+begin
+  select * into strict wrote from public.send_message('b0000000-0000-0000-0000-000000000012', 'first words') s;
+  if wrote.sender_id <> 'b0000000-0000-0000-0000-000000000011' or wrote.body <> 'first words' then
+    raise exception 'check 46 FAILED: send_message returned the wrong message: %', wrote;
+  end if;
+  select * into strict c from public.conversations where id = wrote.conversation_id;
+  if c.started_by <> 'b0000000-0000-0000-0000-000000000011' then
+    raise exception 'check 46 FAILED: the conversation was not started by the sender';
+  end if;
+  -- kai does not follow jo, so this is a request.
+  if c.accepted_at is not null then
+    raise exception 'check 46 FAILED: a message from somebody they do not follow was accepted on the spot';
+  end if;
+  if c.last_preview <> 'first words' or c.last_sender_id <> 'b0000000-0000-0000-0000-000000000011' then
+    raise exception 'check 46 FAILED: the conversation does not carry the message it was made by: %', c;
+  end if;
+end $$;
+
+-- Sending again reuses the conversation rather than making a second one.
+do $$
+declare wrote public.messages; n int;
+begin
+  select * into strict wrote from public.send_message('b0000000-0000-0000-0000-000000000012', 'and more') s;
+  select count(*) into n from public.conversations c
+   where c.a = 'b0000000-0000-0000-0000-000000000011' and c.b = 'b0000000-0000-0000-0000-000000000012';
+  if n <> 1 then
+    raise exception 'check 46 FAILED: expected one conversation for the pair, found %', n;
+  end if;
+  if (select count(*) from public.messages m where m.conversation_id = wrote.conversation_id) <> 2 then
+    raise exception 'check 46 FAILED: the second message did not land in the same conversation';
+  end if;
+end $$;
+
+-- lee follows jo, so jo's first message to lee is not a request.
+do $$
+declare wrote public.messages;
+begin
+  select * into strict wrote from public.send_message('b0000000-0000-0000-0000-000000000013', 'hello you') s;
+  if (select c.accepted_at from public.conversations c where c.id = wrote.conversation_id) is null then
+    raise exception 'check 46 FAILED: a message to somebody who follows you was left waiting in requests';
+  end if;
+end $$;
+
+do $$ begin
+  perform public.send_message('b0000000-0000-0000-0000-000000000011', 'talking to myself');
+  raise exception 'check 46 FAILED: a message to yourself was accepted';
+exception when invalid_parameter_value then null; end $$;
+
+-- The conversation insert policy is the wall a crafted request hits, and
+-- send_message being invoker is what puts it in the way. By hand, as jo:
+-- a conversation that arrives already accepted by somebody who does not follow
+-- him would walk straight past Requests...
+do $$ begin
+  insert into public.conversations (a, b, started_by, last_sender_id, accepted_at)
+  values ('b0000000-0000-0000-0000-000000000011', 'b0000000-0000-0000-0000-000000000014',
+          'b0000000-0000-0000-0000-000000000011', 'b0000000-0000-0000-0000-000000000011', now());
+  raise exception 'check 46 FAILED: a conversation let itself in already accepted';
+exception when insufficient_privilege then null; end $$;
+-- ...and one stamped with somebody else's name would show in their list as a
+-- conversation they started.
+do $$ begin
+  insert into public.conversations (a, b, started_by, last_sender_id)
+  values ('b0000000-0000-0000-0000-000000000011', 'b0000000-0000-0000-0000-000000000014',
+          'b0000000-0000-0000-0000-000000000014', 'b0000000-0000-0000-0000-000000000014');
+  raise exception 'check 46 FAILED: a conversation was started in somebody else''s name';
+exception when insufficient_privilege then null; end $$;
+
+-- A block refuses the conversation before it exists...
+reset role;
+insert into public.blocks (blocker_id, blocked_id)
+values ('b0000000-0000-0000-0000-000000000014', 'b0000000-0000-0000-0000-000000000011'),
+       ('b0000000-0000-0000-0000-000000000012', 'b0000000-0000-0000-0000-000000000011');
+set local role authenticated;
+do $$ begin
+  perform set_config('request.jwt.claim.sub', 'b0000000-0000-0000-0000-000000000011', true);
+  perform set_config('request.jwt.claims', '{"sub":"b0000000-0000-0000-0000-000000000011","role":"authenticated"}', true);
+end $$;
+do $$ begin
+  perform public.send_message('b0000000-0000-0000-0000-000000000014', 'let me in');
+  raise exception 'check 46 FAILED: somebody who blocked you can still be written to';
+exception when insufficient_privilege then null; end $$;
+-- The same wall on the conversation itself, and not only on the words. The
+-- message insert would refuse the body either way, but without the block clause
+-- on THIS policy a crafted request still leaves an empty conversation sitting in
+-- the inbox of the person who blocked them.
+do $$ begin
+  insert into public.conversations (a, b, started_by, last_sender_id)
+  values ('b0000000-0000-0000-0000-000000000011', 'b0000000-0000-0000-0000-000000000014',
+          'b0000000-0000-0000-0000-000000000011', 'b0000000-0000-0000-0000-000000000011');
+  raise exception 'check 46 FAILED: a blocked person opened a conversation with the person who blocked them';
+exception when insufficient_privilege then null; end $$;
+-- ...and inside one that already exists.
+do $$ begin
+  perform public.send_message('b0000000-0000-0000-0000-000000000012', 'still here');
+  raise exception 'check 46 FAILED: a block does not stop a message into a conversation that predates it';
+exception when insufficient_privilege then null; end $$;
+reset role;
+delete from public.blocks
+ where blocker_id in ('b0000000-0000-0000-0000-000000000012', 'b0000000-0000-0000-0000-000000000014');
+\echo check 46 ok: send_message makes one conversation, requests where it should, and obeys a block
+
+-- 47. Answering a request is what accepts it -- and an accepted conversation
+--     never goes back to being one.
+-- Ground: the jo -> kai request from check 46, still pending, its block lifted.
+set local role authenticated;
+do $$ begin
+  perform set_config('request.jwt.claim.sub', 'b0000000-0000-0000-0000-000000000012', true);
+  perform set_config('request.jwt.claims', '{"sub":"b0000000-0000-0000-0000-000000000012","role":"authenticated"}', true);
+end $$;
+do $$
+declare c public.conversations%rowtype; wrote public.messages;
+begin
+  select * into strict c from public.conversations
+   where a = 'b0000000-0000-0000-0000-000000000011' and b = 'b0000000-0000-0000-0000-000000000012';
+  if c.accepted_at is not null then
+    raise exception 'check 47 FAILED: this check needs a pending request as its ground';
+  end if;
+
+  select * into strict wrote from public.send_message('b0000000-0000-0000-0000-000000000011', 'go on then') s;
+  select * into strict c from public.conversations where id = wrote.conversation_id;
+  if c.accepted_at is null then
+    raise exception 'check 47 FAILED: answering a request did not accept it';
+  end if;
+  if c.last_sender_id <> 'b0000000-0000-0000-0000-000000000012' then
+    raise exception 'check 47 FAILED: the last sender did not move to the person who replied';
+  end if;
+end $$;
+
+-- Stamp the acceptance with a time that is not now(), so "it did not move" is a
+-- thing this transaction can actually see.
+reset role;
+update public.conversations set accepted_at = '2020-02-02 00:00:00+00'
+ where a = 'b0000000-0000-0000-0000-000000000011' and b = 'b0000000-0000-0000-0000-000000000012';
+set local role authenticated;
+do $$ begin
+  perform set_config('request.jwt.claim.sub', 'b0000000-0000-0000-0000-000000000011', true);
+  perform set_config('request.jwt.claims', '{"sub":"b0000000-0000-0000-0000-000000000011","role":"authenticated"}', true);
+end $$;
+do $$
+declare wrote public.messages; c public.conversations%rowtype;
+begin
+  select * into strict wrote from public.send_message('b0000000-0000-0000-0000-000000000012', 'thanks') s;
+  select * into strict c from public.conversations where id = wrote.conversation_id;
+  if c.accepted_at <> '2020-02-02 00:00:00+00'::timestamptz then
+    raise exception 'check 47 FAILED: another message re-stamped an acceptance that was already made';
+  end if;
+  if c.last_preview <> 'thanks' then
+    raise exception 'check 47 FAILED: the preview did not follow the newest message';
+  end if;
+end $$;
+reset role;
+\echo check 47 ok: answering a request accepts it, once and once only
+
+-- 48. Following somebody accepts the request they had sent you.
+-- Ground: mira has never heard of lee; lee writes to her, then she follows him.
+set local role authenticated;
+do $$ begin
+  perform set_config('request.jwt.claim.sub', 'b0000000-0000-0000-0000-000000000013', true);
+  perform set_config('request.jwt.claims', '{"sub":"b0000000-0000-0000-0000-000000000013","role":"authenticated"}', true);
+end $$;
+do $$
+declare wrote public.messages;
+begin
+  select * into strict wrote from public.send_message('b0000000-0000-0000-0000-000000000014', 'do you remember me') s;
+  if (select c.accepted_at from public.conversations c where c.id = wrote.conversation_id) is not null then
+    raise exception 'check 48 FAILED: this check needs a pending request as its ground';
+  end if;
+end $$;
+-- The follow is mira's to make, so it is made as her.
+do $$ begin
+  perform set_config('request.jwt.claim.sub', 'b0000000-0000-0000-0000-000000000014', true);
+  perform set_config('request.jwt.claims', '{"sub":"b0000000-0000-0000-0000-000000000014","role":"authenticated"}', true);
+end $$;
+insert into public.follows (follower_id, followee_id)
+values ('b0000000-0000-0000-0000-000000000014', 'b0000000-0000-0000-0000-000000000013');
+do $$
+declare c public.conversations%rowtype;
+begin
+  select * into strict c from public.conversations
+   where a = 'b0000000-0000-0000-0000-000000000013' and b = 'b0000000-0000-0000-0000-000000000014';
+  if c.accepted_at is null then
+    raise exception 'check 48 FAILED: following somebody left their request to you waiting';
+  end if;
+end $$;
+-- It accepts THEIR request, not one pointing the other way: jo's request to kai
+-- was accepted by an answer in check 47, and nothing here may have touched the
+-- one lee still has out to nobody. Mira following lee says nothing about the
+-- request mira herself might have sent somebody else.
+reset role;
+\echo check 48 ok: following somebody accepts the request they sent you
+
+-- 49. mark_read() and accept_conversation(): your own side, your own answer.
+-- Ground of its own: two conversations written here, with stamps from 2020 so
+-- "this side did not move" is visible inside one transaction.
+insert into public.conversations (id, a, b, started_by, last_sender_id, a_read_at, b_read_at)
+values ('b1000000-0000-0000-0000-000000000002',
+        'b0000000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000003',
+        'b0000000-0000-0000-0000-000000000003', 'b0000000-0000-0000-0000-000000000003',
+        '2020-01-01 00:00:00+00', '2020-01-01 00:00:00+00');
+
+set local role authenticated;
+-- fern is `a`. Marking read must stamp a_read_at and leave b_read_at in 2020.
+do $$ begin
+  perform set_config('request.jwt.claim.sub', 'b0000000-0000-0000-0000-000000000001', true);
+  perform set_config('request.jwt.claims', '{"sub":"b0000000-0000-0000-0000-000000000001","role":"authenticated"}', true);
+end $$;
+do $$
+declare c public.conversations%rowtype;
+begin
+  perform public.mark_read('b1000000-0000-0000-0000-000000000002');
+  select * into strict c from public.conversations where id = 'b1000000-0000-0000-0000-000000000002';
+  if c.a_read_at = '2020-01-01 00:00:00+00'::timestamptz then
+    raise exception 'check 49 FAILED: marking read did not stamp the caller''s own side';
+  end if;
+  if c.b_read_at <> '2020-01-01 00:00:00+00'::timestamptz then
+    raise exception 'check 49 FAILED: marking read stamped the other person''s side too';
+  end if;
+end $$;
+
+-- hana is `b`, and gets the mirror image.
+do $$ begin
+  perform set_config('request.jwt.claim.sub', 'b0000000-0000-0000-0000-000000000003', true);
+  perform set_config('request.jwt.claims', '{"sub":"b0000000-0000-0000-0000-000000000003","role":"authenticated"}', true);
+end $$;
+do $$
+declare c public.conversations%rowtype;
+begin
+  perform public.mark_read('b1000000-0000-0000-0000-000000000002');
+  select * into strict c from public.conversations where id = 'b1000000-0000-0000-0000-000000000002';
+  if c.b_read_at = '2020-01-01 00:00:00+00'::timestamptz then
+    raise exception 'check 49 FAILED: the `b` side cannot mark its own conversation read';
+  end if;
+end $$;
+
+-- Accepting: hana started this one, so it is not hers to accept.
+do $$
+declare c public.conversations%rowtype;
+begin
+  perform public.accept_conversation('b1000000-0000-0000-0000-000000000002');
+  select * into strict c from public.conversations where id = 'b1000000-0000-0000-0000-000000000002';
+  if c.accepted_at is not null then
+    raise exception 'check 49 FAILED: the person who sent a request accepted it themselves';
+  end if;
+end $$;
+-- fern's, though.
+do $$ begin
+  perform set_config('request.jwt.claim.sub', 'b0000000-0000-0000-0000-000000000001', true);
+  perform set_config('request.jwt.claims', '{"sub":"b0000000-0000-0000-0000-000000000001","role":"authenticated"}', true);
+end $$;
+do $$
+declare c public.conversations%rowtype;
+begin
+  perform public.accept_conversation('b1000000-0000-0000-0000-000000000002');
+  select * into strict c from public.conversations where id = 'b1000000-0000-0000-0000-000000000002';
+  if c.accepted_at is null then
+    raise exception 'check 49 FAILED: the person a request was sent to could not accept it';
+  end if;
+end $$;
+-- And an acceptance that already happened is not re-stamped by calling again.
+reset role;
+update public.conversations set accepted_at = '2020-03-03 00:00:00+00'
+ where id = 'b1000000-0000-0000-0000-000000000002';
+set local role authenticated;
+do $$
+declare c public.conversations%rowtype;
+begin
+  perform public.accept_conversation('b1000000-0000-0000-0000-000000000002');
+  select * into strict c from public.conversations where id = 'b1000000-0000-0000-0000-000000000002';
+  if c.accepted_at <> '2020-03-03 00:00:00+00'::timestamptz then
+    raise exception 'check 49 FAILED: accepting twice moved the acceptance';
+  end if;
+end $$;
+reset role;
+\echo check 49 ok: you mark your own side read, and only the recipient accepts a request
+
+-- 50. Messages are private: a third party reads neither side of a conversation,
+--     only the person a request was sent to can bin it, and nobody may edit or
+--     unsend anything.
+-- Ground of its own: a pending request gus -> hana with a message in it, and an
+-- accepted conversation between jo and mira.
+insert into public.conversations (id, a, b, started_by, last_sender_id, accepted_at)
+values ('b1000000-0000-0000-0000-000000000003',
+        'b0000000-0000-0000-0000-000000000002', 'b0000000-0000-0000-0000-000000000003',
+        'b0000000-0000-0000-0000-000000000002', 'b0000000-0000-0000-0000-000000000002', null),
+       ('b1000000-0000-0000-0000-000000000004',
+        'b0000000-0000-0000-0000-000000000011', 'b0000000-0000-0000-0000-000000000014',
+        'b0000000-0000-0000-0000-000000000011', 'b0000000-0000-0000-0000-000000000011', now());
+insert into public.messages (id, conversation_id, sender_id, body)
+values ('b2000000-0000-0000-0000-000000000001', 'b1000000-0000-0000-0000-000000000003',
+        'b0000000-0000-0000-0000-000000000002', 'unwanted');
+
+set local role authenticated;
+-- lee is in neither conversation.
+do $$ begin
+  perform set_config('request.jwt.claim.sub', 'b0000000-0000-0000-0000-000000000013', true);
+  perform set_config('request.jwt.claims', '{"sub":"b0000000-0000-0000-0000-000000000013","role":"authenticated"}', true);
+end $$;
+do $$ begin
+  if exists (select 1 from public.conversations c where c.id = 'b1000000-0000-0000-0000-000000000003') then
+    raise exception 'check 50 FAILED: a third party can see somebody else''s conversation';
+  end if;
+  if exists (select 1 from public.messages m where m.id = 'b2000000-0000-0000-0000-000000000001') then
+    raise exception 'check 50 FAILED: a third party can read somebody else''s messages';
+  end if;
+  -- Nor can he bin it.
+  delete from public.conversations where id = 'b1000000-0000-0000-0000-000000000003';
+end $$;
+
+-- The two people in it can read it.
+do $$ begin
+  perform set_config('request.jwt.claim.sub', 'b0000000-0000-0000-0000-000000000002', true);
+  perform set_config('request.jwt.claims', '{"sub":"b0000000-0000-0000-0000-000000000002","role":"authenticated"}', true);
+end $$;
+do $$ begin
+  if not exists (select 1 from public.messages m where m.id = 'b2000000-0000-0000-0000-000000000001') then
+    raise exception 'check 50 FAILED: somebody cannot read a message in their own conversation';
+  end if;
+  -- gus sent this request, so it is not his to take back out of hana's inbox.
+  delete from public.conversations where id = 'b1000000-0000-0000-0000-000000000003';
+end $$;
+reset role;
+do $$ begin
+  if not exists (select 1 from public.conversations where id = 'b1000000-0000-0000-0000-000000000003') then
+    raise exception 'check 50 FAILED: a request was binned by somebody it was not sent to';
+  end if;
+end $$;
+
+-- An accepted conversation is not binnable either, by either of them.
+set local role authenticated;
+do $$ begin
+  perform set_config('request.jwt.claim.sub', 'b0000000-0000-0000-0000-000000000014', true);
+  perform set_config('request.jwt.claims', '{"sub":"b0000000-0000-0000-0000-000000000014","role":"authenticated"}', true);
+end $$;
+delete from public.conversations where id = 'b1000000-0000-0000-0000-000000000004';
+reset role;
+do $$ begin
+  if not exists (select 1 from public.conversations where id = 'b1000000-0000-0000-0000-000000000004') then
+    raise exception 'check 50 FAILED: an accepted conversation was deleted';
+  end if;
+end $$;
+
+-- The person it was sent to bins it, and its messages go with it.
+set local role authenticated;
+do $$ begin
+  perform set_config('request.jwt.claim.sub', 'b0000000-0000-0000-0000-000000000003', true);
+  perform set_config('request.jwt.claims', '{"sub":"b0000000-0000-0000-0000-000000000003","role":"authenticated"}', true);
+end $$;
+delete from public.conversations where id = 'b1000000-0000-0000-0000-000000000003';
+reset role;
+do $$ begin
+  if exists (select 1 from public.conversations where id = 'b1000000-0000-0000-0000-000000000003') then
+    raise exception 'check 50 FAILED: a request could not be binned by the person it was sent to';
+  end if;
+  if exists (select 1 from public.messages m where m.id = 'b2000000-0000-0000-0000-000000000001') then
+    raise exception 'check 50 FAILED: binning a request left its messages behind';
+  end if;
+end $$;
+
+do $$ begin
+  -- Nobody edits or unsends a message, and nobody writes the derived columns by
+  -- hand: no update grant on either table, and no delete on messages.
+  if has_table_privilege('authenticated', 'public.conversations', 'update')
+     or has_table_privilege('authenticated', 'public.messages', 'update')
+     or has_table_privilege('authenticated', 'public.messages', 'delete') then
+    raise exception 'check 50 FAILED: authenticated can rewrite a conversation or a message';
+  end if;
+  if has_table_privilege('anon', 'public.conversations', 'select')
+     or has_table_privilege('anon', 'public.messages', 'select') then
+    raise exception 'check 50 FAILED: anon can read messages';
+  end if;
+
+  -- The open conversation, the list and the badge all hang off this.
+  if not exists (select 1 from pg_publication_tables
+                  where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'messages') then
+    raise exception 'check 50 FAILED: public.messages not in supabase_realtime';
+  end if;
+
+  -- send_message is invoker: the two insert policies are what stop a blocked
+  -- sender, and definer would put this function past both of them.
+  if (select p.prosecdef from pg_proc p where p.oid = 'public.send_message(uuid, text)'::regprocedure) then
+    raise exception 'check 50 FAILED: send_message is security definer';
+  end if;
+  -- These three write columns nobody holds UPDATE on, so they have to be.
+  if not (select p.prosecdef from pg_proc p where p.oid = 'public.mark_read(uuid)'::regprocedure)
+     or not (select p.prosecdef from pg_proc p where p.oid = 'public.accept_conversation(uuid)'::regprocedure)
+     or not (select p.prosecdef from pg_proc p where p.oid = 'public.bump_conversation()'::regprocedure)
+     or not (select p.prosecdef from pg_proc p where p.oid = 'public.accept_on_follow()'::regprocedure) then
+    raise exception 'check 50 FAILED: a function that writes the derived columns is not security definer';
+  end if;
+  if has_function_privilege('anon', 'public.send_message(uuid, text)', 'execute')
+     or has_function_privilege('anon', 'public.mark_read(uuid)', 'execute')
+     or has_function_privilege('anon', 'public.accept_conversation(uuid)', 'execute')
+     or not has_function_privilege('authenticated', 'public.send_message(uuid, text)', 'execute')
+     or not has_function_privilege('authenticated', 'public.mark_read(uuid)', 'execute')
+     or not has_function_privilege('authenticated', 'public.accept_conversation(uuid)', 'execute') then
+    raise exception 'check 50 FAILED: the message function execute grants are wrong';
+  end if;
+end $$;
+\echo check 50 ok: a conversation is readable by its two people and nobody else
 
 
 rollback;

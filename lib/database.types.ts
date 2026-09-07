@@ -144,6 +144,113 @@ export type Database = {
           }
         ]
       }
+      conversations: {
+        Row: {
+          a: string
+          a_read_at: string | null
+          accepted_at: string | null
+          b: string
+          b_read_at: string | null
+          id: string
+          last_message_at: string
+          last_preview: string
+          last_sender_id: string
+          started_by: string
+        }
+        Insert: {
+          a: string
+          a_read_at?: string | null
+          accepted_at?: string | null
+          b: string
+          b_read_at?: string | null
+          id?: string
+          last_message_at?: string
+          last_preview?: string
+          last_sender_id: string
+          started_by: string
+        }
+        Update: {
+          a?: string
+          a_read_at?: string | null
+          accepted_at?: string | null
+          b?: string
+          b_read_at?: string | null
+          id?: string
+          last_message_at?: string
+          last_preview?: string
+          last_sender_id?: string
+          started_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversations_a_fkey"
+            columns: ["a"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversations_b_fkey"
+            columns: ["b"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversations_started_by_fkey"
+            columns: ["started_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversations_last_sender_id_fkey"
+            columns: ["last_sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      messages: {
+        Row: {
+          body: string
+          conversation_id: string
+          created_at: string
+          id: string
+          sender_id: string
+        }
+        Insert: {
+          body: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          sender_id: string
+        }
+        Update: {
+          body?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       link_previews: {
         Row: {
           description: string | null
@@ -580,6 +687,25 @@ export type Database = {
           id: string
           depth: number
         }[]
+      }
+      accept_conversation: {
+        Args: {
+          conversation: string
+        }
+        Returns: undefined
+      }
+      mark_read: {
+        Args: {
+          conversation: string
+        }
+        Returns: undefined
+      }
+      send_message: {
+        Args: {
+          to_user: string
+          body: string
+        }
+        Returns: Database["public"]["Tables"]["messages"]["Row"]
       }
       search_peels: {
         Args: {

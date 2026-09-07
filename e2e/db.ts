@@ -40,6 +40,10 @@ export async function resetData(): Promise<void> {
   // keying on the url -- so the next run would find one already there and never
   // knock on the page the suite is serving.
   await rest("link_previews?url=not.is.null", { method: "DELETE", token });
+  // Conversations outlive peels entirely -- they are about people, not posts --
+  // so without this the second run finds ada already talking to bob, with a
+  // request already accepted and a badge already cleared. Messages cascade.
+  await rest("conversations?id=not.is.null", { method: "DELETE", token });
   for (const user of Object.values(USERS)) {
     await rest(`profiles?username=eq.${user.username}`, {
       method: "PATCH",

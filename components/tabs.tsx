@@ -1,6 +1,6 @@
 "use client";
 
-// The bottom bar: Feed, Explore, the compose button, Alerts, You. Fixed to the
+// The bottom bar: Feed, Explore, the compose button, Alerts, Messages. Fixed to the
 // viewport, inset to the column's gutters. Phones only: from the tablet
 // breakpoint the side rail (side-nav.tsx) takes over and this hides.
 import * as stylex from "@stylexjs/stylex";
@@ -8,7 +8,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { bp, colors, fonts, shape } from "@/app/tokens.stylex";
 import { Button } from "./button";
-import { BellIcon, HomeIcon, PlusIcon, SearchIcon, UserIcon } from "./icons";
+import { BellIcon, HomeIcon, MailIcon, PlusIcon, SearchIcon } from "./icons";
 import { UnreadBadge } from "./unread-badge";
 
 /** A prefix only counts at a path boundary: `/u/ada` is not inside `/u/adam`. */
@@ -17,9 +17,8 @@ export function isOn(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function Tabs({ username, onCompose }: { username: string; onCompose: () => void }) {
+export function Tabs({ onCompose }: { onCompose: () => void }) {
   const pathname = usePathname();
-  const you = `/u/${username}`;
 
   return (
     <nav {...stylex.props(styles.bar)} aria-label="Main">
@@ -40,8 +39,11 @@ export function Tabs({ username, onCompose }: { username: string; onCompose: () 
         <UnreadBadge />
       </Tab>
 
-      <Tab href={you} label="You" on={isOn(pathname, you)}>
-        <UserIcon style={styles.icon} />
+      {/* Messages has the fifth slot from here on; your own profile is behind
+          the avatar on the home band, and behind your handle anywhere it
+          appears. Five is what fits on a phone. */}
+      <Tab href="/messages" label="Messages" on={isOn(pathname, "/messages")}>
+        <MailIcon style={styles.icon} />
       </Tab>
     </nav>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-// The rail: the mark, the four destinations and the compose button. The bottom
+// The rail: the mark, the five destinations and the compose button. The bottom
 // bar's twin from the tablet breakpoint up; hidden below it. Icons stacked over
 // small labels until the wide breakpoint, where it grows to the labelled column.
 import * as stylex from "@stylexjs/stylex";
@@ -8,7 +8,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { bp, colors, fonts, shape } from "@/app/tokens.stylex";
 import { Button } from "./button";
-import { BellIcon, HomeIcon, PlusIcon, SearchIcon, UserIcon } from "./icons";
+import { BellIcon, HomeIcon, MailIcon, PlusIcon, SearchIcon, UserIcon } from "./icons";
 import { isOn } from "./tabs";
 import { UnreadBadge } from "./unread-badge";
 
@@ -34,6 +34,10 @@ export function SideNav({ username, onCompose }: { username: string; onCompose: 
         <BellIcon style={styles.icon} />
         <UnreadBadge />
       </Item>
+      <Item href="/messages" label="Messages" on={isOn(pathname, "/messages")}>
+        <MailIcon style={styles.icon} />
+      </Item>
+      {/* The rail has the room the phone bar does not, so You keeps its place here. */}
       <Item href={you} label="You" on={isOn(pathname, you)}>
         <UserIcon style={styles.icon} />
       </Item>

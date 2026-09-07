@@ -58,6 +58,12 @@ export const bp = stylex.defineConsts({
   desktop: "@media (min-width: 1024px)",
   /** The rail widens and its labels sit beside the icons. */
   wide: "@media (min-width: 1280px)",
+  /**
+   * Messages only: the width at which the conversation list and the open
+   * conversation fit side by side. Nothing else uses it -- it is the one place
+   * in the app where two screens share a column.
+   */
+  split: "@media (min-width: 768px)",
   hover: "@media (hover: hover)",
   reduce: "@media (prefers-reduced-motion: reduce)",
 });

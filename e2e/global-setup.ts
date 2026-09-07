@@ -14,6 +14,8 @@ const LATER_TABLES = [
   "mutes",
   "blocks",
   "link_previews",
+  "conversations",
+  "messages",
 ];
 
 /**
@@ -64,6 +66,15 @@ async function assertSchema(): Promise<void> {
     body: JSON.stringify({ items: [] }),
   });
   if (thread.status === 404) throw stale("The `add_thread` function");
+
+  // Sending is a function too, and it is the only way a message is ever written:
+  // a stack without it has the tables and still cannot say a word.
+  const send = await fetch(`${apiUrl}/rest/v1/rpc/send_message`, {
+    method: "POST",
+    headers: { ...headers, "Content-Type": "application/json" },
+    body: JSON.stringify({ to_user: "00000000-0000-0000-0000-000000000000", body: "" }),
+  });
+  if (send.status === 404) throw stale("The `send_message` function");
 
   // Uploads go to Storage, which the migration provisions through a function
   // that reports rather than raises -- so its bucket is worth its own check.

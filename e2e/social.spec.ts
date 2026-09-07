@@ -1770,3 +1770,92 @@ test("25. the composer offers people after @, and the one ada picks gets the bel
   await expect(rang).toHaveCount(1);
   await expect(rang).toContainText(mention);
 });
+
+// Slice 11: messages.
+/** Ada's row in bob's list: her name, so it cannot match the navigation. */
+const BOB_ROW_MATCH = "Ada Lovelace";
+const ADA_HELLO = "bob, are you awake";
+const BOB_ANSWER = "wide awake, ada";
+
+test("26. ada writes to bob from his profile, and his answer arrives without a reload", async ({
+  open,
+}) => {
+  // Its own ground. Tests 10 and 13 both take the bob -> ada follow away, and
+  // whether the recipient follows the sender is exactly what decides between an
+  // ordinary conversation and a request -- so this one puts it back rather than
+  // inheriting whatever the run before it left. (Requests are test 27's subject.)
+  const bobApi = await restAs("bob");
+  const adaApi = await restAs("ada");
+  await bobApi.remove(`follows?follower_id=eq.${bobApi.id}&followee_id=eq.${adaApi.id}`);
+  await bobApi.insert("follows", { follower_id: bobApi.id, followee_id: adaApi.id });
+
+  const ada = await open("ada");
+  const bob = await open("bob");
+
+  // Nothing has been said yet, so bob has no inbox at all.
+  await bob.goto("/messages");
+  await expect(bob.getByText("No messages yet")).toBeVisible();
+
+  // The way in is the button on his profile.
+  await ada.goto("/u/bob");
+  // `exact`, or it also matches the bar's own "Messages" -- the trap mvp test 6
+  // set for @ada and the rail.
+  await ada.getByRole("link", { name: "Message", exact: true }).click();
+  await expect(ada).toHaveURL(`${BASE_URL}/messages/with/bob`);
+  await expect(ada.getByText(`This is the start of your conversation with ${BOB}`)).toBeVisible();
+
+  // Opening a conversation is not starting one: the row is written by the first
+  // message and by nothing else.
+  await bob.reload();
+  await expect(bob.getByText("No messages yet")).toBeVisible();
+
+  // A conversation owns the bottom edge of a phone, so the bar stands aside and
+  // the way back is the arrow in the head.
+  await expect(ada.getByRole("navigation", { name: "Main" })).toHaveCount(0);
+  await expect(ada.getByRole("link", { name: "Back to messages" })).toBeVisible();
+
+  const box = ada.getByRole("textbox", { name: "Message @bob" });
+  await box.fill(ADA_HELLO);
+  await ada.getByRole("button", { name: "Send" }).click();
+
+  // Sent: the words are on the screen, the box is empty again, and the url has
+  // become the conversation the message just made.
+  await expect(ada.getByText(ADA_HELLO)).toBeVisible();
+  await expect(box).toHaveValue("");
+  await expect(ada).toHaveURL(new RegExp(`^${BASE_URL}/messages/[0-9a-f-]{36}$`));
+
+  // Bob follows ada, so it is an ordinary conversation rather than a request:
+  // straight into his list, with the preview and a dot on it.
+  await bob.reload();
+  const row = bob.getByRole("link").filter({ hasText: BOB_ROW_MATCH });
+  await expect(row).toHaveCount(1);
+  await expect(row).toContainText(ADA_HELLO);
+  await expect(bob.getByRole("img", { name: "Unread" })).toHaveCount(1);
+
+  // Opening it clears the dot and shows what she said. The read mark is waited
+  // for as the request it makes, not as a dot that goes: toHaveCount(0) is true
+  // the instant before an element renders as well as the instant after it goes,
+  // so on its own it would pass against a screen that never marked anything.
+  const marked = bob.waitForResponse((response) =>
+    response.url().includes("/rest/v1/rpc/mark_read"),
+  );
+  await row.click();
+  await expect(bob.getByText(ADA_HELLO)).toBeVisible();
+  await marked;
+  await bob.goto("/messages");
+  await expect(bob.getByRole("img", { name: "Unread" })).toHaveCount(0);
+
+  // Ada's page is left open on the conversation. Bob answers, and it lands
+  // there with nothing reloaded.
+  const live = subscribed(ada, "conversation");
+  await ada.reload();
+  await live;
+
+  await bob.goto("/messages");
+  await bob.getByRole("link").filter({ hasText: BOB_ROW_MATCH }).click();
+  await bob.getByRole("textbox", { name: "Message @ada" }).fill(BOB_ANSWER);
+  await bob.getByRole("button", { name: "Send" }).click();
+
+  await expect(ada.getByText(BOB_ANSWER)).toBeVisible();
+  await shot(ada, "conversation-mobile");
+});

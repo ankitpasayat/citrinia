@@ -29,6 +29,10 @@ export function FeedShell({
   const [open, setOpen] = useState(false);
   const close = useCallback(() => setOpen(false), []);
   const pathname = usePathname();
+  // Inside a conversation the composer owns the bottom edge of a phone, so the
+  // bar stands aside. /messages/new is a search screen rather than a
+  // conversation, and keeps it.
+  const inConversation = pathname.startsWith("/messages/") && pathname !== "/messages/new";
 
   return (
     <>
@@ -41,7 +45,7 @@ export function FeedShell({
           {aside}
         </aside>
       </div>
-      <Tabs username={username} onCompose={() => setOpen(true)} />
+      {!inConversation && <Tabs onCompose={() => setOpen(true)} />}
       <ComposeSheet open={open} onClose={close} />
     </>
   );

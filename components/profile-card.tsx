@@ -14,7 +14,7 @@ import { BlockButton } from "./block-button";
 import { Button, buttonStyles } from "./button";
 import { EditProfileButton } from "./edit-profile-sheet";
 import { FollowButton } from "./follow-button";
-import { BookmarkIcon, CalendarIcon, GearIcon, LinkIcon, LogOutIcon, MapPinIcon } from "./icons";
+import { BookmarkIcon, CalendarIcon, GearIcon, LinkIcon, LogOutIcon, MailIcon, MapPinIcon } from "./icons";
 import { ProfileMenu } from "./profile-menu";
 
 export type ProfileCounts = { peels: number; followers: number; following: number };
@@ -173,7 +173,26 @@ export function ProfileCard({
                 <BlockButton profileId={profile.id} handle={profile.username} isBlocked />
               ) : (
                 !blockedByThem && (
-                  <FollowButton profileId={profile.id} isFollowing={isFollowing} />
+                  <>
+                    <FollowButton profileId={profile.id} isFollowing={isFollowing} />
+                    {/* The way into a conversation from anywhere a person is.
+                        It opens one whether or not they have ever spoken --
+                        /messages/with decides that, and nothing is written
+                        until a message is sent. Not shown across a block, for
+                        the same reason Follow is not: the send would be
+                        refused. */}
+                    <Link
+                      href={`/messages/with/${encodeURIComponent(profile.username)}`}
+                      {...stylex.props(
+                        buttonStyles.base,
+                        buttonStyles.variants.secondary,
+                        buttonStyles.sizes.sm,
+                      )}
+                    >
+                      <MailIcon />
+                      Message
+                    </Link>
+                  </>
                 )
               )}
               <ProfileMenu profileId={profile.id} handle={profile.username} isMuted={isMuted} />

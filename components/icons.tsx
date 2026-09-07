@@ -120,6 +120,24 @@ export function MonitorIcon(p: IconProps) {
   );
 }
 
+export function MailIcon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <rect x="3" y="5" width="18" height="14" rx="3" {...stroke} />
+      <path {...stroke} d="M4 8l7.1 4.7a2 2 0 0 0 2.2 0L20.5 8" />
+    </Svg>
+  );
+}
+
+export function SendIcon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path {...stroke} d="M4.5 12L20 4.5 15 20l-3.3-5.4L4.5 12z" />
+      <path {...stroke} d="M11.7 14.6L20 4.5" />
+    </Svg>
+  );
+}
+
 export function ReplyIcon(p: IconProps) {
   return (
     <Svg {...p}>
