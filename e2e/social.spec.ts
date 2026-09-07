@@ -1647,3 +1647,60 @@ test("23. a link in a peel gets a card, fetched once and drawn from the url", as
   await expect(card(bob, shared).getByRole("link", { name: new RegExp(OG_TITLE) })).toBeVisible();
   expect(ogFetches, "a link shared twice is fetched once").toBe(1);
 });
+
+test("24. ada peels a thread, and it lands as one chain in the order she wrote it", async ({
+  open,
+}) => {
+  const one = "a thread about marmalade, part one";
+  const two = "part two: the setting point is a lie";
+  const three = "part three: it sets when it feels like it";
+
+  const ada = await open("ada");
+  await ada.goto("/");
+  await ada.getByRole("button", { name: "New peel", exact: true }).click();
+
+  // One box to start with, and the button offers to post one peel.
+  const sheet = ada.getByRole("dialog");
+  await expect(sheet.getByRole("button", { name: "Peel it" })).toBeVisible();
+  await sheet.getByRole("textbox", { name: "Your peel" }).fill(one);
+
+  await sheet.getByRole("button", { name: "Add another" }).click();
+  await sheet.getByRole("textbox", { name: "Peel 2" }).fill(two);
+
+  // Each box counts its own characters. The second box is not told how much
+  // room the first one used, because it is a different peel.
+  await expect(sheet.getByText(`${280 - one.length} left`)).toBeVisible();
+  await expect(sheet.getByText(`${280 - two.length} left`)).toBeVisible();
+
+  // A box with nothing in it is not a peel, so the whole thread waits.
+  await sheet.getByRole("button", { name: "Add another" }).click();
+  const post = sheet.getByRole("button", { name: "Peel all" });
+  await expect(post).toBeDisabled();
+  await sheet.getByRole("textbox", { name: "Peel 3" }).fill(three);
+  await expect(post).toBeEnabled();
+
+  const posted = actionWrite(ada);
+  await post.click();
+  await posted;
+
+  // The feed shows the first peel and only the first: the other two are replies
+  // to it, and replies do not sit at the top level.
+  await expect(card(ada, one)).toHaveCount(1);
+  await expect(card(ada, two)).toHaveCount(0);
+  await expect(card(ada, three)).toHaveCount(0);
+
+  // The chain, from the middle of it: part one above, part three below, and the
+  // one she opened between them. Reading the ancestors is slice 1's walk, so
+  // this is also proof the parent_ids really do point back up the thread.
+  await card(ada, one).getByRole("link", { name: "Open this peel" }).click();
+  await expect(ada.getByRole("article").filter({ hasText: two })).toHaveCount(1);
+  await ada.getByRole("article").filter({ hasText: two }).getByRole("link", { name: "Open this peel" }).click();
+
+  const chain = ada.getByRole("article");
+  await expect(chain).toHaveCount(3);
+  await expect(chain.nth(0)).toContainText(one);
+  await expect(chain.nth(1)).toContainText(two);
+  await expect(chain.nth(2)).toContainText(three);
+
+  await shot(ada, "thread-composed-mobile");
+});

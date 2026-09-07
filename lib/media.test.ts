@@ -1,5 +1,5 @@
-// Spec: the composer sends its attachments as one JSON form field. parseMedia()
-// is the gate between that string and the peel_media table, so it has to reject
+// Spec: the composer sends each box's attachments as a list inside `items`.
+// parseMedia() is the gate between that list and the peel_media table, so it has to reject
 // everything the table's constraints would reject (https urls, four kinds, 200
 // characters of alt) plus the two rules the table cannot express: at most four
 // attachments, and a video or a YouTube link peels on its own.
@@ -14,17 +14,17 @@ import { MAX_ALT, MAX_MEDIA, objectPath, parseMedia, youtubeId, youtubeThumbnail
 const IMAGE = { kind: "image", url: "https://cdn.example.com/lemon.png", alt: "a lemon" };
 
 test("loopback http URLs from a local Supabase stack are accepted; other http is not", () => {
-  const local = parseMedia(JSON.stringify([{ ...IMAGE, url: "http://127.0.0.1:54321/storage/v1/object/public/media/u/x.png" }]));
+  const local = parseMedia([{ ...IMAGE, url: "http://127.0.0.1:54321/storage/v1/object/public/media/u/x.png" }]);
   assert.ok(Array.isArray(local), "127.0.0.1 accepted");
-  const localhost = parseMedia(JSON.stringify([{ ...IMAGE, url: "http://localhost:54321/storage/v1/object/public/media/u/x.png" }]));
+  const localhost = parseMedia([{ ...IMAGE, url: "http://localhost:54321/storage/v1/object/public/media/u/x.png" }]);
   assert.ok(Array.isArray(localhost), "localhost accepted");
-  const remote = parseMedia(JSON.stringify([{ ...IMAGE, url: "http://cdn.example.com/lemon.png" }]));
+  const remote = parseMedia([{ ...IMAGE, url: "http://cdn.example.com/lemon.png" }]);
   assert.ok(!Array.isArray(remote) && "error" in remote, "plain http rejected");
 });
 
-/** parseMedia takes the raw form value, which is a JSON string or nothing. */
+/** parseMedia takes one box's `media`, which is a list or nothing. */
 function parse(items: unknown) {
-  return parseMedia(JSON.stringify(items));
+  return parseMedia(items);
 }
 
 function ok(result: PeelMedia[] | { error: string }): PeelMedia[] {
@@ -37,10 +37,9 @@ function err(result: PeelMedia[] | { error: string }): string {
   return result.error;
 }
 
-test("no media field at all means no media, not an error", () => {
+test("no media on a box means no media, not an error", () => {
   assert.deepEqual(parseMedia(null), []);
   assert.deepEqual(parseMedia(undefined), []);
-  assert.deepEqual(parseMedia(""), []);
   assert.deepEqual(parse([]), []);
 });
 
@@ -84,13 +83,15 @@ test("four attachments are fine, five are not", () => {
   assert.match(err(parse([...four, IMAGE])), /four/i);
 });
 
-test("the field has to be a JSON array of objects", () => {
-  assert.ok(err(parseMedia("not json")));
-  assert.ok(err(parseMedia("{}")));
-  assert.ok(err(parse("a string")));
+test("the field has to be a list of objects", () => {
+  // A string is not a list, however JSON-ish it looks: parsing happens once, in
+  // lib/thread.ts, and what reaches here is already a value.
+  assert.ok(err(parse("not json")));
+  assert.ok(err(parse("")));
+  assert.ok(err(parse({})));
   assert.ok(err(parse([null])));
   assert.ok(err(parse(["https://cdn.example.com/1.png"])));
-  assert.ok(err(parseMedia(123)));
+  assert.ok(err(parse(123)));
 });
 
 test("only the four known kinds are accepted", () => {

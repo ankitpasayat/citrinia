@@ -1,8 +1,9 @@
 "use client";
 
 // The inline reply box under a peel. Same rules as the compose sheet, minus the
-// sheet and minus the file picker (a reply with a picture is a peel; use the +):
-// post, clear, and let the revalidated thread show the new reply.
+// sheet, minus the file picker (a reply with a picture is a peel; use the +) and
+// minus the thread: a chain is composed somewhere you can see all of it at once.
+// Post, clear, and let the revalidated thread show the new reply.
 import * as stylex from "@stylexjs/stylex";
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useRef, useState } from "react";
@@ -20,9 +21,11 @@ export function ReplyComposer({ parentId, replyingTo }: { parentId: string; repl
 
   // A YouTube link in the text becomes a player. The link stays in the text: it
   // is what they wrote, and removing words nobody asked us to remove is rude.
+  //
+  // One box is a thread of one, and it goes up the same way, so there is a
+  // single shape on the wire and a single gate on the other side of it.
   async function submit(_prev: ActionResult, formData: FormData): Promise<ActionResult> {
-    const media = youtubeMedia(String(formData.get("title") ?? ""));
-    if (media.length > 0) formData.set("media", JSON.stringify(media));
+    formData.set("items", JSON.stringify([{ title: text, media: youtubeMedia(text) }]));
     return addPeel({}, formData);
   }
 
@@ -45,7 +48,6 @@ export function ReplyComposer({ parentId, replyingTo }: { parentId: string; repl
     <form action={formAction} {...stylex.props(styles.card)}>
       <input type="hidden" name="parent_id" value={parentId} />
       <Textarea
-        name="title"
         rows={3}
         onSurface
         invalid={over}

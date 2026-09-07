@@ -5,10 +5,10 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { firstPreviewLink } from "@/lib/link-preview";
 import { recordLinkPreview } from "@/lib/link-preview-fetch";
-import { objectPath, parseMedia } from "@/lib/media";
-import { parseTitle } from "@/lib/peel";
+import { objectPath } from "@/lib/media";
 import { parseHandle, parseProfile } from "@/lib/profile";
 import { parseReport } from "@/lib/report";
+import { parseThread } from "@/lib/thread";
 
 export type ActionResult = {
   error?: string;
@@ -28,12 +28,21 @@ async function viewer() {
   return { supabase, user };
 }
 
-/** Insert a peel for the signed-in user. Shaped for useActionState; call as addPeel({}, formData) otherwise. */
+/**
+ * Post what the composer wrote: one peel, or a thread of them as a chain. Shaped
+ * for useActionState; call as addPeel({}, formData) otherwise.
+ *
+ * Every box goes up in one add_thread() call, which is one transaction, so a
+ * thread posts whole or not at all -- there is no state where three of your five
+ * peels are live and the rest are gone. A single peel takes the same route,
+ * because a peel and a thread of one are the same act.
+ */
 export async function addPeel(_prev: ActionResult, formData: FormData): Promise<ActionResult> {
-  const parsed = parseTitle(formData.get("title"));
-  if ("error" in parsed) return { error: parsed.error };
+  const items = parseThread(formData.get("items"));
+  if (!Array.isArray(items)) return { error: items.error };
 
   // A reply carries the peel it hangs off; a quote carries the peel it embeds.
+  // Both belong to the first box: the rest are replies to the one before them.
   const rawParent = formData.get("parent_id");
   const parentId = typeof rawParent === "string" && rawParent !== "" ? rawParent : null;
   if (parentId !== null && !UUID.test(parentId)) return { error: "Couldn't post that reply. Try again." };
@@ -42,41 +51,32 @@ export async function addPeel(_prev: ActionResult, formData: FormData): Promise<
   const quoteId = typeof rawQuote === "string" && rawQuote !== "" ? rawQuote : null;
   if (quoteId !== null && !UUID.test(quoteId)) return { error: "Couldn't quote that peel. Try again." };
 
-  const media = parseMedia(formData.get("media"));
-  if (!Array.isArray(media)) return { error: media.error };
+  const { supabase } = await viewer();
 
-  const { supabase, user } = await viewer();
-
-  // A link in the text gets a card. The fetch runs beside the insert rather than
-  // after it -- the two are independent, since the preview is keyed by the url
-  // and not by this peel -- so posting costs whichever of the two is slower and
-  // never the sum of them. It has a three-second ceiling and swallows
+  // A link in the text gets a card. The fetches run beside the insert rather
+  // than after it -- they are independent, since a preview is keyed by the url
+  // and not by the peel that mentioned it -- so posting costs the slowest of
+  // them and never the sum. Each has a three-second ceiling and swallows
   // everything: a slow or hostile page means no card, never a failed post.
   //
-  // Nothing is fetched for a peel that carries media or a quote, because the
-  // card would have nowhere to go; attachPreviews skips exactly the same ones.
-  const link = media.length === 0 && quoteId === null ? firstPreviewLink(parsed.title) : null;
+  // Nothing is fetched for a box that carries media, or for the first one when
+  // it quotes, because the card would have nowhere to go; attachPreviews skips
+  // exactly the same ones. A url written twice in one thread is fetched once.
+  const links = [
+    ...new Set(
+      items
+        .filter((item, at) => item.media.length === 0 && !(at === 0 && quoteId !== null))
+        .map((item) => firstPreviewLink(item.title))
+        .filter((link) => link !== null),
+    ),
+  ];
 
-  const [{ data: peel, error }] = await Promise.all([
-    supabase
-      .from("peels")
-      .insert({ title: parsed.title, user_id: user.id, parent_id: parentId, quote_id: quoteId })
-      .select("id")
-      .single(),
-    link === null ? Promise.resolve() : recordLinkPreview(supabase, link),
+  const [{ error }] = await Promise.all([
+    supabase.rpc("add_thread", { items, parent: parentId, quote: quoteId }),
+    Promise.all(links.map((link) => recordLinkPreview(supabase, link))),
   ]);
-  if (error || !peel) return { error: "Couldn't post that peel. Try again." };
-
-  if (media.length > 0) {
-    const { error: mediaError } = await supabase
-      .from("peel_media")
-      .insert(media.map((item, position) => ({ peel_id: peel.id, position, ...item })));
-    // A peel without the pictures they attached is not the peel they wrote, so
-    // compost it and let them try again rather than post half of it.
-    if (mediaError) {
-      await supabase.from("peels").delete().eq("id", peel.id);
-      return { error: "Couldn't attach that media. Try again." };
-    }
+  if (error) {
+    return { error: items.length > 1 ? "Couldn't post that thread. Try again." : "Couldn't post that peel. Try again." };
   }
 
   revalidatePath("/");

@@ -68,8 +68,8 @@ users, in one narrative on one database:
 - `e2e/social.spec.ts` — repeel, quote, bookmarks, notifications and the unread
   badge, @mentions and #hashtags, YouTube links, the media picker and the
   upload a composted peel takes with it, cursor pagination, the "N new peels"
-  announcement, who to follow, the ancestors above an opened reply, and the card
-  a link gets under it.
+  announcement, who to follow, the ancestors above an opened reply, the card
+  a link gets under it, and a thread posted as one chain.
 
 GitHub OAuth cannot be completed headlessly, so the suite runs against a
 **local** Supabase stack and mints its sessions with the password grant
@@ -103,7 +103,8 @@ pnpm e2e
 
 Global setup checks the schema before anything runs and says to reset if the
 `reposts`, `bookmarks`, `peel_media` or `notifications` tables, the
-`peel_ancestors` function, or the `media` Storage bucket are not there yet.
+`peel_ancestors` or `add_thread` functions, or the `media` Storage bucket are
+not there yet.
 
 A file uploaded through the composer comes back from the local stack's Storage
 as `http://127.0.0.1:54321/…`; `lib/media.ts` and the `peel_media_url_https`

@@ -2238,6 +2238,211 @@ end $$;
 reset role;
 \echo check 43 ok: link previews are shared, written once, and never rewritten
 
+--------------------------------------------------------------------------------
+-- 44. add_thread: a chain that posts whole or not at all.
+--------------------------------------------------------------------------------
+
+-- Its own ground: two people and two peels nothing else in this file touches.
+insert into auth.users (id, instance_id, aud, role, email, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
+values ('a4000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+        'thready@example.com', '{"provider":"github"}', '{"user_name":"threadyverify","avatar_url":""}', now(), now()),
+       ('a4000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+        'blocky@example.com', '{"provider":"github"}', '{"user_name":"blockyverify","avatar_url":""}', now(), now());
+
+insert into public.peels (id, title, user_id) values
+  ('a5000000-0000-0000-0000-000000000001', 'the peel a thread answers', 'a4000000-0000-0000-0000-000000000002'),
+  ('a5000000-0000-0000-0000-000000000002', 'the peel a thread quotes', 'a4000000-0000-0000-0000-000000000002');
+
+set local role authenticated;
+do $$ begin
+  perform set_config('request.jwt.claim.sub', 'a4000000-0000-0000-0000-000000000001', true);
+  perform set_config('request.jwt.claims', '{"sub":"a4000000-0000-0000-0000-000000000001","role":"authenticated"}', true);
+end $$;
+
+-- The shape of the thing: three peels, the first answering a peel and quoting
+-- another, each one after it a reply to the one before, pictures where they were
+-- put and nowhere else.
+do $$
+declare
+  made uuid[];
+  p public.peels%rowtype;
+begin
+  made := public.add_thread(
+    jsonb_build_array(
+      jsonb_build_object('title', 'verifythread one',
+                         'media', jsonb_build_array(
+                           jsonb_build_object('kind', 'image', 'url', 'https://ada.dev/a.png',
+                                              'alt', 'first', 'width', 10, 'height', 20),
+                           jsonb_build_object('kind', 'image', 'url', 'https://ada.dev/b.png', 'alt', 'second'))),
+      jsonb_build_object('title', 'verifythread two, and @blockyverify is in it'),
+      -- A missing key and an explicit json null both mean "nothing attached".
+      jsonb_build_object('title', 'verifythread three', 'media', null)),
+    'a5000000-0000-0000-0000-000000000001',
+    'a5000000-0000-0000-0000-000000000002');
+
+  if cardinality(made) <> 3 then
+    raise exception 'check 44 FAILED: a thread of three made % peels', cardinality(made);
+  end if;
+
+  select * into strict p from public.peels where id = made[1];
+  if p.parent_id is distinct from 'a5000000-0000-0000-0000-000000000001'::uuid
+     or p.quote_id is distinct from 'a5000000-0000-0000-0000-000000000002'::uuid
+     or p.user_id <> 'a4000000-0000-0000-0000-000000000001'
+     or p.title <> 'verifythread one' then
+    raise exception 'check 44 FAILED: the first peel of the thread is %', p;
+  end if;
+
+  select * into strict p from public.peels where id = made[2];
+  if p.parent_id is distinct from made[1] then
+    raise exception 'check 44 FAILED: the second peel is not a reply to the first, it hangs off %', p.parent_id;
+  end if;
+  -- A quote embeds one peel; repeating the card down the chain is not a thread.
+  if p.quote_id is not null then
+    raise exception 'check 44 FAILED: the quote was repeated on the second peel';
+  end if;
+
+  select * into strict p from public.peels where id = made[3];
+  if p.parent_id is distinct from made[2] or p.title <> 'verifythread three' then
+    raise exception 'check 44 FAILED: the third peel is %', p;
+  end if;
+
+  if (select count(*) from public.peel_media m where m.peel_id = made[1]) <> 2
+     or (select count(*) from public.peel_media m where m.peel_id = made[2]) <> 0
+     or (select count(*) from public.peel_media m where m.peel_id = made[3]) <> 0 then
+    raise exception 'check 44 FAILED: the pictures did not stay on the peel they were attached to';
+  end if;
+  -- `is distinct from` rather than `<>`: a row that moved leaves the subquery
+  -- empty, and `null <> 'x'` is null, which an `if` treats as "fine".
+  if (select m.url from public.peel_media m where m.peel_id = made[1] and m.position = 0)
+       is distinct from 'https://ada.dev/a.png'
+     or (select m.alt from public.peel_media m where m.peel_id = made[1] and m.position = 1)
+       is distinct from 'second' then
+    raise exception 'check 44 FAILED: media position does not follow the order of the array';
+  end if;
+  if (select m.width from public.peel_media m where m.peel_id = made[1] and m.position = 0) is distinct from 10
+     or (select m.height from public.peel_media m where m.peel_id = made[1] and m.position = 1) is not null then
+    raise exception 'check 44 FAILED: media dimensions did not come through as given';
+  end if;
+end $$;
+
+-- The notify trigger is per row, so it fires for every peel in the chain and not
+-- only the one that started it. Read as the owner: a notification is the
+-- recipient's to see, and the recipient is not the person posting.
+reset role;
+do $$ begin
+  if not exists (select 1 from public.notifications n
+                  join public.peels p on p.id = n.peel_id
+                  where n.user_id = 'a4000000-0000-0000-0000-000000000002'
+                    and n.type = 'mention' and p.title like 'verifythread two%') then
+    raise exception 'check 44 FAILED: a mention in the middle of a thread did not ring';
+  end if;
+  if (select count(*) from public.notifications n
+       where n.user_id = 'a4000000-0000-0000-0000-000000000002' and n.type = 'reply') <> 1 then
+    raise exception 'check 44 FAILED: the thread rang % reply bells rather than one',
+      (select count(*) from public.notifications n
+        where n.user_id = 'a4000000-0000-0000-0000-000000000002' and n.type = 'reply');
+  end if;
+end $$;
+
+set local role authenticated;
+do $$ begin
+  perform set_config('request.jwt.claim.sub', 'a4000000-0000-0000-0000-000000000001', true);
+  perform set_config('request.jwt.claims', '{"sub":"a4000000-0000-0000-0000-000000000001","role":"authenticated"}', true);
+end $$;
+
+-- Whole or nothing. This is the entire reason the chain is a function rather
+-- than a loop in the server action: the peels before the bad one must not exist
+-- afterwards, and no amount of tidying up in the app can promise that.
+do $$
+declare before_count int;
+begin
+  select count(*) into before_count from public.peels p where p.user_id = 'a4000000-0000-0000-0000-000000000001';
+
+  begin
+    perform public.add_thread(jsonb_build_array(
+      jsonb_build_object('title', 'verifyatomic one'),
+      jsonb_build_object('title', 'verifyatomic two'),
+      jsonb_build_object('title', repeat('x', 281))));
+    raise exception 'check 44 FAILED: a thread with an over-long peel in it posted';
+  exception when check_violation then null; end;
+
+  -- A picture is the other half of an item, and it fails the same way.
+  begin
+    perform public.add_thread(jsonb_build_array(
+      jsonb_build_object('title', 'verifyatomic three'),
+      jsonb_build_object('title', 'verifyatomic four',
+                         'media', jsonb_build_array(
+                           jsonb_build_object('kind', 'image', 'url', 'http://evil.example/x.png', 'alt', 'no')))));
+    raise exception 'check 44 FAILED: a thread carrying an unstorable picture posted';
+  exception when check_violation then null; end;
+
+  if (select count(*) from public.peels p where p.user_id = 'a4000000-0000-0000-0000-000000000001') <> before_count then
+    raise exception 'check 44 FAILED: a failed thread left peels behind';
+  end if;
+  if exists (select 1 from public.peels p where p.title like 'verifyatomic%') then
+    raise exception 'check 44 FAILED: the peels before the failure are still there';
+  end if;
+end $$;
+
+-- The bounds, and the length that is meant to work. 25 is peel_ancestors()'s
+-- depth, so the last peel of the longest thread can still draw its whole chain.
+do $$ begin
+  perform public.add_thread('[]'::jsonb);
+  raise exception 'check 44 FAILED: an empty thread posted';
+exception when invalid_parameter_value then null; end $$;
+do $$ begin
+  perform public.add_thread('"not an array"'::jsonb);
+  raise exception 'check 44 FAILED: something that is not an array of peels posted';
+exception when invalid_parameter_value then null; end $$;
+do $$ begin
+  perform public.add_thread((select jsonb_agg(jsonb_build_object('title', 'verifyover ' || n) order by n)
+                               from generate_series(1, 26) n));
+  raise exception 'check 44 FAILED: a 26-peel thread posted';
+exception when invalid_parameter_value then null; end $$;
+do $$
+declare made uuid[];
+begin
+  made := public.add_thread((select jsonb_agg(jsonb_build_object('title', 'verifylong ' || n) order by n)
+                               from generate_series(1, 25) n));
+  if cardinality(made) <> 25 then
+    raise exception 'check 44 FAILED: 25 peels is meant to be allowed, % came back', cardinality(made);
+  end if;
+  if (select p.parent_id from public.peels p where p.id = made[25]) is distinct from made[24] then
+    raise exception 'check 44 FAILED: the chain broke somewhere before the 25th peel';
+  end if;
+end $$;
+
+-- Not a way past anything: the peels insert policy still runs, so a thread
+-- cannot answer somebody who has blocked you.
+reset role;
+insert into public.blocks (blocker_id, blocked_id)
+values ('a4000000-0000-0000-0000-000000000002', 'a4000000-0000-0000-0000-000000000001');
+set local role authenticated;
+do $$ begin
+  perform set_config('request.jwt.claim.sub', 'a4000000-0000-0000-0000-000000000001', true);
+  perform set_config('request.jwt.claims', '{"sub":"a4000000-0000-0000-0000-000000000001","role":"authenticated"}', true);
+end $$;
+do $$ begin
+  perform public.add_thread(jsonb_build_array(jsonb_build_object('title', 'verifyblocked one')),
+                            'a5000000-0000-0000-0000-000000000001');
+  raise exception 'check 44 FAILED: a blocked person threaded a reply into the person who blocked them';
+exception when insufficient_privilege then null; end $$;
+reset role;
+delete from public.blocks where blocker_id = 'a4000000-0000-0000-0000-000000000002';
+
+do $$ begin
+  if has_function_privilege('anon', 'public.add_thread(jsonb, uuid, uuid)', 'execute')
+     or not has_function_privilege('authenticated', 'public.add_thread(jsonb, uuid, uuid)', 'execute') then
+    raise exception 'check 44 FAILED: add_thread execute grants are wrong';
+  end if;
+  -- Invoker is what keeps every rule above in force. Definer would make this
+  -- function the one way to post that RLS never sees.
+  if (select p.prosecdef from pg_proc p where p.oid = 'public.add_thread(jsonb, uuid, uuid)'::regprocedure) then
+    raise exception 'check 44 FAILED: add_thread is security definer';
+  end if;
+end $$;
+\echo check 44 ok: a thread posts as one chain, whole or not at all
+
 
 rollback;
 \echo ALL CHECKS PASSED

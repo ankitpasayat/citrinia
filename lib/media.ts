@@ -1,9 +1,9 @@
-// Media attached to a peel. The composer serialises its attachments into one
-// hidden `media` form field as JSON; this is the gate between that string and
-// the peel_media table, so it enforces everything the table's check constraints
-// do (https only, four kinds, 200 characters of alt) plus the two rules a
-// constraint cannot see: at most four attachments, and a moving picture peels on
-// its own.
+// Media attached to a peel. The composer sends its attachments inside the
+// `items` field, one list per box (see lib/thread.ts); this is the gate between
+// that list and the peel_media table, so it enforces everything the table's
+// check constraints do (https only, four kinds, 200 characters of alt) plus the
+// two rules a constraint cannot see: at most four attachments, and a moving
+// picture peels on its own.
 import { countChars } from "./peel.ts";
 
 export const MAX_MEDIA = 4;
@@ -20,26 +20,19 @@ const YOUTUBE_ID = /^[A-Za-z0-9_-]{11}$/;
 const YOUTUBE_HOSTS = new Set(["youtube.com", "m.youtube.com"]);
 
 /**
- * Parse the composer's `media` form field. `null`, `undefined` and `""` all mean
- * "no media" rather than an error, so a peel with nothing attached is normal.
- * Returns the rows to insert, in order, or one short message for the composer.
+ * Parse one box's attachments. `null` and `undefined` both mean "nothing
+ * attached" rather than an error, so a peel with no pictures is normal --
+ * anything else has to be a list. Returns the rows to insert, in order, or one
+ * short message for the composer.
  */
 export function parseMedia(raw: unknown): PeelMedia[] | { error: string } {
-  if (raw === null || raw === undefined || raw === "") return [];
-  if (typeof raw !== "string") return { error: "Couldn't read that media." };
-
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(raw);
-  } catch {
-    return { error: "Couldn't read that media." };
-  }
-  if (!Array.isArray(parsed)) return { error: "Couldn't read that media." };
-  if (parsed.length === 0) return [];
-  if (parsed.length > MAX_MEDIA) return { error: `Four bits of media at most.` };
+  if (raw === null || raw === undefined) return [];
+  if (!Array.isArray(raw)) return { error: "Couldn't read that media." };
+  if (raw.length === 0) return [];
+  if (raw.length > MAX_MEDIA) return { error: `Four bits of media at most.` };
 
   const media: PeelMedia[] = [];
-  for (const item of parsed) {
+  for (const item of raw) {
     const one = parseOne(item);
     if ("error" in one) return one;
     media.push(one.media);

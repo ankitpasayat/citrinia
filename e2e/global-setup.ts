@@ -55,6 +55,16 @@ async function assertSchema(): Promise<void> {
   // 404 is "no such function"; a 4xx from its own validation means it is there.
   if (rename.status === 404) throw stale("The `change_username` function");
 
+  // Every peel goes up through add_thread() now, so a stack without it cannot
+  // post at all -- and an empty thread is refused by the function's own
+  // validation, which is how a 4xx tells us it is there.
+  const thread = await fetch(`${apiUrl}/rest/v1/rpc/add_thread`, {
+    method: "POST",
+    headers: { ...headers, "Content-Type": "application/json" },
+    body: JSON.stringify({ items: [] }),
+  });
+  if (thread.status === 404) throw stale("The `add_thread` function");
+
   // Uploads go to Storage, which the migration provisions through a function
   // that reports rather than raises -- so its bucket is worth its own check.
   const buckets = await fetch(`${apiUrl}/storage/v1/bucket`, { headers });

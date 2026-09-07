@@ -513,6 +513,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_thread: {
+        Args: {
+          items: Json
+          parent?: string | null
+          quote?: string | null
+        }
+        Returns: string[]
+      }
       change_username: {
         Args: {
           new_username: string
