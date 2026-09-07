@@ -12,6 +12,7 @@ const LATER_TABLES = [
   "username_history",
   "reports",
   "mutes",
+  "blocks",
 ];
 
 /**

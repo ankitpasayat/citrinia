@@ -50,9 +50,14 @@ export default async function Settings() {
 
         <h2 {...stylex.props(styles.section)}>People</h2>
         <div {...stylex.props(styles.group)}>
-          {/* Blocked joins this group with the other half of the slice. */}
           <Link href="/settings/muted" {...stylex.props(styles.row)}>
             <span {...stylex.props(styles.rowLabel)}>Muted</span>
+            <span aria-hidden="true" {...stylex.props(styles.chevron)}>
+              ›
+            </span>
+          </Link>
+          <Link href="/settings/blocked" {...stylex.props(styles.row)}>
+            <span {...stylex.props(styles.rowLabel)}>Blocked</span>
             <span aria-hidden="true" {...stylex.props(styles.chevron)}>
               ›
             </span>

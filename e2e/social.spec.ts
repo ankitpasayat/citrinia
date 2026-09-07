@@ -58,6 +58,10 @@ const MUTED_PEEL = "marmalade thoughts nobody asked for";
 const MUTED_REPLY = "and another marmalade thought";
 const BOB_THREAD = "bob starts something for ada to answer";
 
+// ...and carol goes further than quiet.
+const CAROL_PEEL = "carol has candied peel opinions";
+const BOB_BEFORE_BLOCK = "bob peels before any of this";
+
 const CHAIN_ROOT = "what is the correct number of oranges";
 const CHAIN_MIDDLE = "one more than you have";
 const CHAIN_LEAF = "that is not a number, bob";
@@ -1360,4 +1364,92 @@ test("20. bob mutes ada: she leaves his feed, his replies and his bell, but not 
       ).map((row) => row.type),
     )
     .toEqual(["like"]);
+});
+
+test("21. bob blocks carol: she is told, the follows go, and neither can reach the other", async ({
+  open,
+}) => {
+  const carol = await makeGuest("carol");
+  const service = restAsService();
+
+  try {
+    const bobApi = await restAs("bob");
+    const carolApi = await restAsGuest(carol);
+
+    // Before: they follow each other and each can read the other's peels.
+    const bobPeel = await peelAs("bob", BOB_BEFORE_BLOCK);
+    await carolApi.insert("peels", { title: CAROL_PEEL, user_id: carolApi.id });
+    await carolApi.insert("follows", { follower_id: carolApi.id, followee_id: bobApi.id });
+    await bobApi.insert("follows", { follower_id: bobApi.id, followee_id: carolApi.id });
+
+    const bob = await open("bob");
+    await bob.goto("/");
+    await expect(card(bob, CAROL_PEEL)).toBeVisible();
+
+    // Blocking is the one thing here that asks first, because it changes what
+    // somebody else can see and unblocking does not put the follows back.
+    await bob.goto("/u/carol");
+    await bob.getByRole("button", { name: "More for @carol" }).click();
+    await bob.getByRole("button", { name: "Block @carol" }).click();
+    const confirm = bob.getByRole("dialog");
+    await expect(confirm.getByRole("heading", { name: "Block @carol?" })).toBeVisible();
+    await expect(confirm.getByText(/unblocking later does not undo that/)).toBeVisible();
+    await confirm.getByRole("button", { name: "Block @carol" }).click();
+    await expect(bob.getByRole("status")).toHaveText("@carol is blocked");
+
+    // His side: the notice stands where her peels were, and the button that
+    // undoes it stands where Follow was.
+    await expect(bob.getByText("You blocked @carol")).toBeVisible();
+    await expect(bob.getByRole("button", { name: "Unblock" })).toBeVisible();
+    await expect(card(bob, CAROL_PEEL)).toHaveCount(0);
+    // Not "no peels yet" -- she has peels, and saying otherwise would be a lie.
+    await expect(bob.getByRole("link", { name: "Peels" })).toHaveCount(0);
+    await bob.goto("/");
+    await expect(card(bob, CAROL_PEEL)).toHaveCount(0);
+
+    // Her side. She is told, which is the whole difference from a mute.
+    const she = await open(carol);
+    await she.goto("/u/bob");
+    await expect(she.getByText("@bob has blocked you")).toBeVisible();
+    await expect(she.getByRole("button", { name: "Follow" })).toHaveCount(0);
+    await expect(card(she, BOB_BEFORE_BLOCK)).toHaveCount(0);
+    await she.goto("/");
+    await expect(card(she, BOB_BEFORE_BLOCK)).toHaveCount(0);
+
+    // She cannot reach the peel at all, so there is nothing to reply to: the
+    // policy hides the row, and the page has no peel to render.
+    await she.goto(`/p/${bobPeel}`);
+    await expect(she.getByRole("heading", { name: "That peel got composted." })).toBeVisible();
+
+    // Both follows went, and neither of them had to ask for that.
+    expect(
+      await service.select<{ follower_id: string }>(
+        `follows?or=(and(follower_id.eq.${bobApi.id},followee_id.eq.${carolApi.id}),and(follower_id.eq.${carolApi.id},followee_id.eq.${bobApi.id}))&select=follower_id`,
+      ),
+    ).toEqual([]);
+
+    // Nor can she put one back, whatever her client thinks.
+    await expect(
+      carolApi.insert("follows", { follower_id: carolApi.id, followee_id: bobApi.id }),
+    ).rejects.toThrow(/40[13]/);
+
+    // Settings lists her, and unblocking gives the peels back -- and only those.
+    await bob.goto("/settings");
+    await bob.getByRole("link", { name: "Blocked" }).click();
+    await expect(bob.getByRole("heading", { name: "Blocked", level: 1 })).toBeVisible();
+    await expect(bob.getByRole("link", { name: /@carol\b/ })).toBeVisible();
+    await bob.getByRole("button", { name: "Unblock" }).click();
+    await expect(bob.getByRole("status")).toHaveText("@carol is unblocked");
+    await expect(bob.getByRole("heading", { name: "Nobody blocked" })).toBeVisible();
+
+    await bob.goto("/");
+    await expect(card(bob, CAROL_PEEL)).toBeVisible();
+    expect(
+      await service.select<{ follower_id: string }>(
+        `follows?or=(and(follower_id.eq.${bobApi.id},followee_id.eq.${carolApi.id}),and(follower_id.eq.${carolApi.id},followee_id.eq.${bobApi.id}))&select=follower_id`,
+      ),
+    ).toEqual([]);
+  } finally {
+    await removeExtras([carol.id]);
+  }
 });

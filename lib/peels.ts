@@ -454,26 +454,7 @@ export async function fetchFollowList(
   if (!rows || rows.length === 0) return { people: [], older: null };
 
   const ids = rows.map((row) => row[shown]);
-  const [profiles, mine] = await Promise.all([
-    supabase.from("profiles").select("*").in("id", ids),
-    // Which of them the viewer already follows, so each row's button opens right.
-    supabase.from("follows").select("followee_id").eq("follower_id", viewerId).in("followee_id", ids),
-  ]);
-  if (profiles.error) throw new Error(`Couldn't load ${side}: ${profiles.error.message}`);
-  if (mine.error) throw new Error(`Couldn't load ${side}: ${mine.error.message}`);
-
-  const byId = new Map((profiles.data ?? []).map((profile) => [profile.id, profile]));
-  const followed = new Set((mine.data ?? []).map((row) => row.followee_id));
-
-  // `.in()` answers in its own order, so the follow rows are what orders the page.
-  const people = ids
-    .map((id) => byId.get(id))
-    .filter((profile) => profile !== undefined)
-    .map((profile) => ({
-      profile,
-      isFollowing: followed.has(profile.id),
-      isSelf: profile.id === viewerId,
-    }));
+  const people = await peopleByIds(supabase, viewerId, ids, side);
 
   const last = rows[rows.length - 1];
   const older = rows.length === PAGE_SIZE ? encodeCursor(last.created_at, last[shown]) : null;
@@ -505,30 +486,74 @@ export async function fetchMutedList(
   if (!rows || rows.length === 0) return { people: [], older: null };
 
   const ids = rows.map((row) => row.muted_id);
+  const people = await peopleByIds(supabase, viewerId, ids, "the muted list");
+
+  const last = rows[rows.length - 1];
+  const older = rows.length === PAGE_SIZE ? encodeCursor(last.created_at, last.muted_id) : null;
+  return { people, older };
+}
+
+/**
+ * One page of the people the viewer has blocked, for /settings/blocked. The
+ * muted list with the other table under it -- only the blocks the viewer made,
+ * never the ones made about them, which is what the button on each row undoes.
+ */
+export async function fetchBlockedList(
+  supabase: SupabaseClient<Database>,
+  viewerId: string,
+  before?: string,
+): Promise<{ people: Person[]; older: string | null }> {
+  let query = supabase.from("blocks").select("*").eq("blocker_id", viewerId);
+  const from = cursor(before);
+  if (from) query = query.or(olderThan("created_at", "blocked_id", from));
+  const { data: rows, error } = await query
+    .order("created_at", { ascending: false })
+    .order("blocked_id", { ascending: false })
+    .limit(PAGE_SIZE);
+  if (error) throw new Error(`Couldn't load the blocked list: ${error.message}`);
+  if (!rows || rows.length === 0) return { people: [], older: null };
+
+  const ids = rows.map((row) => row.blocked_id);
+  const people = await peopleByIds(supabase, viewerId, ids, "the blocked list");
+
+  const last = rows[rows.length - 1];
+  const older = rows.length === PAGE_SIZE ? encodeCursor(last.created_at, last.blocked_id) : null;
+  return { people, older };
+}
+
+/**
+ * A page of people, given the ids and the order the list itself decided. Shared
+ * by the followers/following lists, the muted list and the blocked list: they
+ * differ in which join table they read and nothing else, and the "who does the
+ * viewer already follow" round trip is the same for all of them.
+ *
+ * `.in()` answers in its own order, so the caller's `ids` is what orders the page.
+ */
+async function peopleByIds(
+  supabase: SupabaseClient<Database>,
+  viewerId: string,
+  ids: string[],
+  what: string,
+): Promise<Person[]> {
   const [profiles, mine] = await Promise.all([
     supabase.from("profiles").select("*").in("id", ids),
+    // Which of them the viewer already follows, so each row's button opens right.
     supabase.from("follows").select("followee_id").eq("follower_id", viewerId).in("followee_id", ids),
   ]);
-  if (profiles.error) throw new Error(`Couldn't load the muted list: ${profiles.error.message}`);
-  if (mine.error) throw new Error(`Couldn't load the muted list: ${mine.error.message}`);
+  if (profiles.error) throw new Error(`Couldn't load ${what}: ${profiles.error.message}`);
+  if (mine.error) throw new Error(`Couldn't load ${what}: ${mine.error.message}`);
 
   const byId = new Map((profiles.data ?? []).map((profile) => [profile.id, profile]));
   const followed = new Set((mine.data ?? []).map((row) => row.followee_id));
 
-  // `.in()` answers in its own order, so the mute rows are what orders the page.
-  const people = ids
+  return ids
     .map((id) => byId.get(id))
     .filter((profile) => profile !== undefined)
     .map((profile) => ({
       profile,
       isFollowing: followed.has(profile.id),
-      // mutes_not_self means the viewer is never in their own muted list.
-      isSelf: false,
+      isSelf: profile.id === viewerId,
     }));
-
-  const last = rows[rows.length - 1];
-  const older = rows.length === PAGE_SIZE ? encodeCursor(last.created_at, last.muted_id) : null;
-  return { people, older };
 }
 
 type EmbeddedMedia = {

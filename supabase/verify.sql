@@ -73,15 +73,15 @@ do $$ begin
 end $$;
 \echo check 5 ok: peels and notifications in supabase_realtime publication, notifications logged whole
 
--- 6. RLS enabled on every table, 27 policies, API roles have the grants their policies assume.
+-- 6. RLS enabled on every table, 30 policies, API roles have the grants their policies assume.
 do $$ begin
   if exists (select 1 from pg_tables where schemaname = 'public'
-               and tablename in ('profiles','peels','likes','follows','reposts','bookmarks','peel_media','notifications','username_history','reports','mutes')
+               and tablename in ('profiles','peels','likes','follows','reposts','bookmarks','peel_media','notifications','username_history','reports','mutes','blocks')
                and not rowsecurity) then
     raise exception 'check 6 FAILED: RLS not enabled on every table';
   end if;
-  if (select count(*) from pg_policies where schemaname = 'public') <> 27 then
-    raise exception 'check 6 FAILED: expected 27 policies, found %', (select count(*) from pg_policies where schemaname = 'public');
+  if (select count(*) from pg_policies where schemaname = 'public') <> 30 then
+    raise exception 'check 6 FAILED: expected 30 policies, found %', (select count(*) from pg_policies where schemaname = 'public');
   end if;
   if not has_table_privilege('authenticated', 'public.peels', 'insert') or not has_table_privilege('anon', 'public.profiles', 'select') then
     raise exception 'check 6 FAILED: API roles lack table grants';
@@ -1175,6 +1175,9 @@ begin
   expected :=
     'anon likes SELECT'                      || E'\n' ||
     'anon profiles SELECT'                   || E'\n' ||
+    'authenticated blocks DELETE'            || E'\n' ||
+    'authenticated blocks INSERT'            || E'\n' ||
+    'authenticated blocks SELECT'            || E'\n' ||
     'authenticated bookmarks DELETE'         || E'\n' ||
     'authenticated bookmarks INSERT'         || E'\n' ||
     'authenticated bookmarks SELECT'         || E'\n' ||
@@ -1607,6 +1610,253 @@ begin
   end if;
 end $$;
 \echo check 36 ok: a muted person rings no bell, and an unmuted one rings every one
+
+-- 37. Block: a rule about two people, that both of them can read and only one
+--     of them can change.
+-- Its own ground again: Vic and Wren, untouched by anything above.
+insert into auth.users (id, instance_id, aud, role, email, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
+values ('90000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+        'vic@example.com', '{"provider":"github"}', '{"user_name":"vicverify","avatar_url":""}', now(), now()),
+       ('90000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+        'wren@example.com', '{"provider":"github"}', '{"user_name":"wrenverify","avatar_url":""}', now(), now());
+insert into public.peels (id, title, user_id)
+values ('91000000-0000-0000-0000-000000000001', 'vic says something', '90000000-0000-0000-0000-000000000001'),
+       ('91000000-0000-0000-0000-000000000002', 'wren says something', '90000000-0000-0000-0000-000000000002');
+-- They follow each other, so the severing below has something to sever.
+insert into public.follows (follower_id, followee_id)
+values ('90000000-0000-0000-0000-000000000001', '90000000-0000-0000-0000-000000000002'),
+       ('90000000-0000-0000-0000-000000000002', '90000000-0000-0000-0000-000000000001');
+
+do $$ begin
+  insert into public.blocks (blocker_id, blocked_id)
+  values ('90000000-0000-0000-0000-000000000001', '90000000-0000-0000-0000-000000000001');
+  raise exception 'check 37 FAILED: somebody blocked themselves';
+exception when check_violation then null; end $$;
+
+-- Vic blocks Wren.
+set local role authenticated;
+do $$ begin
+  perform set_config('request.jwt.claim.sub', '90000000-0000-0000-0000-000000000001', true);
+  perform set_config('request.jwt.claims', '{"sub":"90000000-0000-0000-0000-000000000001","role":"authenticated"}', true);
+end $$;
+
+insert into public.blocks (blocker_id, blocked_id)
+values ('90000000-0000-0000-0000-000000000001', '90000000-0000-0000-0000-000000000002');
+
+do $$ begin
+  insert into public.blocks (blocker_id, blocked_id)
+  values ('90000000-0000-0000-0000-000000000001', '90000000-0000-0000-0000-000000000002');
+  raise exception 'check 37 FAILED: the same person was blocked twice';
+exception when unique_violation then null; end $$;
+
+do $$ begin
+  insert into public.blocks (blocker_id, blocked_id)
+  values ('90000000-0000-0000-0000-000000000002', '90000000-0000-0000-0000-000000000001');
+  raise exception 'check 37 FAILED: vic blocked somebody as wren';
+exception when insufficient_privilege then null; end $$;
+
+-- The follows went, both ways, without vic being able to reach wren's row.
+reset role;
+do $$ begin
+  if exists (select 1 from public.follows f
+              where f.follower_id in ('90000000-0000-0000-0000-000000000001', '90000000-0000-0000-0000-000000000002')
+                and f.followee_id in ('90000000-0000-0000-0000-000000000001', '90000000-0000-0000-0000-000000000002')) then
+    raise exception 'check 37 FAILED: a block left a follow standing';
+  end if;
+end $$;
+
+-- Wren is told. This is the one thing a block does that a mute does not, and it
+-- is why the blocks policy lets the target read the row.
+set local role authenticated;
+do $$ begin
+  perform set_config('request.jwt.claim.sub', '90000000-0000-0000-0000-000000000002', true);
+  perform set_config('request.jwt.claims', '{"sub":"90000000-0000-0000-0000-000000000002","role":"authenticated"}', true);
+end $$;
+do $$ begin
+  if not exists (select 1 from public.blocks b
+                  where b.blocker_id = '90000000-0000-0000-0000-000000000001'
+                    and b.blocked_id = '90000000-0000-0000-0000-000000000002') then
+    raise exception 'check 37 FAILED: the blocked party cannot see that they are blocked';
+  end if;
+  -- Being told is not being able to undo it.
+  delete from public.blocks;
+end $$;
+reset role;
+do $$ begin
+  if not exists (select 1 from public.blocks
+                  where blocker_id = '90000000-0000-0000-0000-000000000001') then
+    raise exception 'check 37 FAILED: the blocked party unblocked themselves';
+  end if;
+end $$;
+
+-- Somebody outside the pair learns nothing, and neither function is reachable
+-- signed out.
+set local role authenticated;
+do $$ begin
+  perform set_config('request.jwt.claim.sub', '80000000-0000-0000-0000-000000000003', true);
+  perform set_config('request.jwt.claims', '{"sub":"80000000-0000-0000-0000-000000000003","role":"authenticated"}', true);
+end $$;
+do $$ begin
+  if exists (select 1 from public.blocks) then
+    raise exception 'check 37 FAILED: a stranger can read who blocked whom';
+  end if;
+  if public.blocks_between('90000000-0000-0000-0000-000000000001', '90000000-0000-0000-0000-000000000002') then
+    raise exception 'check 37 FAILED: blocks_between told a stranger about somebody else''s block';
+  end if;
+end $$;
+reset role;
+do $$ begin
+  if has_function_privilege('anon', 'public.blocks_between(uuid, uuid)', 'execute')
+     or has_function_privilege('anon', 'public.blocked_ids()', 'execute')
+     or has_function_privilege('anon', 'public.blocked_peel(uuid)', 'execute') then
+    raise exception 'check 37 FAILED: a signed-out caller can ask about blocks';
+  end if;
+end $$;
+\echo check 37 ok: a block is readable by both, changeable by one, and severs the follows
+
+-- 38. The peels a block hides, hidden by the policy rather than by a query.
+-- Both directions from one rule: vic blocked wren, so neither sees the other.
+set local role authenticated;
+do $$ begin
+  perform set_config('request.jwt.claim.sub', '90000000-0000-0000-0000-000000000001', true);
+  perform set_config('request.jwt.claims', '{"sub":"90000000-0000-0000-0000-000000000001","role":"authenticated"}', true);
+end $$;
+do $$ begin
+  if exists (select 1 from public.peels where id = '91000000-0000-0000-0000-000000000002') then
+    raise exception 'check 38 FAILED: the blocker can still read the blocked person''s peel';
+  end if;
+  if not exists (select 1 from public.peels where id = '91000000-0000-0000-0000-000000000001') then
+    raise exception 'check 38 FAILED: a block swallowed the blocker''s own peel';
+  end if;
+  if exists (select 1 from public.home_timeline(false, null, 100) t
+              where t.peel_id = '91000000-0000-0000-0000-000000000002') then
+    raise exception 'check 38 FAILED: a blocked person''s peel is still in the feed';
+  end if;
+end $$;
+
+do $$ begin
+  perform set_config('request.jwt.claim.sub', '90000000-0000-0000-0000-000000000002', true);
+  perform set_config('request.jwt.claims', '{"sub":"90000000-0000-0000-0000-000000000002","role":"authenticated"}', true);
+end $$;
+do $$ begin
+  -- The half people forget: the person who did NOT block also stops seeing.
+  if exists (select 1 from public.peels where id = '91000000-0000-0000-0000-000000000001') then
+    raise exception 'check 38 FAILED: the blocked person can still read the blocker''s peels';
+  end if;
+  if not exists (select 1 from public.peels where id = '91000000-0000-0000-0000-000000000002') then
+    raise exception 'check 38 FAILED: a block swallowed the blocked person''s own peel';
+  end if;
+end $$;
+reset role;
+
+-- And nobody else is touched by somebody else's block.
+set local role authenticated;
+do $$ begin
+  perform set_config('request.jwt.claim.sub', '80000000-0000-0000-0000-000000000003', true);
+  perform set_config('request.jwt.claims', '{"sub":"80000000-0000-0000-0000-000000000003","role":"authenticated"}', true);
+end $$;
+do $$ begin
+  if (select count(*) from public.peels
+       where id in ('91000000-0000-0000-0000-000000000001', '91000000-0000-0000-0000-000000000002')) <> 2 then
+    raise exception 'check 38 FAILED: a block hid peels from somebody outside it';
+  end if;
+end $$;
+reset role;
+\echo check 38 ok: a block hides both people''s peels from each other, and nobody else''s
+
+-- 39. Nothing attaches to a peel across a block.
+-- The SELECT policy hides the peel, but an insert naming it by id is not a
+-- select, and the foreign key check runs past RLS -- so each of these is its own
+-- rule, and each is worth its own line here.
+set local role authenticated;
+do $$ begin
+  perform set_config('request.jwt.claim.sub', '90000000-0000-0000-0000-000000000002', true);
+  perform set_config('request.jwt.claims', '{"sub":"90000000-0000-0000-0000-000000000002","role":"authenticated"}', true);
+end $$;
+do $$ begin
+  insert into public.peels (title, user_id, parent_id)
+  values ('replying across a block', '90000000-0000-0000-0000-000000000002', '91000000-0000-0000-0000-000000000001');
+  raise exception 'check 39 FAILED: a blocked person replied to the blocker';
+exception when insufficient_privilege then null; end $$;
+do $$ begin
+  insert into public.peels (title, user_id, quote_id)
+  values ('quoting across a block', '90000000-0000-0000-0000-000000000002', '91000000-0000-0000-0000-000000000001');
+  raise exception 'check 39 FAILED: a blocked person quoted the blocker';
+exception when insufficient_privilege then null; end $$;
+do $$ begin
+  insert into public.likes (peel_id, user_id)
+  values ('91000000-0000-0000-0000-000000000001', '90000000-0000-0000-0000-000000000002');
+  raise exception 'check 39 FAILED: a blocked person liked the blocker''s peel';
+exception when insufficient_privilege then null; end $$;
+do $$ begin
+  insert into public.reposts (peel_id, user_id)
+  values ('91000000-0000-0000-0000-000000000001', '90000000-0000-0000-0000-000000000002');
+  raise exception 'check 39 FAILED: a blocked person repeeled the blocker''s peel';
+exception when insufficient_privilege then null; end $$;
+
+-- It runs the other way too: blocking somebody is not a way to keep replying to
+-- them while they cannot answer.
+do $$ begin
+  perform set_config('request.jwt.claim.sub', '90000000-0000-0000-0000-000000000001', true);
+  perform set_config('request.jwt.claims', '{"sub":"90000000-0000-0000-0000-000000000001","role":"authenticated"}', true);
+end $$;
+do $$ begin
+  insert into public.peels (title, user_id, parent_id)
+  values ('replying to the person i blocked', '90000000-0000-0000-0000-000000000001', '91000000-0000-0000-0000-000000000002');
+  raise exception 'check 39 FAILED: the blocker replied to the person they blocked';
+exception when insufficient_privilege then null; end $$;
+
+-- A peel that is nobody's business but their own still goes in, so the rules
+-- above are about the block and not about a broken insert policy.
+insert into public.peels (title, user_id) values ('vic carries on', '90000000-0000-0000-0000-000000000001');
+insert into public.peels (title, user_id, parent_id)
+values ('vic answers uma', '90000000-0000-0000-0000-000000000001', '81000000-0000-0000-0000-000000000003');
+insert into public.likes (peel_id, user_id)
+values ('81000000-0000-0000-0000-000000000003', '90000000-0000-0000-0000-000000000001');
+reset role;
+\echo check 39 ok: no reply, quote, like or repeel crosses a block, in either direction
+
+-- 40. Following across a block, and what unblocking does not undo.
+set local role authenticated;
+do $$ begin
+  perform set_config('request.jwt.claim.sub', '90000000-0000-0000-0000-000000000002', true);
+  perform set_config('request.jwt.claims', '{"sub":"90000000-0000-0000-0000-000000000002","role":"authenticated"}', true);
+end $$;
+do $$ begin
+  insert into public.follows (follower_id, followee_id)
+  values ('90000000-0000-0000-0000-000000000002', '90000000-0000-0000-0000-000000000001');
+  raise exception 'check 40 FAILED: a blocked person followed the blocker';
+exception when insufficient_privilege then null; end $$;
+
+do $$ begin
+  perform set_config('request.jwt.claim.sub', '90000000-0000-0000-0000-000000000001', true);
+  perform set_config('request.jwt.claims', '{"sub":"90000000-0000-0000-0000-000000000001","role":"authenticated"}', true);
+end $$;
+do $$ begin
+  insert into public.follows (follower_id, followee_id)
+  values ('90000000-0000-0000-0000-000000000001', '90000000-0000-0000-0000-000000000002');
+  raise exception 'check 40 FAILED: the blocker followed the person they blocked';
+exception when insufficient_privilege then null; end $$;
+
+-- Unblocking gives the peels back and nothing else: the follows stay gone,
+-- because quietly re-following somebody you had blocked is a worse surprise
+-- than pressing the button again.
+delete from public.blocks where blocked_id = '90000000-0000-0000-0000-000000000002';
+do $$ begin
+  if not exists (select 1 from public.peels where id = '91000000-0000-0000-0000-000000000002') then
+    raise exception 'check 40 FAILED: unblocking did not give the peels back';
+  end if;
+  if exists (select 1 from public.follows f
+              where f.follower_id in ('90000000-0000-0000-0000-000000000001', '90000000-0000-0000-0000-000000000002')
+                and f.followee_id in ('90000000-0000-0000-0000-000000000001', '90000000-0000-0000-0000-000000000002')) then
+    raise exception 'check 40 FAILED: unblocking silently put the follows back';
+  end if;
+  -- And following again is allowed once more.
+  insert into public.follows (follower_id, followee_id)
+  values ('90000000-0000-0000-0000-000000000001', '90000000-0000-0000-0000-000000000002');
+end $$;
+reset role;
+\echo check 40 ok: no follow crosses a block, and unblocking restores the peels but not the follows
 
 rollback;
 \echo ALL CHECKS PASSED

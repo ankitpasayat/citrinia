@@ -10,6 +10,7 @@ import { bp, colors, fonts, shape } from "@/app/tokens.stylex";
 import { displayWebsite } from "@/lib/profile";
 import { formatMonthYear } from "@/lib/relative-time";
 import { Avatar } from "./avatar";
+import { BlockButton } from "./block-button";
 import { Button, buttonStyles } from "./button";
 import { EditProfileButton } from "./edit-profile-sheet";
 import { FollowButton } from "./follow-button";
@@ -25,9 +26,21 @@ type Props = {
   isFollowing: boolean;
   /** Whether the viewer has muted this profile, for the dots menu's label. */
   isMuted: boolean;
+  /** The viewer blocked them: Unblock stands where Follow would. */
+  isBlocked: boolean;
+  /** They blocked the viewer: there is nothing here to press. */
+  blockedByThem: boolean;
 };
 
-export function ProfileCard({ profile, counts, isSelf, isFollowing, isMuted }: Props) {
+export function ProfileCard({
+  profile,
+  counts,
+  isSelf,
+  isFollowing,
+  isMuted,
+  isBlocked,
+  blockedByThem,
+}: Props) {
   const base = `/u/${encodeURIComponent(profile.username)}`;
   // "1 peel", not "1 peels". "following" has no singular to get wrong.
   // The two follow counts are the way to those lists; the peel count is a fact.
@@ -153,7 +166,16 @@ export function ProfileCard({ profile, counts, isSelf, isFollowing, isMuted }: P
             </>
           ) : (
             <>
-              <FollowButton profileId={profile.id} isFollowing={isFollowing} />
+              {/* Follow is not offered across a block in either direction: one
+                  way the policy would refuse it, the other way it would be a
+                  button that undoes nothing the reader can see. */}
+              {isBlocked ? (
+                <BlockButton profileId={profile.id} handle={profile.username} isBlocked />
+              ) : (
+                !blockedByThem && (
+                  <FollowButton profileId={profile.id} isFollowing={isFollowing} />
+                )
+              )}
               <ProfileMenu profileId={profile.id} handle={profile.username} isMuted={isMuted} />
             </>
           )}

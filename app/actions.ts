@@ -230,6 +230,49 @@ export async function unmuteUser(profileId: string): Promise<ActionResult> {
   return {};
 }
 
+/**
+ * Block a profile. The database does the work: the SELECT policy on peels hides
+ * both people from each other, a trigger severs the follows both ways, and the
+ * insert policies stop anything attaching across it. There is nothing to do here
+ * beyond writing the row and saying so.
+ *
+ * Blocking somebody already blocked collides on the primary key, which is the
+ * right answer to "block them" -- so 23505 is success, as it is for mute.
+ */
+export async function blockUser(profileId: string): Promise<ActionResult> {
+  if (!UUID.test(profileId)) return { error: "Couldn't block. Try again." };
+
+  const { supabase, user } = await viewer();
+  if (user.id === profileId) return { error: "You can't block yourself." };
+
+  const { error } = await supabase
+    .from("blocks")
+    .insert({ blocker_id: user.id, blocked_id: profileId });
+  if (error && error.code !== "23505") return { error: "Couldn't block. Try again." };
+  revalidatePath("/", "layout");
+  return {};
+}
+
+/**
+ * Unblock a profile. The peels come back on their own -- they were never gone,
+ * only out of reach -- and the follows deliberately do not: quietly re-following
+ * somebody you had blocked is a worse surprise than pressing the button again.
+ */
+export async function unblockUser(profileId: string): Promise<ActionResult> {
+  if (!UUID.test(profileId)) return { error: "Couldn't unblock. Try again." };
+
+  const { supabase, user } = await viewer();
+
+  const { error } = await supabase
+    .from("blocks")
+    .delete()
+    .eq("blocker_id", user.id)
+    .eq("blocked_id", profileId);
+  if (error) return { error: "Couldn't unblock. Try again." };
+  revalidatePath("/", "layout");
+  return {};
+}
+
 /** Save the signed-in user's profile: the words, the facts, the pictures, and
  *  the handle -- which goes through change_username() rather than the update. */
 export async function updateProfile(_prev: ActionResult, formData: FormData): Promise<ActionResult> {

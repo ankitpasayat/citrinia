@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
+import { BlockNotice } from "@/components/block-notice";
 import { Column } from "@/components/column";
 import { FeedShell } from "@/components/feed-shell";
 import { PeelList } from "@/components/peel-list";
@@ -87,7 +88,7 @@ export default async function ProfilePage({ params, searchParams }: Props) {
   const pinnedId = tab === "peels" && !before ? profile.pinned_peel_id : null;
 
   // Counts are head requests, so nothing but the number crosses the wire.
-  const [peelCount, followers, following, follow, mute, peels, viewer, pinned] = await Promise.all([
+  const [peelCount, followers, following, follow, mute, block, peels, viewer, pinned] = await Promise.all([
     supabase
       .from("peels")
       .select("id", { count: "exact", head: true })
@@ -109,6 +110,14 @@ export default async function ProfilePage({ params, searchParams }: Props) {
       .eq("muter_id", user.id)
       .eq("muted_id", profile.id)
       .maybeSingle(),
+    // A block, either way round, in one read: RLS on blocks shows the viewer
+    // only rows they are named in, and a self-block cannot exist, so both `in`
+    // lists together can only match the row between these two people.
+    supabase
+      .from("blocks")
+      .select("blocker_id")
+      .in("blocker_id", [user.id, profile.id])
+      .in("blocked_id", [user.id, profile.id]),
     tab === "replies"
       ? fetchRepliesBy(supabase, user.id, profile.id, before)
       : tab === "likes"
@@ -128,6 +137,12 @@ export default async function ProfilePage({ params, searchParams }: Props) {
     pinnedId === null ? null : fetchPeel(supabase, user.id, pinnedId),
   ]);
 
+  // Who did it decides which notice the reader gets, and whether there is a
+  // button. Both rows can exist at once -- blocking somebody who blocked you is
+  // allowed -- and then the reader's own block is the one that has a button.
+  const isBlocked = (block.data ?? []).some((row) => row.blocker_id === user.id);
+  const blockedByThem = (block.data ?? []).some((row) => row.blocker_id === profile.id);
+
   const older = peels.length === PAGE_SIZE ? await cursor(supabase, tab, profile.id, peels) : null;
   const empty = EMPTY[tab];
 
@@ -144,27 +159,41 @@ export default async function ProfilePage({ params, searchParams }: Props) {
           isSelf={isSelf}
           isFollowing={follow.data !== null}
           isMuted={mute.data !== null}
+          isBlocked={isBlocked}
+          blockedByThem={blockedByThem}
         />
 
-        <ProfileTabs username={profile.username} tab={tab} />
-
-        {pinned && <PeelList peels={[pinned]} viewerId={user.id} live={false} pinned />}
-
-        <PeelList
-          peels={peels}
-          viewerId={user.id}
-          live={false}
-          // Past the first page an empty tab is the end of it, not an empty tab.
-          emptyTitle={before ? "That's all the peels." : empty.title}
-          emptyBody={
-            before ? "You've reached the end." : isSelf ? empty.self : empty.other
-          }
-        />
-
-        {older && (
-          <ShowOlder
-            href={`/u/${encodeURIComponent(profile.username)}?tab=${tab}&before=${encodeURIComponent(older)}`}
+        {/* Across a block the policy has already emptied every tab, so tabs and
+            an empty state would only say "no peels yet" -- which is not what
+            happened. The notice says what happened instead. */}
+        {isBlocked || blockedByThem ? (
+          <BlockNotice
+            kind={isBlocked ? "you-blocked" : "they-blocked"}
+            handle={profile.username}
           />
+        ) : (
+          <>
+            <ProfileTabs username={profile.username} tab={tab} />
+
+            {pinned && <PeelList peels={[pinned]} viewerId={user.id} live={false} pinned />}
+
+            <PeelList
+              peels={peels}
+              viewerId={user.id}
+              live={false}
+              // Past the first page an empty tab is the end of it, not an empty tab.
+              emptyTitle={before ? "That's all the peels." : empty.title}
+              emptyBody={
+                before ? "You've reached the end." : isSelf ? empty.self : empty.other
+              }
+            />
+
+            {older && (
+              <ShowOlder
+                href={`/u/${encodeURIComponent(profile.username)}?tab=${tab}&before=${encodeURIComponent(older)}`}
+              />
+            )}
+          </>
         )}
       </Column>
     </FeedShell>

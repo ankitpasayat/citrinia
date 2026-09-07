@@ -270,3 +270,13 @@ export function MuteIcon(p: IconProps) {
     </Svg>
   );
 }
+
+// The artifact's i-block: the circle-with-a-slash everybody reads as "no".
+export function BlockIcon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <circle {...stroke} cx="12" cy="12" r="9" />
+      <path {...stroke} d="M5.6 5.6l12.8 12.8" />
+    </Svg>
+  );
+}

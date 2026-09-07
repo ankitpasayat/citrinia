@@ -12,6 +12,7 @@ import {
   escapeRegex,
   fetchBookmarks,
   fetchLikedBy,
+  fetchBlockedList,
   fetchMutedIds,
   fetchMutedList,
   fetchNotifications,
@@ -69,6 +70,8 @@ function fake(rows: {
   followers?: { followee_id: string }[];
   /** Who the viewer has muted. */
   mutes?: { muted_id: string; created_at?: string }[];
+  /** Who the viewer has blocked. */
+  blocks?: { blocked_id: string; created_at?: string }[];
   count?: number;
 }) {
   const calls: Call[] = [];
@@ -90,6 +93,7 @@ function fake(rows: {
       return (followReads === 1 ? rows.follows : rows.followers) ?? [];
     }
     if (table === "mutes") return rows.mutes ?? [];
+    if (table === "blocks") return rows.blocks ?? [];
     if (table === "likes" || table === "bookmarks") return rows.joins ?? [];
     return [];
   }
@@ -813,6 +817,34 @@ test("the muted list pages on (created_at, muted_id), newest mute first", async 
   assert.deepEqual(call?.filters.slice(2, 4), [
     ["order", "created_at", { ascending: false }],
     ["order", "muted_id", { ascending: false }],
+  ]);
+  assert.deepEqual(
+    people.map((person) => person.profile.id),
+    [BOB.id],
+  );
+});
+
+// --- block -------------------------------------------------------------------
+// Spec (slice 7): the hiding a block does is the SELECT policy's job, so there is
+// nothing here to test about reading peels -- lib/peels.ts never names a block,
+// and supabase/verify.sql checks 37-40 are where that rule is proved. What is
+// left in this file is the list behind /settings/blocked.
+
+test("the blocked list is only the blocks the viewer made, newest first", async () => {
+  // Only `blocker_id`: the rows where somebody blocked the VIEWER are readable
+  // too (that is how the notice works), and they must not turn up in the list
+  // whose button offers to undo them.
+  const { client, calls } = fake({
+    blocks: [{ blocked_id: BOB.id, created_at: "2026-09-05T00:00:00Z" }],
+    profiles: [BOB],
+  });
+  const { people } = await fetchBlockedList(client, ADA.id, encodeCursor("2026-09-05T00:00:00Z", ID));
+  const call = calls.find((c) => c.table === "blocks");
+  assert.deepEqual(call?.filters[0], ["eq", "blocker_id", ADA.id]);
+  assert.deepEqual(call?.filters[1], ["or", "", olderThan("blocked_id", "2026-09-05T00:00:00Z", ID)]);
+  assert.deepEqual(call?.filters.slice(2, 4), [
+    ["order", "created_at", { ascending: false }],
+    ["order", "blocked_id", { ascending: false }],
   ]);
   assert.deepEqual(
     people.map((person) => person.profile.id),
