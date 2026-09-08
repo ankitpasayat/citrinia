@@ -14,13 +14,19 @@ type Props = {
   people: Person[];
   heading?: string;
   /**
+   * Whether there is somebody doing the following. Only the two lists a reader
+   * can reach without an account -- a profile's followers, and the people search
+   * -- ever say otherwise; the rest are behind /login already.
+   */
+  signedIn?: boolean;
+  /**
    * What sits at the end of a row, when Follow is not the point of the list --
    * Unmute on /settings/muted. Left out, every row gets the follow button.
    */
   action?: (person: Person) => ReactNode;
 };
 
-export function PersonList({ people, heading, action }: Props) {
+export function PersonList({ people, heading, signedIn = true, action }: Props) {
   return (
     <section {...stylex.props(styles.card)}>
       {heading && <h2 {...stylex.props(styles.label)}>{heading}</h2>}
@@ -48,6 +54,7 @@ export function PersonList({ people, heading, action }: Props) {
                 <FollowButton
                   profileId={person.profile.id}
                   isFollowing={person.isFollowing}
+                  signedIn={signedIn}
                   compact
                 />
               )}

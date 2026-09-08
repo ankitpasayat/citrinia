@@ -73,15 +73,15 @@ do $$ begin
 end $$;
 \echo check 5 ok: peels and notifications in supabase_realtime publication, notifications logged whole
 
--- 6. RLS enabled on every table, 32 policies, API roles have the grants their policies assume.
+-- 6. RLS enabled on every table, 43 policies, API roles have the grants their policies assume.
 do $$ begin
   if exists (select 1 from pg_tables where schemaname = 'public'
                and tablename in ('profiles','peels','likes','follows','reposts','bookmarks','peel_media','notifications','username_history','reports','mutes','blocks','link_previews','conversations','messages')
                and not rowsecurity) then
     raise exception 'check 6 FAILED: RLS not enabled on every table';
   end if;
-  if (select count(*) from pg_policies where schemaname = 'public') <> 37 then
-    raise exception 'check 6 FAILED: expected 37 policies, found %', (select count(*) from pg_policies where schemaname = 'public');
+  if (select count(*) from pg_policies where schemaname = 'public') <> 43 then
+    raise exception 'check 6 FAILED: expected 43 policies, found %', (select count(*) from pg_policies where schemaname = 'public');
   end if;
   if not has_table_privilege('authenticated', 'public.peels', 'insert') or not has_table_privilege('anon', 'public.profiles', 'select') then
     raise exception 'check 6 FAILED: API roles lack table grants';
@@ -105,9 +105,10 @@ do $$ begin
      or has_column_privilege('authenticated', 'public.notifications', 'type', 'update') then
     raise exception 'check 6 FAILED: authenticated can write notifications';
   end if;
-  -- The two RPCs are scoped by GRANT, not only by their bodies.
+  -- The two RPCs are scoped by GRANT, not only by their bodies. The square is
+  -- public, so the timeline is one a signed-out reader may ask for too.
   if not has_function_privilege('authenticated', 'public.home_timeline(boolean, timestamptz, int, uuid, uuid)', 'execute')
-     or has_function_privilege('anon', 'public.home_timeline(boolean, timestamptz, int, uuid, uuid)', 'execute') then
+     or not has_function_privilege('anon', 'public.home_timeline(boolean, timestamptz, int, uuid, uuid)', 'execute') then
     raise exception 'check 6 FAILED: home_timeline execute grants are wrong';
   end if;
   -- The keyset migration replaced the three-argument version; an overload left
@@ -125,7 +126,7 @@ do $$ begin
     raise exception 'check 6 FAILED: ensure_media_bucket is not locked down';
   end if;
 end $$;
-\echo check 6 ok: RLS on, 37 policies, grants present
+\echo check 6 ok: RLS on, 43 policies, grants present
 
 -- 7. RLS behaviour as an authenticated user: own peel ok, spoofed user_id blocked, own like ok, spoofed like blocked.
 set local role authenticated;
@@ -149,17 +150,14 @@ end $$;
 reset role;
 \echo check 7 ok: RLS scopes writes to auth.uid(), reads open to authenticated
 
--- 8. Anonymous role cannot read peels (policy is authenticated-only) but can read profiles.
+-- 8. The square is public: the anonymous role reads profiles AND peels.
 set local role anon;
 do $$ begin
-  begin
-    if (select count(*) from public.peels) <> 0 then raise exception 'check 8 FAILED: anon can read peels'; end if;
-  exception when insufficient_privilege then null; -- no grant at all is also "cannot read"
-  end;
+  if (select count(*) from public.peels) = 0 then raise exception 'check 8 FAILED: anon cannot read peels'; end if;
   if (select count(*) from public.profiles) <> 2 then raise exception 'check 8 FAILED: anon cannot read profiles'; end if;
 end $$;
 reset role;
-\echo check 8 ok: anon sees profiles but not peels
+\echo check 8 ok: anon sees profiles and peels
 
 -- 9. Replies: parent_id must point at a real peel, and deleting a parent composts its replies.
 insert into public.peels (id, title, user_id) values ('10000000-0000-0000-0000-000000000002', 'parent peel', :'ada');
@@ -236,16 +234,13 @@ exception when insufficient_privilege then null; end $$;
 reset role;
 \echo check 12 ok: delete and profile edit are scoped to auth.uid(), username stays GitHub-owned
 
--- 13. Anonymous role cannot read follows.
+-- 13. Anonymous role reads follows: who follows whom is on every public profile.
 set local role anon;
 do $$ begin
-  begin
-    if (select count(*) from public.follows) <> 0 then raise exception 'check 13 FAILED: anon can read follows'; end if;
-  exception when insufficient_privilege then null; -- no grant at all is also "cannot read"
-  end;
+  if (select count(*) from public.follows) = 0 then raise exception 'check 13 FAILED: anon cannot read follows'; end if;
 end $$;
 reset role;
-\echo check 13 ok: anon cannot read follows
+\echo check 13 ok: anon can read follows
 
 --------------------------------------------------------------------------------
 -- 20260907000000_social.sql
@@ -692,13 +687,27 @@ begin
   end if;
 end $$;
 reset role;
+-- The same timeline, signed out. A real anon request carries the anon key and
+-- no `sub`, so auth.uid() is null inside the function; the claims the block
+-- above set are ada's and would send hidden_from looking for her blocks, which
+-- anon may not read. Clearing them is what an actual signed-out call looks like.
 set local role anon;
 do $$ begin
-  perform public.home_timeline(false, null, 10);
-  raise exception 'check 22 FAILED: anon can read the home timeline';
-exception when insufficient_privilege then null; end $$;
+  perform set_config('request.jwt.claim.sub', '', true);
+  perform set_config('request.jwt.claims', '{"role":"anon"}', true);
+end $$;
+do $$ begin
+  if (select count(*) from public.home_timeline(false, null, 50)) = 0 then
+    raise exception 'check 22 FAILED: the signed-out home timeline is empty';
+  end if;
+end $$;
 reset role;
-\echo check 22 ok: home_timeline merges reposts by their own time, honours following_only, page_size and a three-key cursor
+-- Check 23 below leans on request.jwt.claims still saying "authenticated".
+do $$ begin
+  perform set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000001', true);
+  perform set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-000000000001","role":"authenticated"}', true);
+end $$;
+\echo check 22 ok: home_timeline merges reposts by their own time, honours following_only, page_size and a three-key cursor, and reads signed out
 
 -- 23. seed_triggers is service-role only, twice over, and really does silence
 --     the notification triggers while it is off.
@@ -820,8 +829,9 @@ begin
   if (select prosecdef from pg_proc where oid = 'public.peel_ancestors(uuid,int)'::regprocedure) then
     raise exception 'check 27 FAILED: peel_ancestors is security definer, so it would walk past RLS';
   end if;
-  if has_function_privilege('anon', 'public.peel_ancestors(uuid,int)', 'execute') then
-    raise exception 'check 27 FAILED: anon can execute peel_ancestors';
+  -- A thread is part of the public square, so the walk up it is too.
+  if not has_function_privilege('anon', 'public.peel_ancestors(uuid,int)', 'execute') then
+    raise exception 'check 27 FAILED: anon cannot execute peel_ancestors';
   end if;
   if not has_function_privilege('authenticated', 'public.peel_ancestors(uuid,int)', 'execute') then
     raise exception 'check 27 FAILED: authenticated cannot execute peel_ancestors';
@@ -1173,8 +1183,15 @@ begin
     from information_schema.role_table_grants
    where table_schema = 'public' and grantee in ('anon', 'authenticated');
   expected :=
+    'anon bookmarks SELECT'                  || E'\n' ||
+    'anon follows SELECT'                    || E'\n' ||
     'anon likes SELECT'                      || E'\n' ||
+    'anon link_previews SELECT'              || E'\n' ||
+    'anon peel_media SELECT'                 || E'\n' ||
+    'anon peels SELECT'                      || E'\n' ||
     'anon profiles SELECT'                   || E'\n' ||
+    'anon reposts SELECT'                    || E'\n' ||
+    'anon username_history SELECT'           || E'\n' ||
     'authenticated blocks DELETE'            || E'\n' ||
     'authenticated blocks INSERT'            || E'\n' ||
     'authenticated blocks SELECT'            || E'\n' ||
@@ -1472,8 +1489,12 @@ do $$ begin
                   where muter_id = '80000000-0000-0000-0000-000000000001') then
     raise exception 'check 34 FAILED: tess deleted a mute that was not hers';
   end if;
-  if has_function_privilege('anon', 'public.hidden_from(uuid, uuid)', 'execute') then
-    raise exception 'check 34 FAILED: a signed-out caller can ask about mutes';
+  -- A signed-out reader calls this with a null viewer and gets false without
+  -- the function naming a table; with a real viewer it still reaches
+  -- blocks_between and mutes, which anon holds nothing on, so the grant
+  -- publishes no mute. See 20260921000000_public_square.sql and check 51.
+  if not has_function_privilege('anon', 'public.hidden_from(uuid, uuid)', 'execute') then
+    raise exception 'check 34 FAILED: a signed-out reader cannot ask about nobody';
   end if;
 end $$;
 \echo check 34 ok: a mute is the muter''s alone, one-sided, and invisible to the muted
@@ -1999,7 +2020,7 @@ end $$;
 reset role;
 
 do $$ begin
-  if has_function_privilege('anon', 'public.trending(int, int)', 'execute')
+  if not has_function_privilege('anon', 'public.trending(int, int)', 'execute')
      or not has_function_privilege('authenticated', 'public.trending(int, int)', 'execute') then
     raise exception 'check 41 FAILED: trending execute grants are wrong';
   end if;
@@ -2124,7 +2145,7 @@ delete from public.mutes where muter_id = 'a0000000-0000-0000-0000-000000000003'
 reset role;
 
 do $$ begin
-  if has_function_privilege('anon', 'public.search_peels(text, boolean, int)', 'execute')
+  if not has_function_privilege('anon', 'public.search_peels(text, boolean, int)', 'execute')
      or not has_function_privilege('authenticated', 'public.search_peels(text, boolean, int)', 'execute') then
     raise exception 'check 42 FAILED: search_peels execute grants are wrong';
   end if;
@@ -2140,12 +2161,13 @@ do $$ begin
   if not exists (select 1 from pg_class where oid = 'public.link_previews'::regclass and relrowsecurity) then
     raise exception 'check 43 FAILED: RLS is not on for link_previews';
   end if;
-  -- anon cannot read peels, so it has no card to draw and no business here.
-  if has_table_privilege('anon', 'public.link_previews', 'select')
+  -- anon reads peels now, so it has cards to draw: SELECT and nothing else.
+  -- A row nobody can be sure of is one a signed-out visitor must not write.
+  if not has_table_privilege('anon', 'public.link_previews', 'select')
      or has_table_privilege('anon', 'public.link_previews', 'insert')
      or has_table_privilege('anon', 'public.link_previews', 'update')
      or has_table_privilege('anon', 'public.link_previews', 'delete') then
-    raise exception 'check 43 FAILED: anon has privileges on link_previews';
+    raise exception 'check 43 FAILED: anon privileges on link_previews are wrong';
   end if;
   if not has_table_privilege('authenticated', 'public.link_previews', 'select')
      or not has_table_privilege('authenticated', 'public.link_previews', 'insert') then
@@ -2969,6 +2991,160 @@ do $$ begin
 end $$;
 \echo check 50 ok: a conversation is readable by its two people and nobody else
 
+
+--------------------------------------------------------------------------------
+-- 51. The square is public. A signed-out visitor reads the same peels, the same
+--     timeline, the same trending list, the same search and the same thread
+--     walk a signed-in one does -- and still reaches nothing that is between
+--     two people or private to one, and writes nothing at all.
+--------------------------------------------------------------------------------
+
+-- Its own ground: four accounts no earlier check has touched.
+insert into auth.users (id, instance_id, aud, role, email, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
+values ('c0000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+        'ida@example.com', '{"provider":"github"}', '{"user_name":"idaverify","avatar_url":""}', now(), now()),
+       ('c0000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+        'ned@example.com', '{"provider":"github"}', '{"user_name":"nedverify","avatar_url":""}', now(), now()),
+       ('c0000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+        'orla@example.com', '{"provider":"github"}', '{"user_name":"orlaverify","avatar_url":""}', now(), now()),
+       ('c0000000-0000-0000-0000-000000000004', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+        'pip@example.com', '{"provider":"github"}', '{"user_name":"pipverify","avatar_url":""}', now(), now());
+
+-- One of everything the four read functions and the app's embed literal touch:
+-- a tagged peel, a reply under it, a repeel of it, a bookmark of it, and a
+-- second author's peel to prove a block does not reach a stranger.
+insert into public.peels (id, title, user_id) values
+  ('c1000000-0000-0000-0000-000000000001', 'the gates are open #verifysquare', 'c0000000-0000-0000-0000-000000000001'),
+  ('c1000000-0000-0000-0000-000000000003', 'pip, saying hello to nobody in particular', 'c0000000-0000-0000-0000-000000000004');
+insert into public.peels (id, title, user_id, parent_id) values
+  ('c1000000-0000-0000-0000-000000000002', 'a reply under the open gate', 'c0000000-0000-0000-0000-000000000002',
+   'c1000000-0000-0000-0000-000000000001');
+insert into public.reposts (user_id, peel_id)
+  values ('c0000000-0000-0000-0000-000000000002', 'c1000000-0000-0000-0000-000000000001');
+insert into public.bookmarks (user_id, peel_id)
+  values ('c0000000-0000-0000-0000-000000000002', 'c1000000-0000-0000-0000-000000000001');
+-- orla mutes pip, and ida blocks pip. Both must survive the square opening, and
+-- neither is any of a signed-out reader's business.
+insert into public.mutes (muter_id, muted_id)
+  values ('c0000000-0000-0000-0000-000000000003', 'c0000000-0000-0000-0000-000000000004');
+insert into public.blocks (blocker_id, blocked_id)
+  values ('c0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000004');
+
+-- The two totals the signed-out reader is measured against. They are carried in
+-- settings rather than a plpgsql variable because nothing declared in one block
+-- survives into the next, and these have to cross a role change.
+do $$ begin
+  perform set_config('verify.peels_total', (select count(*)::text from public.peels), true);
+  perform set_config('verify.bookmarks_total', (select count(*)::text from public.bookmarks), true);
+  if (select count(*) from public.bookmarks) = 0 then
+    raise exception 'check 51 FAILED: no bookmark left to keep private';
+  end if;
+end $$;
+
+set local role anon;
+-- A real signed-out request carries the anon key and no `sub`, so auth.uid() is
+-- null. The claims the last authenticated block left behind are not that.
+do $$ begin
+  perform set_config('request.jwt.claim.sub', '', true);
+  perform set_config('request.jwt.claims', '{"role":"anon"}', true);
+end $$;
+do $$
+declare n int; peels_seen int; reposts_seen int;
+begin
+  -- Every peel, and the same set the owner of the table sees: an anon policy
+  -- that quietly dropped replies, or one author, would show up here.
+  select count(*) into n from public.peels;
+  if n <> current_setting('verify.peels_total')::int then
+    raise exception 'check 51 FAILED: a signed-out reader sees % peels of %', n, current_setting('verify.peels_total');
+  end if;
+
+  -- The timeline, with both kinds of row on it: a peel, and somebody's repeel.
+  select count(*) filter (where t.repost_by is null),
+         count(*) filter (where t.repost_by is not null)
+    into peels_seen, reposts_seen
+    from public.home_timeline(false, null, 50) t;
+  if peels_seen = 0 or reposts_seen = 0 then
+    raise exception 'check 51 FAILED: the signed-out timeline had % peels and % repeels', peels_seen, reposts_seen;
+  end if;
+
+  -- Trending, search and the thread walk all answer rather than raise, which is
+  -- what hidden_from(null, ...) returning false without naming a table buys.
+  if (select count(*) from public.trending(24, 5)) = 0 then
+    raise exception 'check 51 FAILED: trending is empty when signed out';
+  end if;
+  if (select count(*) from public.search_peels('verifysquare', false, 30)) = 0 then
+    raise exception 'check 51 FAILED: search finds nothing when signed out';
+  end if;
+  if (select count(*) from public.peel_ancestors('c1000000-0000-0000-0000-000000000002', 25)) = 0 then
+    raise exception 'check 51 FAILED: a reply has no ancestors when signed out';
+  end if;
+
+  -- bookmarks(user_id) in the embed literal: the grant is what stops the whole
+  -- request erroring, and RLS with no applicable policy is what empties it.
+  if (select count(*) from public.bookmarks) <> 0 then
+    raise exception 'check 51 FAILED: a signed-out reader can see somebody''s bookmarks';
+  end if;
+
+  -- Nobody is hidden from nobody, and asking costs no grant on mutes or blocks.
+  if public.hidden_from(null::uuid, 'c0000000-0000-0000-0000-000000000004') then
+    raise exception 'check 51 FAILED: hidden_from hides a peel from a reader who is nobody';
+  end if;
+
+  -- A block is between two accounts, so it takes nothing off the square: a
+  -- signed-out reader is always a third party to one.
+  if not exists (select 1 from public.peels where id = 'c1000000-0000-0000-0000-000000000001')
+     or not exists (select 1 from public.peels where id = 'c1000000-0000-0000-0000-000000000003') then
+    raise exception 'check 51 FAILED: a block took a peel off the public square';
+  end if;
+end $$;
+
+-- Nothing private is reachable at all. No grant, so each of these raises rather
+-- than coming back empty -- "it errors" and "it is filtered" are different
+-- promises and this is the stronger one.
+do $$
+declare t text;
+begin
+  foreach t in array array['mutes', 'blocks', 'notifications', 'conversations', 'messages', 'reports'] loop
+    begin
+      execute format('select 1 from public.%I limit 1', t);
+      raise exception 'check 51 FAILED: a signed-out reader can read public.%', t;
+    exception when insufficient_privilege then null;
+    end;
+  end loop;
+end $$;
+
+-- And the square is read-only: taking part in it still takes an account.
+do $$ begin
+  begin
+    insert into public.peels (title, user_id) values ('posted by nobody', 'c0000000-0000-0000-0000-000000000001');
+    raise exception 'check 51 FAILED: a signed-out visitor can peel';
+  exception when insufficient_privilege then null; end;
+  begin
+    insert into public.likes (user_id, peel_id)
+      values ('c0000000-0000-0000-0000-000000000001', 'c1000000-0000-0000-0000-000000000001');
+    raise exception 'check 51 FAILED: a signed-out visitor can like';
+  exception when insufficient_privilege then null; end;
+  begin
+    insert into public.follows (follower_id, followee_id)
+      values ('c0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000002');
+    raise exception 'check 51 FAILED: a signed-out visitor can follow';
+  exception when insufficient_privilege then null; end;
+end $$;
+reset role;
+
+-- The other half of the guard: a mute is still a mute for the person holding it.
+set local role authenticated;
+do $$ begin
+  perform set_config('request.jwt.claim.sub', 'c0000000-0000-0000-0000-000000000003', true);
+  perform set_config('request.jwt.claims', '{"sub":"c0000000-0000-0000-0000-000000000003","role":"authenticated"}', true);
+end $$;
+do $$ begin
+  if not public.hidden_from('c0000000-0000-0000-0000-000000000003', 'c0000000-0000-0000-0000-000000000004') then
+    raise exception 'check 51 FAILED: the null-viewer guard swallowed a real mute';
+  end if;
+end $$;
+reset role;
+\echo check 51 ok: the square is public, and everything private is still private
 
 rollback;
 \echo ALL CHECKS PASSED

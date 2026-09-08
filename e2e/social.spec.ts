@@ -2002,3 +2002,87 @@ test("28. from 768 the list and the open conversation share one screen", async (
   await expect(list).toBeVisible();
   await expect(conversation).toBeHidden();
 });
+
+test("29. signed out, a peel, a profile, a list and a search read; the private screens do not", async ({
+  open,
+}) => {
+  // Ada's anchor peel by id rather than by text: bob's quote from test 2 carries
+  // her words inside his own card, so the text alone names two articles.
+  const adaPeel = await peelId(ADA_PEEL);
+  const page = await open();
+
+  // Reading the square is public. The screens that are about you still have to
+  // know who you are, and a server redirect is an ordinary navigation -- so it
+  // is the url the browser ends on that says so, not a status code.
+  for (const screen of ["/messages", "/bookmarks", "/notifications", "/settings"]) {
+    await page.goto(screen);
+    await expect(page, `${screen} with no session`).toHaveURL(`${BASE_URL}/login`);
+  }
+
+  // A peel is a public thing to have said. The composer under it is the one part
+  // of the page that needs an account, and in its place is the way to get one.
+  await page.goto(`/p/${adaPeel}`);
+  await expect(page).toHaveURL(`${BASE_URL}/p/${adaPeel}`);
+  const opened = peelCard(page, adaPeel);
+  await expect(opened).toContainText(ADA_PEEL);
+  await expect(page.getByRole("textbox", { name: "Reply to @ada" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Sign in to reply" })).toHaveAttribute("href", "/login");
+
+  // Repeeling and bookmarking are writes, so with no session they are links to
+  // the door and not buttons that would paint a change nobody can save. Each
+  // keeps the name it answers to signed in, because that is what the reader of
+  // a screen reader hears either way.
+  const writes: { name: string | RegExp; exact?: boolean; what: string }[] = [
+    { name: /^Repeel, /, what: "the repeel chip" },
+    // Exact: "Bookmark" is also the front of "Remove bookmark".
+    { name: "Bookmark", exact: true, what: "the bookmark" },
+  ];
+  for (const { name, exact, what } of writes) {
+    await expect(opened.getByRole("link", { name, exact }), what).toHaveAttribute("href", "/login");
+    await expect(opened.getByRole("button", { name, exact }), what).toHaveCount(0);
+  }
+
+  // The reply chip was already a link; what it must not be is a button, and it
+  // keeps the name it has always had.
+  const replies = /^\d+ (reply|replies)$/;
+  await expect(opened.getByRole("link", { name: replies })).toBeVisible();
+  await expect(opened.getByRole("button", { name: replies })).toHaveCount(0);
+  // The dots menu keeps what the browser can do for anybody -- copy the link --
+  // and loses what needs a name: reporting somebody else's peel, pinning or
+  // deleting your own. Escape closes it the way it would for anyone.
+  await opened.getByRole("button", { name: "More" }).click();
+  await expect(page.getByRole("button", { name: "Copy link" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Report peel" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Delete peel" })).toHaveCount(0);
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("button", { name: "Copy link" })).toBeHidden();
+
+  // A profile reads too, and Follow is the door in the shape of the button it
+  // will be. Messaging needs somebody to send it, and muting or blocking needs
+  // somebody to do the not-seeing, so neither is offered.
+  await page.goto("/u/ada");
+  await expect(page.getByRole("heading", { name: "Ada Lovelace", level: 1 })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Follow", exact: true })).toHaveAttribute(
+    "href",
+    "/login",
+  );
+  await expect(page.getByRole("button", { name: "Follow", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Message", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "More for @ada" })).toHaveCount(0);
+
+  // And so do the lists hanging off it: the control says which side is open,
+  // whoever is or is not on it.
+  await page.goto("/u/ada/followers");
+  const follows = page.getByRole("group", { name: "Follows" });
+  await expect(follows.getByRole("link", { name: "Followers" })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
+  await expect(follows.getByRole("link", { name: "Following" })).toBeVisible();
+
+  // Search answers a reader with no session. The term is the one peel the
+  // narrative has had since its first test, and the card is checked by its id.
+  await page.goto(`/explore?q=${encodeURIComponent("first peel from ada")}`);
+  await expect(page.getByRole("link", { name: "Top" })).toHaveAttribute("aria-current", "page");
+  await expect(peelCard(page, adaPeel)).toBeVisible();
+});

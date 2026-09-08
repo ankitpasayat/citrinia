@@ -46,11 +46,8 @@ const EMPTY: Record<ProfileTab, { title: string; self: string; other: string }> 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { username } = await params;
   const supabase = await createClient();
-  // Metadata resolves before the page's redirect; keep names out of titles for logged-out requests.
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { title: "Citrinia" };
+  // A profile is public now, so its title is too: a link to somebody's peels
+  // that says "Citrinia" when it is shared is a link nobody clicks.
   const { data } = await supabase
     .from("profiles")
     .select("name, username")
@@ -69,7 +66,10 @@ export default async function ProfilePage({ params, searchParams }: Props) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  // A profile reads in full without a session. Everything that is about where
+  // the viewer stands with this person -- the follow, the mute, the block, their
+  // own handle for the rail -- needs one, and is not asked for without it.
+  const viewerId = user?.id ?? null;
 
   const found = await resolveHandle(supabase, username);
   if (!found) notFound();
@@ -81,7 +81,7 @@ export default async function ProfilePage({ params, searchParams }: Props) {
   }
   const profile = found.profile;
 
-  const isSelf = profile.id === user.id;
+  const isSelf = profile.id === viewerId;
 
   // The pin leads the profile's own timeline and nothing else: it is not a
   // reply, not a like, and by page two the reader has gone past it.
@@ -96,33 +96,39 @@ export default async function ProfilePage({ params, searchParams }: Props) {
       .is("parent_id", null),
     supabase.from("follows").select("follower_id", { count: "exact", head: true }).eq("followee_id", profile.id),
     supabase.from("follows").select("followee_id", { count: "exact", head: true }).eq("follower_id", profile.id),
-    supabase
-      .from("follows")
-      .select("follower_id")
-      .eq("follower_id", user.id)
-      .eq("followee_id", profile.id)
-      .maybeSingle(),
+    user
+      ? supabase
+          .from("follows")
+          .select("follower_id")
+          .eq("follower_id", user.id)
+          .eq("followee_id", profile.id)
+          .maybeSingle()
+      : null,
     // Only for the dots menu's label. A mute changes nothing on this page: the
     // whole point of it is that a muted person's profile still reads in full.
-    supabase
-      .from("mutes")
-      .select("muted_id")
-      .eq("muter_id", user.id)
-      .eq("muted_id", profile.id)
-      .maybeSingle(),
+    user
+      ? supabase
+          .from("mutes")
+          .select("muted_id")
+          .eq("muter_id", user.id)
+          .eq("muted_id", profile.id)
+          .maybeSingle()
+      : null,
     // A block, either way round, in one read: RLS on blocks shows the viewer
     // only rows they are named in, and a self-block cannot exist, so both `in`
     // lists together can only match the row between these two people.
-    supabase
-      .from("blocks")
-      .select("blocker_id")
-      .in("blocker_id", [user.id, profile.id])
-      .in("blocked_id", [user.id, profile.id]),
+    user
+      ? supabase
+          .from("blocks")
+          .select("blocker_id")
+          .in("blocker_id", [user.id, profile.id])
+          .in("blocked_id", [user.id, profile.id])
+      : null,
     tab === "replies"
-      ? fetchRepliesBy(supabase, user.id, profile.id, before)
+      ? fetchRepliesBy(supabase, viewerId, profile.id, before)
       : tab === "likes"
-        ? fetchLikedBy(supabase, user.id, profile.id, before)
-        : fetchPeels(supabase, user.id, {
+        ? fetchLikedBy(supabase, viewerId, profile.id, before)
+        : fetchPeels(supabase, viewerId, {
             authorId: profile.id,
             parentId: null,
             // Media is the same list with the attachment as the filter.
@@ -133,21 +139,26 @@ export default async function ProfilePage({ params, searchParams }: Props) {
             before,
             limit: PAGE_SIZE,
           }),
-    supabase.from("profiles").select("username").eq("id", user.id).maybeSingle(),
-    pinnedId === null ? null : fetchPeel(supabase, user.id, pinnedId),
+    user ? supabase.from("profiles").select("username").eq("id", user.id).maybeSingle() : null,
+    pinnedId === null ? null : fetchPeel(supabase, viewerId, pinnedId),
   ]);
 
   // Who did it decides which notice the reader gets, and whether there is a
   // button. Both rows can exist at once -- blocking somebody who blocked you is
   // allowed -- and then the reader's own block is the one that has a button.
-  const isBlocked = (block.data ?? []).some((row) => row.blocker_id === user.id);
-  const blockedByThem = (block.data ?? []).some((row) => row.blocker_id === profile.id);
+  // Signed out neither can be true: a block is between two people, and one of
+  // them is missing, so `block` was never read at all.
+  const isBlocked = (block?.data ?? []).some((row) => row.blocker_id === viewerId);
+  const blockedByThem = (block?.data ?? []).some((row) => row.blocker_id === profile.id);
+
+  // The reader's own handle, for the rail's You; null is a signed-out reader.
+  const me = viewer === null ? null : (isSelf ? profile.username : (viewer.data?.username ?? ""));
 
   const older = peels.length === PAGE_SIZE ? await cursor(supabase, tab, profile.id, peels) : null;
   const empty = EMPTY[tab];
 
   return (
-    <FeedShell username={isSelf ? profile.username : (viewer.data?.username ?? "")}>
+    <FeedShell username={me}>
       <Column>
         <ProfileCard
           profile={profile}
@@ -157,8 +168,9 @@ export default async function ProfilePage({ params, searchParams }: Props) {
             following: following.count ?? 0,
           }}
           isSelf={isSelf}
-          isFollowing={follow.data !== null}
-          isMuted={mute.data !== null}
+          isFollowing={Boolean(follow?.data)}
+          signedIn={user !== null}
+          isMuted={Boolean(mute?.data)}
           isBlocked={isBlocked}
           blockedByThem={blockedByThem}
         />
@@ -175,11 +187,11 @@ export default async function ProfilePage({ params, searchParams }: Props) {
           <>
             <ProfileTabs username={profile.username} tab={tab} />
 
-            {pinned && <PeelList peels={[pinned]} viewerId={user.id} live={false} pinned />}
+            {pinned && <PeelList peels={[pinned]} viewerId={viewerId} live={false} pinned />}
 
             <PeelList
               peels={peels}
-              viewerId={user.id}
+              viewerId={viewerId}
               live={false}
               // Past the first page an empty tab is the end of it, not an empty tab.
               emptyTitle={before ? "That's all the peels." : empty.title}

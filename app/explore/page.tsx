@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { searchPeels, searchPeople } from "@/lib/peels";
 import { Column } from "@/components/column";
@@ -28,7 +27,9 @@ export default async function Explore({
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  // Search is how a reader without an account finds anybody at all, so it is
+  // open; only the suggestions below it are about somebody in particular.
+  const viewerId = user?.id ?? null;
 
   const params = await searchParams;
   const q = (params.q ?? "").trim();
@@ -37,18 +38,18 @@ export default async function Explore({
   // One tab is on screen, so one tab is read: peels and people are different
   // queries against different tables, and neither is cheap enough to run for a
   // panel nobody asked for. The two that do not apply resolve to nothing.
-  const [{ data: viewer }, peels, people] = await Promise.all([
-    supabase.from("profiles").select("username").eq("id", user.id).maybeSingle(),
+  const [viewer, peels, people] = await Promise.all([
+    user ? supabase.from("profiles").select("username").eq("id", user.id).maybeSingle() : null,
     q !== "" && tab !== "people"
-      ? searchPeels(supabase, user.id, q, tab === "top", PEEL_LIMIT)
+      ? searchPeels(supabase, viewerId, q, tab === "top", PEEL_LIMIT)
       : Promise.resolve([]),
     q !== "" && tab === "people"
-      ? searchPeople(supabase, user.id, q, PEOPLE_LIMIT)
+      ? searchPeople(supabase, viewerId, q, PEOPLE_LIMIT)
       : Promise.resolve([]),
   ]);
 
   return (
-    <FeedShell username={viewer?.username ?? ""}>
+    <FeedShell username={viewer === null ? null : (viewer.data?.username ?? "")}>
       <Column>
         <SearchForm q={q} />
 
@@ -57,7 +58,9 @@ export default async function Explore({
              the two ways in that do not need the reader to know a word first. */
           <>
             <Trending n={TRENDS} />
-            <WhoToFollow viewerId={user.id} n={SUGGESTIONS} />
+            {/* Suggestions are people the viewer does not follow yet, which is
+                not a question a signed-out reader has an answer to. */}
+            {viewerId && <WhoToFollow viewerId={viewerId} n={SUGGESTIONS} />}
           </>
         ) : (
           <>
@@ -70,12 +73,12 @@ export default async function Explore({
               people.length === 0 ? (
                 <EmptyState title="Nobody by that name" body="Try a handle, or part of one." />
               ) : (
-                <PersonList people={people} />
+                <PersonList people={people} signedIn={user !== null} />
               )
             ) : (
               <PeelList
                 peels={peels}
-                viewerId={user.id}
+                viewerId={viewerId}
                 live={false}
                 emptyTitle="No peels match"
                 emptyBody="Try another word, or look under People."

@@ -1,7 +1,9 @@
 "use client";
 
-// The signed-in chrome: whatever the page renders, plus the navigation and the
-// one compose sheet they share. Every signed-in screen wraps its column in this.
+// The chrome: whatever the page renders, plus the navigation and the one compose
+// sheet they share. Every screen wraps its column in this. A signed-out reader
+// gets the same frame with less in it -- Feed and Explore, and Sign in where the
+// compose controls were -- so the square looks like itself before you join it.
 // Phones get the bottom bar. From the tablet breakpoint the navigation is an
 // icon rail on the left with the column centred beside it; from the desktop
 // breakpoint the aside joins on the right -- search plus whatever the page hands
@@ -23,7 +25,8 @@ export function FeedShell({
   wide = false,
   children,
 }: {
-  username: string;
+  /** The viewer's handle, for the rail's You. null is a signed-out reader. */
+  username: string | null;
   aside?: React.ReactNode;
   /**
    * Give the middle everything the rail does not take, and drop the aside.
@@ -58,8 +61,8 @@ export function FeedShell({
           </aside>
         )}
       </div>
-      {!inConversation && <Tabs onCompose={() => setOpen(true)} />}
-      <ComposeSheet open={open} onClose={close} />
+      {!inConversation && <Tabs signedIn={username !== null} onCompose={() => setOpen(true)} />}
+      {username !== null && <ComposeSheet open={open} onClose={close} />}
     </>
   );
 }

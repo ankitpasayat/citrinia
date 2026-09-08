@@ -42,7 +42,8 @@ export async function FollowPage({
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  // Who follows whom is public; only the button at the end of each row is not.
+  const viewerId = user?.id ?? null;
 
   const found = await resolveHandle(supabase, username);
   if (!found) notFound();
@@ -51,16 +52,18 @@ export async function FollowPage({
   const profile = found.profile;
 
   const [{ people, older }, viewer] = await Promise.all([
-    fetchFollowList(supabase, user.id, profile.id, side, before),
-    supabase.from("profiles").select("username").eq("id", user.id).maybeSingle(),
+    fetchFollowList(supabase, viewerId, profile.id, side, before),
+    user ? supabase.from("profiles").select("username").eq("id", user.id).maybeSingle() : null,
   ]);
 
   const base = `/u/${encodeURIComponent(profile.username)}`;
-  const isSelf = profile.id === user.id;
+  const isSelf = profile.id === viewerId;
   const empty = EMPTY[side];
+  // The reader's own handle, for the rail's You; null is a signed-out reader.
+  const me = viewer === null ? null : (isSelf ? profile.username : (viewer.data?.username ?? ""));
 
   return (
-    <FeedShell username={isSelf ? profile.username : (viewer.data?.username ?? "")}>
+    <FeedShell username={me}>
       <Column>
         {/* Back to the profile this list belongs to, named, so it is clear whose it is. */}
         <Link
@@ -85,7 +88,7 @@ export async function FollowPage({
         />
 
         {people.length > 0 ? (
-          <PersonList people={people} />
+          <PersonList people={people} signedIn={user !== null} />
         ) : (
           <EmptyState
             // Past the first page an empty side is the end of it, not an empty side.

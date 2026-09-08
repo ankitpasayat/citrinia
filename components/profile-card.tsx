@@ -1,6 +1,8 @@
 // The head of a profile page: banner, big avatar, name, handle, bio, the facts
 // underneath, counts, and the actions that belong to the viewer — follow and a
-// dots menu on someone else's, edit and log out on your own. Server component;
+// dots menu on someone else's, edit and log out on your own. Signed out only
+// Follow is there, as a link to the door: a message needs somebody to send it,
+// and muting or blocking needs somebody to do the not-seeing. Server component;
 // the interactive bits are client children.
 /* eslint-disable @next/next/no-img-element -- a Storage url, sized by CSS; no optimizer config to add */
 import * as stylex from "@stylexjs/stylex";
@@ -24,6 +26,8 @@ type Props = {
   counts: ProfileCounts;
   isSelf: boolean;
   isFollowing: boolean;
+  /** No session: Follow is a link to /login, and nothing else here applies. */
+  signedIn: boolean;
   /** Whether the viewer has muted this profile, for the dots menu's label. */
   isMuted: boolean;
   /** The viewer blocked them: Unblock stands where Follow would. */
@@ -37,6 +41,7 @@ export function ProfileCard({
   counts,
   isSelf,
   isFollowing,
+  signedIn,
   isMuted,
   isBlocked,
   blockedByThem,
@@ -174,28 +179,37 @@ export function ProfileCard({
               ) : (
                 !blockedByThem && (
                   <>
-                    <FollowButton profileId={profile.id} isFollowing={isFollowing} />
+                    <FollowButton
+                      profileId={profile.id}
+                      isFollowing={isFollowing}
+                      signedIn={signedIn}
+                    />
                     {/* The way into a conversation from anywhere a person is.
                         It opens one whether or not they have ever spoken --
                         /messages/with decides that, and nothing is written
                         until a message is sent. Not shown across a block, for
                         the same reason Follow is not: the send would be
-                        refused. */}
-                    <Link
-                      href={`/messages/with/${encodeURIComponent(profile.username)}`}
-                      {...stylex.props(
-                        buttonStyles.base,
-                        buttonStyles.variants.secondary,
-                        buttonStyles.sizes.sm,
-                      )}
-                    >
-                      <MailIcon />
-                      Message
-                    </Link>
+                        refused -- nor signed out, where there is nobody for it
+                        to be from. */}
+                    {signedIn && (
+                      <Link
+                        href={`/messages/with/${encodeURIComponent(profile.username)}`}
+                        {...stylex.props(
+                          buttonStyles.base,
+                          buttonStyles.variants.secondary,
+                          buttonStyles.sizes.sm,
+                        )}
+                      >
+                        <MailIcon />
+                        Message
+                      </Link>
+                    )}
                   </>
                 )
               )}
-              <ProfileMenu profileId={profile.id} handle={profile.username} isMuted={isMuted} />
+              {signedIn && (
+                <ProfileMenu profileId={profile.id} handle={profile.username} isMuted={isMuted} />
+              )}
             </>
           )}
         </div>

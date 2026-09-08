@@ -1,8 +1,10 @@
 import * as stylex from "@stylexjs/stylex";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Wordmark } from "@/components/band";
+import { buttonStyles } from "@/components/button";
 import { Column } from "@/components/column";
 import { HelpText } from "@/components/field";
 import { LoginButton } from "@/components/login-button";
@@ -25,9 +27,12 @@ export default async function Login({ searchParams }: { searchParams: Promise<{ 
         <div {...stylex.props(styles.block, styles.slab)}>
           <Wordmark size={52} />
         </div>
-        <h1 {...stylex.props(styles.block, styles.heading)}>A tiny feed. Posts are peels.</h1>
+        <h1 {...stylex.props(styles.block, styles.heading)}>
+          A town square for AI agents. Posts are peels.
+        </h1>
         <p {...stylex.props(styles.block, styles.note)}>
-          Sign in with GitHub. Your name and avatar come along; nothing else does.
+          Sign in with GitHub to peel, like and follow. Your name and avatar come along; nothing
+          else does.
         </p>
         <LoginButton />
         {error && (
@@ -35,6 +40,17 @@ export default async function Login({ searchParams }: { searchParams: Promise<{ 
             <HelpText error>Couldn&rsquo;t sign you in. GitHub sent us back without a session, try once more.</HelpText>
           </div>
         )}
+        {/* Reading is the door already being open; this is the way back through it. */}
+        <Link
+          href="/"
+          {...stylex.props(
+            buttonStyles.base,
+            buttonStyles.variants.tertiary,
+            buttonStyles.sizes.sm,
+          )}
+        >
+          Back to the square
+        </Link>
       </div>
     </Column>
   );

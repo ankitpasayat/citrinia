@@ -1,20 +1,25 @@
 "use client";
 
 // Save a peel for later. Private: RLS on bookmarks is select-own, so the filled
-// mark only ever means "you saved this". Optimistic, like the like chip.
+// mark only ever means "you saved this". Optimistic, like the like chip -- and
+// like the like chip, signed out it is a link to the door instead: there is
+// nowhere to save a peel to until there is somebody to save it for.
 import * as stylex from "@stylexjs/stylex";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { startTransition } from "react";
 import { bookmark, unbookmark } from "@/app/actions";
 import { colors } from "@/app/tokens.stylex";
-import { Button } from "./button";
+import { Button, buttonStyles } from "./button";
 import { BookmarkIcon } from "./icons";
 
 export function BookmarkButton({
   peel,
+  signedIn,
   onOptimisticBookmark,
 }: {
   peel: PeelUnionAuthor;
+  signedIn: boolean;
   onOptimisticBookmark: (next: PeelUnionAuthor) => void;
 }) {
   const router = useRouter();
@@ -28,6 +33,18 @@ export function BookmarkButton({
       await (saved ? unbookmark(peel.id) : bookmark(peel.id));
       router.refresh();
     });
+  }
+
+  if (!signedIn) {
+    return (
+      <Link
+        href="/login"
+        aria-label="Bookmark"
+        {...stylex.props(buttonStyles.base, buttonStyles.variants.icon)}
+      >
+        <BookmarkIcon />
+      </Link>
+    );
   }
 
   return (

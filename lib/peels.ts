@@ -119,11 +119,15 @@ function olderThan(column: string, idColumn: string, c: Cursor): string {
  *
  * An empty list is the common answer and costs one small indexed read; RLS on
  * `mutes` is select-own, so this can only ever return the viewer's own rows.
+ *
+ * A signed-out reader has muted nobody, and `mutes` is not theirs to read at
+ * all: asking would be an error page for somebody the square is happy to have.
  */
 export async function fetchMutedIds(
   supabase: SupabaseClient<Database>,
-  viewerId: string,
+  viewerId: string | null,
 ): Promise<string[]> {
+  if (viewerId === null) return [];
   const { data, error } = await supabase.from("mutes").select("muted_id").eq("muter_id", viewerId);
   // A feed that quietly stops honouring a mute is worse than an error page.
   if (error) throw new Error(`Couldn't load your mutes: ${error.message}`);
@@ -133,7 +137,7 @@ export async function fetchMutedIds(
 /** Fetch peels with author, counts, the viewer's like/repost/bookmark flags, media and quote. */
 export async function fetchPeels(
   supabase: SupabaseClient<Database>,
-  viewerId: string,
+  viewerId: string | null,
   filter: PeelFilter = {},
 ): Promise<PeelUnionAuthor[]> {
   // `.in()` on an empty list matches nothing; skip the round trip.
@@ -176,7 +180,7 @@ export async function fetchPeels(
 /** One peel by id with the same meta, or null when it is gone (or the id is not a peel id). */
 export async function fetchPeel(
   supabase: SupabaseClient<Database>,
-  viewerId: string,
+  viewerId: string | null,
   id: string,
 ): Promise<PeelUnionAuthor | null> {
   const { data, error } = await supabase.from("peels").select(SELECT).eq("id", id).maybeSingle();
@@ -205,7 +209,7 @@ export async function fetchPeel(
  */
 export async function fetchAncestors(
   supabase: SupabaseClient<Database>,
-  viewerId: string,
+  viewerId: string | null,
   id: string,
 ): Promise<PeelUnionAuthor[]> {
   const { data, error } = await supabase.rpc("peel_ancestors", { of_peel: id });
@@ -233,7 +237,7 @@ export async function fetchAncestors(
  */
 export async function fetchTimeline(
   supabase: SupabaseClient<Database>,
-  viewerId: string,
+  viewerId: string | null,
   options: { followingOnly: boolean; before?: string; pageSize?: number },
 ): Promise<{ items: PeelUnionAuthor[]; nextBefore: string | null }> {
   const pageSize = options.pageSize ?? PAGE_SIZE;
@@ -272,7 +276,7 @@ export async function fetchTimeline(
 /** The replies tab on a profile: this user's peels that hang off somebody's peel. */
 export async function fetchRepliesBy(
   supabase: SupabaseClient<Database>,
-  viewerId: string,
+  viewerId: string | null,
   userId: string,
   before?: string,
 ): Promise<PeelUnionAuthor[]> {
@@ -287,7 +291,7 @@ export async function fetchRepliesBy(
 /** The likes tab on a profile: peels this user liked, their most recent like first. */
 export async function fetchLikedBy(
   supabase: SupabaseClient<Database>,
-  viewerId: string,
+  viewerId: string | null,
   userId: string,
   before?: string,
 ): Promise<PeelUnionAuthor[]> {
@@ -366,7 +370,7 @@ export async function countUnreadNotifications(
  */
 export async function searchPeels(
   supabase: SupabaseClient<Database>,
-  viewerId: string,
+  viewerId: string | null,
   term: string,
   top: boolean,
   limit: number = 30,
@@ -396,7 +400,7 @@ export async function searchPeels(
  */
 export async function searchPeople(
   supabase: SupabaseClient<Database>,
-  viewerId: string,
+  viewerId: string | null,
   term: string,
   limit: number = 20,
 ): Promise<Person[]> {
@@ -520,7 +524,7 @@ export type Person = { profile: Profile; isFollowing: boolean; isSelf: boolean }
  */
 export async function fetchFollowList(
   supabase: SupabaseClient<Database>,
-  viewerId: string,
+  viewerId: string | null,
   profileId: string,
   side: FollowSide,
   before?: string,
@@ -617,20 +621,24 @@ export async function fetchBlockedList(
  */
 async function peopleByIds(
   supabase: SupabaseClient<Database>,
-  viewerId: string,
+  viewerId: string | null,
   ids: string[],
   what: string,
 ): Promise<Person[]> {
   const [profiles, mine] = await Promise.all([
     supabase.from("profiles").select("*").in("id", ids),
     // Which of them the viewer already follows, so each row's button opens right.
-    supabase.from("follows").select("followee_id").eq("follower_id", viewerId).in("followee_id", ids),
+    // Signed out there is no such row and no such button -- every row's button is
+    // the door -- so the round trip is not made at all.
+    viewerId === null
+      ? null
+      : supabase.from("follows").select("followee_id").eq("follower_id", viewerId).in("followee_id", ids),
   ]);
   if (profiles.error) throw new Error(`Couldn't load ${what}: ${profiles.error.message}`);
-  if (mine.error) throw new Error(`Couldn't load ${what}: ${mine.error.message}`);
+  if (mine?.error) throw new Error(`Couldn't load ${what}: ${mine.error.message}`);
 
   const byId = new Map((profiles.data ?? []).map((profile) => [profile.id, profile]));
-  const followed = new Set((mine.data ?? []).map((row) => row.followee_id));
+  const followed = new Set((mine?.data ?? []).map((row) => row.followee_id));
 
   return ids
     .map((id) => byId.get(id))
@@ -662,7 +670,7 @@ type Embedded = Database["public"]["Tables"]["peels"]["Row"] & {
 /** null when the author row did not come back, which would be a peel we cannot render. */
 function shape(
   row: Embedded,
-  viewerId: string,
+  viewerId: string | null,
   replies: number,
   quotes: Map<string, PeelUnionAuthor> = new Map(),
 ): PeelUnionAuthor | null {
@@ -672,7 +680,8 @@ function shape(
   if (!author) return null;
   const likes = row.likes ?? [];
   const reposts = row.reposts ?? [];
-  // RLS on bookmarks is select-own, so this array is only ever the viewer's row.
+  // RLS on bookmarks is select-own, so this array is only ever the viewer's row
+  // -- and empty for a signed-out reader, who has no row anywhere to find.
   const bookmarks = row.bookmarks ?? [];
   return {
     ...row,
@@ -763,7 +772,7 @@ async function replyCounts(
  */
 async function fetchQuotes(
   supabase: SupabaseClient<Database>,
-  viewerId: string,
+  viewerId: string | null,
   rows: { quote_id: string | null }[],
 ): Promise<Map<string, PeelUnionAuthor>> {
   const quotes = new Map<string, PeelUnionAuthor>();
@@ -788,7 +797,7 @@ async function fetchQuotes(
  */
 async function fetchByJoin(
   supabase: SupabaseClient<Database>,
-  viewerId: string,
+  viewerId: string | null,
   table: "likes" | "bookmarks",
   userId: string,
   before?: string,

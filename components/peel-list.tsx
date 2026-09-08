@@ -41,7 +41,8 @@ export function PeelList({
   pinned = false,
 }: {
   peels: PeelUnionAuthor[];
-  viewerId: string;
+  /** null is a signed-out reader: no peel here is theirs, and none of it writes. */
+  viewerId: string | null;
   emptyTitle?: string;
   emptyBody?: string;
   /** Rendered inside the empty state, under the note (the Following feed's suggestions). */
@@ -98,10 +99,12 @@ export function PeelList({
     let channel: RealtimeChannel | undefined;
     let cancelled = false;
 
-    // The session lives in a cookie, so the socket only learns the viewer's token
-    // asynchronously. Subscribing first wins that race and joins as `anon`, and the
-    // peels select policy is `to authenticated`, so RLS filters out every change and
-    // the feed silently never updates. setAuth() first, subscribe second.
+    // The session lives in a cookie, so the socket only learns the reader's token
+    // asynchronously, and a channel keeps whatever it joined with for its whole
+    // life. setAuth() first, subscribe second: it resolves either way -- their
+    // token, or the anon one when there is no session -- and the peels select
+    // policy answers to both, which is what puts the live feed on the square for
+    // a reader who has not signed in.
     supabase.realtime
       .setAuth()
       .then(() => {
@@ -125,7 +128,8 @@ export function PeelList({
               // here instead -- announcing one would send the reader nowhere.
               if (parentId === null && payload.new.parent_id !== null) return;
               // Your own peel is already on the screen: posting refreshes the
-              // list, so announcing it would offer the reader nothing new.
+              // list, so announcing it would offer the reader nothing new. A
+              // signed-out reader has no peels of their own to skip.
               if (payload.new.user_id === viewerId) return;
               setWaiting((n) => n + 1);
             },

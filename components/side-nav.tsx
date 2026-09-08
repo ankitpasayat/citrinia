@@ -3,19 +3,27 @@
 // The rail: the mark, the five destinations and the compose button. The bottom
 // bar's twin from the tablet breakpoint up; hidden below it. Icons stacked over
 // small labels until the wide breakpoint, where it grows to the labelled column.
+// Signed out only the two public destinations are here, and both compose
+// controls become the door: the rest of the rail needs a name behind it.
 import * as stylex from "@stylexjs/stylex";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { bp, colors, fonts, shape } from "@/app/tokens.stylex";
-import { Button } from "./button";
+import { Button, buttonStyles } from "./button";
 import { BellIcon, HomeIcon, MailIcon, PlusIcon, SearchIcon, UserIcon } from "./icons";
 import { isOn } from "./tabs";
 import { MessageBadge } from "./message-badge";
 import { UnreadBadge } from "./unread-badge";
 
-export function SideNav({ username, onCompose }: { username: string; onCompose: () => void }) {
+export function SideNav({
+  username,
+  onCompose,
+}: {
+  /** The viewer's handle, for You. null is a signed-out reader. */
+  username: string | null;
+  onCompose: () => void;
+}) {
   const pathname = usePathname();
-  const you = `/u/${username}`;
 
   return (
     <nav {...stylex.props(styles.rail)} aria-label="Main">
@@ -31,28 +39,59 @@ export function SideNav({ username, onCompose }: { username: string; onCompose: 
       <Item href="/explore" label="Explore" on={isOn(pathname, "/explore")}>
         <SearchIcon style={styles.icon} />
       </Item>
-      <Item href="/notifications" label="Alerts" on={isOn(pathname, "/notifications")}>
-        <BellIcon style={styles.icon} />
-        <UnreadBadge />
-      </Item>
-      <Item href="/messages" label="Messages" on={isOn(pathname, "/messages")}>
-        <MailIcon style={styles.icon} />
-        <MessageBadge />
-      </Item>
-      {/* The rail has the room the phone bar does not, so You keeps its place here. */}
-      <Item href={you} label="You" on={isOn(pathname, you)}>
-        <UserIcon style={styles.icon} />
-      </Item>
+      {username !== null && (
+        <>
+          <Item href="/notifications" label="Alerts" on={isOn(pathname, "/notifications")}>
+            <BellIcon style={styles.icon} />
+            <UnreadBadge />
+          </Item>
+          <Item href="/messages" label="Messages" on={isOn(pathname, "/messages")}>
+            <MailIcon style={styles.icon} />
+            <MessageBadge />
+          </Item>
+          {/* The rail has the room the phone bar does not, so You keeps its place here. */}
+          <Item href={`/u/${username}`} label="You" on={isOn(pathname, `/u/${username}`)}>
+            <UserIcon style={styles.icon} />
+          </Item>
+        </>
+      )}
 
       {/* One compose control per width: the round button on the icon rail, the
-          labelled one on the wide rail. Only one is ever displayed. */}
-      <Button variant="fab" aria-label="New peel" onClick={onCompose} style={styles.composeFab}>
-        <PlusIcon style={styles.plusFab} />
-      </Button>
-      <Button variant="primary" size="lg" onClick={onCompose} style={styles.compose}>
-        <PlusIcon style={styles.plus} />
-        New peel
-      </Button>
+          labelled one on the wide rail. Only one is ever displayed. Signed out
+          each keeps its slot and its shape, and goes to the door instead. */}
+      {username === null ? (
+        <>
+          <Link
+            href="/login"
+            aria-label="Sign in to peel"
+            {...stylex.props(buttonStyles.base, buttonStyles.variants.fab, styles.composeFab)}
+          >
+            <PlusIcon style={styles.plusFab} />
+          </Link>
+          <Link
+            href="/login"
+            {...stylex.props(
+              buttonStyles.base,
+              buttonStyles.variants.primary,
+              buttonStyles.sizes.lg,
+              styles.compose,
+            )}
+          >
+            <PlusIcon style={styles.plus} />
+            Sign in to peel
+          </Link>
+        </>
+      ) : (
+        <>
+          <Button variant="fab" aria-label="New peel" onClick={onCompose} style={styles.composeFab}>
+            <PlusIcon style={styles.plusFab} />
+          </Button>
+          <Button variant="primary" size="lg" onClick={onCompose} style={styles.compose}>
+            <PlusIcon style={styles.plus} />
+            New peel
+          </Button>
+        </>
+      )}
     </nav>
   );
 }

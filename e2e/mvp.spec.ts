@@ -1,12 +1,16 @@
-// The signed-in MVP, driven end to end in a real browser against a local
-// Supabase stack. One narrative on one database, in order: what test 2 posts,
-// test 3 replies to and test 11 deletes.
+// The MVP, driven end to end in a real browser against a local Supabase stack.
+// One narrative on one database, in order: what test 2 posts, test 3 replies to
+// and test 11 deletes. It opens and closes signed out, because reading the
+// square no longer needs an account.
+import { BASE_URL } from "../playwright.config.ts";
 import { actionWrite, card, expect, shot, subscribed, test, type Page } from "./fixtures.ts";
 import { peelAs } from "./db.ts";
 
 const PEEL = "first peel from ada 🍊";
 const REPLY = "hello from the thread";
 const BOB_PEEL = "bob peels in from the outside";
+// The line the square introduces itself with, on the home page and on the door.
+const TAGLINE = "A town square for AI agents. Posts are peels.";
 
 // app/tokens.stylex.ts, light values. Playwright's default colorScheme is light.
 const DANGER = "rgb(198, 40, 40)"; // colors.danger #C62828
@@ -26,13 +30,38 @@ function likeWrite(page: Page, method: "POST" | "DELETE") {
 
 test.describe.configure({ mode: "serial" });
 
-test("1. signed out: / is the login screen, and an unknown path composts", async ({ open }) => {
+test("1. signed out: / is the square, /login is the door, and an unknown path composts", async ({
+  open,
+}) => {
   const page = await open();
 
+  // Anyone may read the square, so the home page stays the home page: no
+  // session, no redirect. Nothing has been posted yet at this point in the
+  // narrative -- global setup empties the tables -- so it is the empty feed.
   await page.goto("/");
-  await expect(page).toHaveURL(/\/login$/);
-  await expect(page.getByRole("heading", { name: "A tiny feed. Posts are peels." })).toBeVisible();
+  await expect(page).toHaveURL(`${BASE_URL}/`);
+  await expect(page.getByRole("heading", { name: TAGLINE, level: 1 })).toBeVisible();
+  await expect(page.getByText("Anyone can watch. Sign in to join in.")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "No peels yet" })).toBeVisible();
+  await expect(page.getByText("Nobody has peeled yet.")).toBeVisible();
+
+  // Nothing to act with: no composer, and none of the screens that need a name.
+  // `exact` matters -- getByRole's name match is a substring by default, and
+  // "Sign in" is the front of "Sign in to peel" over in the bar.
+  await expect(page.getByRole("link", { name: "Sign in", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "New peel" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Alerts" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Messages" })).toHaveCount(0);
+  await shot(page, "square-mobile");
+
+  // The door is one tap away, and it leads back.
+  await page.getByRole("link", { name: "Sign in", exact: true }).click();
+  await expect(page).toHaveURL(`${BASE_URL}/login`);
+  await expect(page.getByRole("heading", { name: TAGLINE, level: 1 })).toBeVisible();
   await expect(page.getByRole("button", { name: "Continue with GitHub" })).toBeVisible();
+  const back = page.getByRole("link", { name: "Back to the square" });
+  await expect(back).toBeVisible();
+  await expect(back).toHaveAttribute("href", "/");
   await shot(page, "login-mobile");
 
   const missing = await page.goto("/nope");
@@ -253,7 +282,7 @@ test("9. the feed, on a phone", async ({ open }) => {
   await shot(page, "feed-mobile");
 });
 
-test("10. theme survives a reload, and log out ends the session", async ({ open }) => {
+test("10. theme survives a reload, and log out leaves you reading the square", async ({ open }) => {
   const page = await open("ada");
   await page.goto("/");
   const system = await page.evaluate(() => document.documentElement.className);
@@ -293,8 +322,20 @@ test("10. theme survives a reload, and log out ends the session", async ({ open 
   await expect(logOut).toBeVisible();
   await logOut.click();
   await expect(page).toHaveURL(/\/login$/);
+
+  // Signing out is not being shut out: the square still reads. What ends is
+  // acting on it -- a card's like is a link to the door, not a button that
+  // would paint a like nobody is signed in to make.
   await page.goto("/");
-  await expect(page).toHaveURL(/\/login$/);
+  await expect(page).toHaveURL(`${BASE_URL}/`);
+  const adas = card(page, PEEL);
+  await expect(adas).toBeVisible();
+  const like = adas.getByRole("link", { name: /likes$/ });
+  // Bob's like from test 5 is still the only one, and it is not the reader's.
+  await expect(like).toHaveAccessibleName("Like, 1 likes");
+  await expect(adas.getByRole("button", { name: /likes$/ })).toHaveCount(0);
+  await like.click();
+  await expect(page).toHaveURL(`${BASE_URL}/login`);
 });
 
 test("11. ada deletes her own peel, and it is gone for everyone", async ({ open }) => {

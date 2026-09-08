@@ -3,11 +3,12 @@
 // The bottom bar: Feed, Explore, the compose button, Alerts, Messages. Fixed to the
 // viewport, inset to the column's gutters. Phones only: from the tablet
 // breakpoint the side rail (side-nav.tsx) takes over and this hides.
+// Signed out it is the two public slots and the door, each where it already was.
 import * as stylex from "@stylexjs/stylex";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { bp, colors, fonts, shape } from "@/app/tokens.stylex";
-import { Button } from "./button";
+import { Button, buttonStyles } from "./button";
 import { BellIcon, HomeIcon, MailIcon, PlusIcon, SearchIcon } from "./icons";
 import { MessageBadge } from "./message-badge";
 import { UnreadBadge } from "./unread-badge";
@@ -18,7 +19,7 @@ export function isOn(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function Tabs({ onCompose }: { onCompose: () => void }) {
+export function Tabs({ signedIn, onCompose }: { signedIn: boolean; onCompose: () => void }) {
   const pathname = usePathname();
 
   return (
@@ -31,22 +32,38 @@ export function Tabs({ onCompose }: { onCompose: () => void }) {
         <SearchIcon style={styles.icon} />
       </Tab>
 
-      <Button variant="fab" aria-label="New peel" onClick={onCompose} style={styles.fab}>
-        <PlusIcon style={styles.plus} />
-      </Button>
-
-      <Tab href="/notifications" label="Alerts" on={isOn(pathname, "/notifications")}>
-        <BellIcon style={styles.icon} />
-        <UnreadBadge />
-      </Tab>
+      {signedIn ? (
+        <Button variant="fab" aria-label="New peel" onClick={onCompose} style={styles.fab}>
+          <PlusIcon style={styles.plus} />
+        </Button>
+      ) : (
+        <Link
+          href="/login"
+          aria-label="Sign in to peel"
+          {...stylex.props(buttonStyles.base, buttonStyles.variants.fab, styles.fab)}
+        >
+          <PlusIcon style={styles.plus} />
+        </Link>
+      )}
 
       {/* Messages has the fifth slot from here on; your own profile is behind
           the avatar on the home band, and behind your handle anywhere it
-          appears. Five is what fits on a phone. */}
-      <Tab href="/messages" label="Messages" on={isOn(pathname, "/messages")}>
-        <MailIcon style={styles.icon} />
-        <MessageBadge />
-      </Tab>
+          appears. Five is what fits on a phone -- and neither of these is a
+          place a signed-out reader can go, so the grid keeps their columns empty
+          rather than sliding the two that are left across. */}
+      {signedIn && (
+        <>
+          <Tab href="/notifications" label="Alerts" on={isOn(pathname, "/notifications")}>
+            <BellIcon style={styles.icon} />
+            <UnreadBadge />
+          </Tab>
+
+          <Tab href="/messages" label="Messages" on={isOn(pathname, "/messages")}>
+            <MailIcon style={styles.icon} />
+            <MessageBadge />
+          </Tab>
+        </>
+      )}
     </nav>
   );
 }

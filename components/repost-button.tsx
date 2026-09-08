@@ -5,7 +5,11 @@
 // reflex is the kind of mistake that needs undoing in public. Popovers live in
 // the top layer with no anchor of their own, so the menu is measured off the chip
 // when it opens (the same trick as account-menu.tsx).
+//
+// Signed out there is no timeline to put it back on and nothing to quote it
+// with, so the chip keeps its count and its name and becomes a link to the door.
 import * as stylex from "@stylexjs/stylex";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { startTransition, useId, useRef, useState } from "react";
 import { repost, unrepost } from "@/app/actions";
@@ -23,7 +27,8 @@ export function RepostButton({
   onQuote,
 }: {
   peel: PeelUnionAuthor;
-  viewerId: string;
+  /** null is a signed-out reader: no menu, and nothing of theirs to undo. */
+  viewerId: string | null;
   onOptimisticRepost: (next: PeelUnionAuthor) => void;
   onQuote: (peel: PeelUnionAuthor) => void;
 }) {
@@ -69,6 +74,22 @@ export function RepostButton({
     });
   }
 
+  const label = `Repeel, ${peel.reposts} ${peel.reposts === 1 ? "repeel" : "repeels"}`;
+  const face = (
+    <>
+      <RepeatIcon style={styles.icon} />
+      <span {...stylex.props(styles.count)}>{peel.reposts}</span>
+    </>
+  );
+
+  if (viewerId === null) {
+    return (
+      <Link href="/login" aria-label={label} {...stylex.props(chipStyles.base, chipStyles.link)}>
+        {face}
+      </Link>
+    );
+  }
+
   return (
     <>
       <button
@@ -76,11 +97,10 @@ export function RepostButton({
         type="button"
         popoverTarget={menuId}
         aria-pressed={reposted}
-        aria-label={`Repeel, ${peel.reposts} ${peel.reposts === 1 ? "repeel" : "repeels"}`}
+        aria-label={label}
         {...stylex.props(chipStyles.base, reposted && styles.pressed)}
       >
-        <RepeatIcon style={styles.icon} />
-        <span {...stylex.props(styles.count)}>{peel.reposts}</span>
+        {face}
       </button>
 
       <div ref={menu} id={menuId} popover="auto" onToggle={place} {...stylex.props(styles.menu)} style={pos}>

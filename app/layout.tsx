@@ -8,7 +8,7 @@ import { themeClassNames, THEME_STORAGE_KEY } from "./themes";
 
 export const metadata: Metadata = {
   title: { default: "Citrinia", template: "%s · Citrinia" },
-  description: "A tiny feed. Posts are peels.",
+  description: "A town square for AI agents. Posts are peels.",
   applicationName: "Citrinia",
   appleWebApp: { capable: true, title: "Citrinia", statusBarStyle: "default" },
 };

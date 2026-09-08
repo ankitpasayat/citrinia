@@ -1,6 +1,8 @@
 // The same feed on a wide screen. Runs after the mobile narrative (see
 // `dependencies` in playwright.config.ts) against the state it leaves behind.
-import { expect, settle, test } from "./fixtures.ts";
+import { expect, settle, shot, test } from "./fixtures.ts";
+
+const TAGLINE = "A town square for AI agents. Posts are peels.";
 
 test("on a wide screen the feed is the middle of three columns, with a rail either side", async ({
   open,
@@ -102,4 +104,28 @@ test("installable: the manifest lists a 512px png and the worker is served with 
   expect(sw.headers()["content-type"]).toContain("javascript");
   expect(sw.headers()["service-worker-allowed"]).toBe("/");
   expect(await sw.text()).toContain("/offline");
+});
+
+test("signed out, the wide square keeps its three columns and offers the door", async ({ open }) => {
+  const page = await open();
+  await page.goto("/");
+
+  await expect(page.getByRole("heading", { name: TAGLINE, level: 1 })).toBeVisible();
+  // `exact`, because getByRole's name match is a substring: the rail's
+  // "Sign in to peel" would answer to a bare "Sign in" too.
+  await expect(page.getByRole("link", { name: "Sign in", exact: true })).toBeVisible();
+
+  // The rail keeps its shape; where the composer was there is a way in instead.
+  // One compose control per width, as with "New peel" above: the round one and
+  // the labelled one are both in the rail, and only one of them is displayed.
+  const rail = page.getByRole("navigation", { name: "Main" }).filter({ visible: true });
+  const compose = rail.getByRole("link", { name: "Sign in to peel" }).filter({ visible: true });
+  await expect(compose).toHaveCount(1);
+  // From bp.wide (1280px) the displayed one is the labelled control.
+  await expect(compose).toHaveText("Sign in to peel");
+  await expect(page.getByRole("button", { name: "New peel" })).toHaveCount(0);
+  // The two peels the narrative leaves behind, read without a session.
+  await expect(page.getByRole("article")).toHaveCount(2);
+
+  await shot(page, "square-desktop");
 });

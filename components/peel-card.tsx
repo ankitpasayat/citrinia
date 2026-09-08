@@ -6,6 +6,10 @@
 // another <a>. Every peel gets a dots menu -- copy the link, hand it to the
 // system share sheet, report somebody else's -- and your own adds a delete that
 // asks once before it fires. The menu's plumbing lives in components/menu.tsx.
+//
+// Signed out the card is the same card with every write taken out of it: the
+// four actions keep their counts and their names and go to the door, and the
+// menu is down to the two things a browser can do on its own.
 import * as stylex from "@stylexjs/stylex";
 import Link from "next/link";
 import { startTransition, useState, useSyncExternalStore } from "react";
@@ -47,7 +51,8 @@ export function PeelCard({
   pinned = false,
 }: {
   peel: PeelUnionAuthor;
-  viewerId: string;
+  /** null is a signed-out reader: nothing here is theirs, and nothing writes. */
+  viewerId: string | null;
   /** On the peel page: YouTube plays inline and the pictures stop linking here. */
   embed?: boolean;
   /**
@@ -71,6 +76,7 @@ export function PeelCard({
   const profileHref = `/u/${author.username}`;
   const threadHref = `/p/${peel.id}`;
   const reposter = peel.reposted_by;
+  const signedIn = viewerId !== null;
   const mine = peel.user_id === viewerId;
 
   /** The link people paste: absolute, because it is leaving the app. */
@@ -179,11 +185,11 @@ export function PeelCard({
         {peel.quote && <QuoteCard quote={peel.quote} />}
 
         <div {...stylex.props(styles.acts)}>
-          <LikeChip peel={peel} onOptimisticLike={onOptimisticLike} />
+          <LikeChip peel={peel} signedIn={signedIn} onOptimisticLike={onOptimisticLike} />
           <Link
             href={threadHref}
             aria-label={`${peel.replies} ${peel.replies === 1 ? "reply" : "replies"}`}
-            {...stylex.props(chipStyles.base, styles.replyChip)}
+            {...stylex.props(chipStyles.base, chipStyles.link)}
           >
             <ReplyIcon style={styles.replyIcon} />
             <span {...stylex.props(styles.count)}>{peel.replies}</span>
@@ -196,7 +202,11 @@ export function PeelCard({
           />
 
           <span {...stylex.props(styles.push)}>
-            <BookmarkButton peel={peel} onOptimisticBookmark={onOptimisticBookmark} />
+            <BookmarkButton
+              peel={peel}
+              signedIn={signedIn}
+              onOptimisticBookmark={onOptimisticBookmark}
+            />
           </span>
 
           <Button ref={trigger} variant="icon" aria-label="More" popoverTarget={menuId}>
@@ -222,7 +232,9 @@ export function PeelCard({
               </button>
             )}
 
-            {!mine && (
+            {/* Copy and Share are the browser's own; reporting somebody is not,
+                and there is nobody to report them as until you sign in. */}
+            {signedIn && !mine && (
               <>
                 <hr {...stylex.props(menuStyles.rule)} />
                 <button type="button" onClick={onReport} {...stylex.props(menuStyles.item)}>
@@ -333,7 +345,6 @@ const styles = stylex.create({
   },
   time: { fontVariantNumeric: "tabular-nums" },
   acts: { display: "flex", alignItems: "center", gap: 6 },
-  replyChip: { textDecorationLine: "none" },
   replyIcon: { width: 18, height: 18 },
   count: { fontVariantNumeric: "tabular-nums" },
   push: { marginLeft: "auto", display: "inline-flex" },

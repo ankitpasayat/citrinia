@@ -11,6 +11,7 @@ import {
   encodeCursor,
   escapeRegex,
   fetchBookmarks,
+  fetchFollowList,
   fetchLikedBy,
   fetchBlockedList,
   fetchMutedIds,
@@ -66,8 +67,11 @@ function fake(rows: {
   profiles?: unknown[];
   notifications?: unknown[];
   joins?: { peel_id: string; created_at: string }[];
-  /** "who does the viewer follow" -- the first read of the follows table. */
-  follows?: { followee_id: string }[];
+  /**
+   * The first read of the follows table: "who does the viewer follow", or, on a
+   * follow list, the page of the list itself -- which carries the join's clock.
+   */
+  follows?: { followee_id: string; created_at?: string }[];
   /** One row per follower of the pool profiles -- the second read of follows. */
   followers?: { followee_id: string }[];
   /** Who the viewer has muted. */
@@ -880,4 +884,66 @@ test("the blocked list is only the blocks the viewer made, newest first", async 
     people.map((person) => person.profile.id),
     [BOB.id],
   );
+});
+
+// --- signed out --------------------------------------------------------------
+// Spec: the square is public, so every read a signed-out reader reaches takes
+// `null` for the viewer. Null is a reader, not an error: the counts are still
+// everybody's, the viewer's own flags are all false, and the tables that only
+// exist to answer "where do YOU stand" -- mutes, and the viewer's follows -- are
+// not asked at all, because anon may not read them and being refused is an error
+// page for somebody the square is happy to have.
+
+test("with nobody signed in there are no mutes, and no query looking for them", async () => {
+  const { client, calls } = fake({ mutes: [{ muted_id: BOB.id }] });
+  assert.deepEqual(await fetchMutedIds(client, null), []);
+  assert.equal(calls.length, 0, "anon may not read mutes, so it must not ask");
+});
+
+test("a signed-out reader's own flags are false, and the counts are still everybody's", async () => {
+  // The bookmarks embed comes back empty for anon (a grant with no policy), so
+  // "nobody bookmarked this" and "you did not" are the same empty array here.
+  const { client } = fake({
+    peels: [
+      peelRow({
+        id: "p1",
+        likes: [{ user_id: ADA.id }, { user_id: BOB.id }],
+        reposts: [{ user_id: BOB.id }],
+        bookmarks: [],
+      }),
+    ],
+  });
+  const [peel] = await fetchPeels(client, null);
+  assert.deepEqual(
+    [peel.likes, peel.user_has_liked_peel, peel.reposts, peel.user_has_reposted, peel.user_has_bookmarked],
+    [2, false, 1, false, false],
+  );
+});
+
+test("a signed-out reader follows nobody and is nobody, and the follows table is read once", async () => {
+  // The list's own read of follows is the page; the second one is "which of
+  // these does the viewer already follow", which has no answer without a viewer.
+  const rows = {
+    follows: [{ followee_id: BOB.id, created_at: "2026-09-05T00:00:00Z" }],
+    // Would make isFollowing true if the second read happened at all.
+    followers: [{ followee_id: BOB.id }],
+    profiles: [BOB],
+  };
+
+  const out = fake(rows);
+  const { people } = await fetchFollowList(out.client, null, ADA.id, "following");
+  assert.deepEqual(
+    people.map((person) => [person.profile.id, person.isFollowing, person.isSelf]),
+    [[BOB.id, false, false]],
+  );
+  assert.equal(out.calls.filter((call) => call.table === "follows").length, 1);
+
+  // Signed in, the same list does ask, and answers.
+  const inside = fake(rows);
+  const mine = await fetchFollowList(inside.client, BOB.id, ADA.id, "following");
+  assert.deepEqual(
+    mine.people.map((person) => [person.isFollowing, person.isSelf]),
+    [[true, true]],
+  );
+  assert.equal(inside.calls.filter((call) => call.table === "follows").length, 2);
 });

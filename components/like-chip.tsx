@@ -3,7 +3,12 @@
 // Peach chip, apricot on hover, mustard with a filled wedge when liked. The
 // write goes straight from the browser (RLS scopes it to the signed-in user),
 // so the count moves before the round trip and the refresh only confirms it.
+//
+// Signed out the same chip is a link to the door. The count is real either way;
+// what changes is that a tap cannot be a like, so it must not look like one --
+// an optimistic bump nobody can save is the chip telling a lie.
 import * as stylex from "@stylexjs/stylex";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { startTransition, useState } from "react";
 import { bp, colors, fonts, shape } from "@/app/tokens.stylex";
@@ -12,9 +17,11 @@ import { WedgeIcon } from "./icons";
 
 export function LikeChip({
   peel,
+  signedIn,
   onOptimisticLike,
 }: {
   peel: PeelUnionAuthor;
+  signedIn: boolean;
   onOptimisticLike: (next: PeelUnionAuthor) => void;
 }) {
   const router = useRouter();
@@ -45,14 +52,9 @@ export function LikeChip({
     });
   }
 
-  return (
-    <button
-      type="button"
-      onClick={toggle}
-      aria-pressed={liked}
-      aria-label={`${liked ? "Unlike" : "Like"}, ${peel.likes} likes`}
-      {...stylex.props(styles.chip, liked && styles.liked)}
-    >
+  const label = `${liked ? "Unlike" : "Like"}, ${peel.likes} likes`;
+  const face = (
+    <>
       <span
         {...stylex.props(styles.mark, justLiked && styles.pop)}
         onAnimationEnd={() => setJustLiked(false)}
@@ -60,14 +62,41 @@ export function LikeChip({
         <WedgeIcon filled={liked} style={styles.icon} />
       </span>
       <span {...stylex.props(styles.count)}>{peel.likes}</span>
+    </>
+  );
+
+  if (!signedIn) {
+    return (
+      <Link href="/login" aria-label={label} {...stylex.props(styles.chip, styles.link)}>
+        {face}
+      </Link>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={toggle}
+      aria-pressed={liked}
+      aria-label={label}
+      {...stylex.props(styles.chip, liked && styles.liked)}
+    >
+      {face}
     </button>
   );
 }
 
-/** The chip shell, for anything else in the actions row that has to match it (the reply link). */
+/**
+ * The chip shell, for anything else in the actions row that has to match it: the
+ * reply link, and the chips that are links because nobody is signed in.
+ */
 export const chipStyles = {
   get base() {
     return styles.chip;
+  },
+  /** The underline a chip that is an <a> would otherwise draw. */
+  get link() {
+    return styles.link;
   },
 };
 
@@ -115,6 +144,7 @@ const styles = stylex.create({
     },
     color: colors.onStripe,
   },
+  link: { textDecorationLine: "none" },
   mark: { display: "inline-flex" },
   pop: {
     animationName: pop,
