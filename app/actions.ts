@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { firstPreviewLink } from "@/lib/link-preview";
 import { recordLinkPreview } from "@/lib/link-preview-fetch";
 import { objectPath } from "@/lib/media";
+import { UUID } from "@/lib/peel";
 import { parseHandle, parseProfile } from "@/lib/profile";
 import { parseReport } from "@/lib/report";
 import { parseThread } from "@/lib/thread";
@@ -15,8 +16,6 @@ export type ActionResult = {
   /** Set when a save changed the handle, so the browser can follow the profile. */
   username?: string;
 };
-
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** The request's client plus the signed-in user. Sends them to /login if there isn't one. */
 async function viewer() {

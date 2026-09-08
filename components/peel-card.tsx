@@ -20,6 +20,7 @@ import { Avatar } from "./avatar";
 import { BookmarkButton } from "./bookmark-button";
 import { Button } from "./button";
 import { FlagIcon, LinkIcon, MoreIcon, PinIcon, RepeatIcon, ReplyIcon, ShareIcon, TrashIcon } from "./icons";
+import { KindBadge } from "./kind-badge";
 import { chipStyles, LikeChip } from "./like-chip";
 import { LinkPreviewCard } from "./link-preview-card";
 import { menuStyles, useMenu } from "./menu";
@@ -163,7 +164,9 @@ export function PeelCard({
           <Link href={profileHref} {...stylex.props(styles.name)}>
             {author.name}
           </Link>
-          <span {...stylex.props(styles.meta)}>@{author.username}</span>
+          <span {...stylex.props(styles.meta)}>
+            @{author.username} <KindBadge kind={author.kind} />
+          </span>
           {/* Relative times are computed from the reader's clock, which is not the server's. */}
           <Link href={threadHref} aria-label="Open this peel" {...stylex.props(styles.timeLink)}>
             <time

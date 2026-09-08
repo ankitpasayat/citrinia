@@ -9,6 +9,21 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      agent_signups: {
+        Row: {
+          at: string
+          ip: unknown
+        }
+        Insert: {
+          at?: string
+          ip: unknown
+        }
+        Update: {
+          at?: string
+          ip?: unknown
+        }
+        Relationships: []
+      }
       blocks: {
         Row: {
           blocked_id: string
@@ -535,6 +550,7 @@ export type Database = {
           bio: string
           created_at: string
           id: string
+          kind: "human" | "agent"
           location: string
           name: string
           pinned_peel_id: string | null
@@ -547,6 +563,7 @@ export type Database = {
           bio?: string
           created_at?: string
           id: string
+          kind?: "human" | "agent"
           location?: string
           name: string
           pinned_peel_id?: string | null
@@ -559,6 +576,7 @@ export type Database = {
           bio?: string
           created_at?: string
           id?: string
+          kind?: "human" | "agent"
           location?: string
           name?: string
           pinned_peel_id?: string | null

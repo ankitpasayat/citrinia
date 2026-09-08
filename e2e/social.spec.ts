@@ -3,6 +3,7 @@
 // where that one left it -- ada's peel with its reply, bob's peel, bob following
 // ada, and bob renamed "Bob Peeler" by mvp test 7 -- so it runs last (see the
 // `social` project in playwright.config.ts).
+import { type APIResponse } from "@playwright/test";
 import { createServer, type Server } from "node:http";
 import { deflateSync } from "node:zlib";
 import { BASE_URL } from "../playwright.config.ts";
@@ -113,6 +114,14 @@ const BOB_BEFORE_BLOCK = "bob peels before any of this";
 // Test 22: one tag three people use, and one tag one person uses three times.
 const ZEST = "zest is the best part";
 const LOUD = "saying it again";
+
+// Test 30: the account an agent signs itself up for, and the first thing it says
+// once it has. The handle is what the key is minted against, so it is the one
+// string the whole test turns on.
+const AGENT = { name: "Verify Bot", handle: "verifybot", bio: "I am a test." };
+const AGENT_PEEL = "hello from the api #verify";
+/** What one account may say in an hour, replies included. */
+const PEELS_AN_HOUR = 30;
 
 const CHAIN_ROOT = "what is the correct number of oranges";
 const CHAIN_MIDDLE = "one more than you have";
@@ -2085,4 +2094,180 @@ test("29. signed out, a peel, a profile, a list and a search read; the private s
   await page.goto(`/explore?q=${encodeURIComponent("first peel from ada")}`);
   await expect(page.getByRole("link", { name: "Top" })).toHaveAttribute("aria-current", "page");
   await expect(peelCard(page, adaPeel)).toBeVisible();
+});
+
+//------------------------------------------------------------------------------
+// The agent door: /api/agents
+//------------------------------------------------------------------------------
+
+/** Every field the API promises on a peel, sorted, and nothing besides. */
+const PEEL_FIELDS = [
+  "author",
+  "created_at",
+  "id",
+  "likes",
+  "media",
+  "quote_id",
+  "replies",
+  "reply_to",
+  "reposted_by",
+  "reposts",
+  "text",
+  "url",
+];
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+type ApiPeel = {
+  id: string;
+  text: string;
+  author: { handle: string; name: string; kind: string };
+};
+
+/** The one shape every refusal has: a sentence under `error`, and nothing else.
+ *  Returns the sentence, for the one refusal whose words are part of the API. */
+async function apiError(response: APIResponse): Promise<string> {
+  const body = (await response.json()) as { error?: unknown };
+  expect(Object.keys(body), `the body of a ${response.status()}`).toEqual(["error"]);
+  expect(typeof body.error, `the sentence in ${JSON.stringify(body)}`).toBe("string");
+  return String(body.error);
+}
+
+test("30. an agent comes in through the API, and the square shows who it is", async ({
+  open,
+  request,
+}) => {
+  // The whole door: no invite, no key of ours to hand out, one POST -- and the
+  // only copy of the key it will ever print comes back in the answer.
+  const made = await request.post("/api/agents/register", { data: AGENT });
+  expect(made.status(), await made.text()).toBe(201);
+  const account = (await made.json()) as { handle: string; api_key: string; profile_url: string };
+  expect(Object.keys(account).sort()).toEqual(["api_key", "docs", "handle", "note", "profile_url"]);
+  expect(account.handle).toBe(AGENT.handle);
+  expect(account.api_key).toMatch(/^ck_verifybot\./);
+  expect(account.profile_url.endsWith("/u/verifybot"), account.profile_url).toBe(true);
+  const auth = { Authorization: `Bearer ${account.api_key}` };
+
+  // A handle is a name, so there is one of it...
+  const taken = await request.post("/api/agents/register", { data: AGENT });
+  expect(taken.status(), await taken.text()).toBe(409);
+  await apiError(taken);
+  // ...and two characters is not one. Three is the floor, the same one a person
+  // types into the edit sheet.
+  const short = await request.post("/api/agents/register", { data: { name: "Ab", handle: "ab" } });
+  expect(short.status(), await short.text()).toBe(400);
+  await apiError(short);
+
+  // Writing needs the key. Not having one and having the wrong one get the same
+  // answer, because telling them apart would be a way of guessing.
+  const nokey = await request.post("/api/agents/peels", { data: { text: "no key on this one" } });
+  expect(nokey.status(), await nokey.text()).toBe(401);
+  await apiError(nokey);
+  const badkey = await request.post("/api/agents/peels", {
+    data: { text: "the wrong key on this one" },
+    headers: { Authorization: "Bearer ck_verifybot.nope" },
+  });
+  expect(badkey.status(), await badkey.text()).toBe(401);
+  await apiError(badkey);
+
+  // With the key, the first thing it has to say.
+  const posted = await request.post("/api/agents/peels", {
+    data: { text: AGENT_PEEL },
+    headers: auth,
+  });
+  expect(posted.status(), await posted.text()).toBe(201);
+  const { id, url } = (await posted.json()) as { id: string; url: string };
+  expect(id).toMatch(UUID);
+  expect(url.endsWith(`/p/${id}`), url).toBe(true);
+
+  // Reading it back takes no key at all -- the square is public, to agents too --
+  // and the peel says who wrote it and what kind of somebody that is.
+  const read = await request.get(`/api/agents/peels/${id}`);
+  expect(read.status(), await read.text()).toBe(200);
+  const thread = (await read.json()) as { peel: ApiPeel; ancestors: ApiPeel[]; replies: ApiPeel[] };
+  expect(Object.keys(thread.peel).sort()).toEqual(PEEL_FIELDS);
+  expect(thread.peel.id).toBe(id);
+  expect(thread.peel.text).toBe(AGENT_PEEL);
+  expect(thread.peel.author).toEqual({ handle: AGENT.handle, name: AGENT.name, kind: "agent" });
+  // A peel a second old has nothing on either side of it.
+  expect(thread.ancestors).toEqual([]);
+  expect(thread.replies).toEqual([]);
+
+  // A like is a state, not an event: saying it twice says the same thing once.
+  const adaPeel = await peelId(ADA_PEEL);
+  for (const attempt of ["first time", "second time"]) {
+    const liked = await request.post("/api/agents/likes", {
+      data: { peel_id: adaPeel },
+      headers: auth,
+    });
+    expect(liked.status(), `liking ada's peel the ${attempt}`).toBe(200);
+    expect(await liked.json(), `liking ada's peel the ${attempt}`).toEqual({ liked: true });
+  }
+
+  // Following is by handle, because a handle is what an agent has been told.
+  const follow = await request.post("/api/agents/follows", {
+    data: { handle: "ada" },
+    headers: auth,
+  });
+  expect(follow.status(), await follow.text()).toBe(200);
+  expect(await follow.json()).toEqual({ following: true, handle: "ada" });
+  // Following yourself is not a relationship.
+  const itself = await request.post("/api/agents/follows", {
+    data: { handle: AGENT.handle },
+    headers: auth,
+  });
+  expect(itself.status(), await itself.text()).toBe(400);
+  await apiError(itself);
+
+  // And the feed reads with no key either, with the new peel in it.
+  const feed = await request.get("/api/agents/feed");
+  expect(feed.status(), await feed.text()).toBe(200);
+  const timeline = (await feed.json()) as { peels: ApiPeel[]; next_before: unknown };
+  expect(Object.keys(timeline).sort()).toEqual(["next_before", "peels"]);
+  expect(
+    timeline.peels.some((peel) => peel.id === id && peel.author.kind === "agent"),
+    "the peel just posted, in the feed, marked an agent's",
+  ).toBe(true);
+
+  // The browser half runs here rather than after the limit, on purpose: the
+  // square shows 20 peels to a page, and the 29 about to be posted would push
+  // this one clean off the first one.
+  const page = await open();
+  await page.goto("/");
+  const his = card(page, AGENT_PEEL);
+  await expect(his).toBeVisible();
+  await expect(his.getByText("agent", { exact: true })).toBeVisible();
+  // Ada is a person and her card says nothing about it -- but the count is the
+  // half with teeth. Her anchor peel is old enough by now to have fallen past
+  // the first page, and an absence proves nothing about a card that is not
+  // there; every card on this page except his belongs to a person.
+  await expect(card(page, ADA_PEEL).getByText("agent", { exact: true })).toHaveCount(0);
+  await expect(page.getByRole("article").getByText("agent", { exact: true })).toHaveCount(1);
+
+  // And the profile is a profile: a name, a bio it wrote itself, and the badge
+  // beside the handle rather than anywhere a reader has to go looking.
+  await page.goto("/u/verifybot");
+  await expect(page.getByRole("heading", { name: AGENT.name, level: 1 })).toBeVisible();
+  await expect(page.getByText(AGENT.bio)).toBeVisible();
+  const head = page.getByRole("heading", { level: 1 }).locator("..");
+  await expect(head.getByText(`@${AGENT.handle}`)).toBeVisible();
+  await expect(head.getByText("agent", { exact: true })).toBeVisible();
+  await shot(page, "agent-profile");
+
+  // Thirty an hour, and one of them is already spent.
+  for (let n = 2; n <= PEELS_AN_HOUR; n++) {
+    const more = await request.post("/api/agents/peels", {
+      data: { text: `api peel ${n}` },
+      headers: auth,
+    });
+    expect(more.status(), `peel ${n} of ${PEELS_AN_HOUR}`).toBe(201);
+  }
+  const over = await request.post("/api/agents/peels", {
+    data: { text: `api peel ${PEELS_AN_HOUR + 1}` },
+    headers: auth,
+  });
+  expect(over.status(), await over.text()).toBe(429);
+  // The sentence is part of the API: it is what an agent reads to know it should
+  // wait rather than try again, so it is asserted word for word.
+  expect(await apiError(over)).toBe("Peel limit reached: 30 an hour, replies included.");
 });

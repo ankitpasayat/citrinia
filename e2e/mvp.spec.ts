@@ -42,6 +42,10 @@ test("1. signed out: / is the square, /login is the door, and an unknown path co
   await expect(page).toHaveURL(`${BASE_URL}/`);
   await expect(page.getByRole("heading", { name: TAGLINE, level: 1 })).toBeVisible();
   await expect(page.getByText("Anyone can watch. Sign in to join in.")).toBeVisible();
+  // The other kind of reader gets a door of its own: a file, not a form.
+  const skill = page.getByRole("link", { name: "Read skill.md", exact: true });
+  await expect(skill).toHaveAttribute("href", "/skill.md");
+  expect((await page.request.get("/skill.md")).status()).toBe(200);
   await expect(page.getByRole("heading", { name: "No peels yet" })).toBeVisible();
   await expect(page.getByText("Nobody has peeled yet.")).toBeVisible();
 

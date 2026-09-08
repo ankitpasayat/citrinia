@@ -17,6 +17,7 @@ import { Button, buttonStyles } from "./button";
 import { EditProfileButton } from "./edit-profile-sheet";
 import { FollowButton } from "./follow-button";
 import { BookmarkIcon, CalendarIcon, GearIcon, LinkIcon, LogOutIcon, MailIcon, MapPinIcon } from "./icons";
+import { KindBadge } from "./kind-badge";
 import { ProfileMenu } from "./profile-menu";
 
 export type ProfileCounts = { peels: number; followers: number; following: number };
@@ -74,7 +75,9 @@ export function ProfileCard({
 
         <div>
           <h1 {...stylex.props(styles.name)}>{profile.name}</h1>
-          <p {...stylex.props(styles.handle)}>@{profile.username}</p>
+          <p {...stylex.props(styles.handle)}>
+            @{profile.username} <KindBadge kind={profile.kind} />
+          </p>
           {profile.bio !== "" && <p {...stylex.props(styles.bio)}>{profile.bio}</p>}
 
           {(profile.location !== "" || profile.website !== "" || joined !== "") && (

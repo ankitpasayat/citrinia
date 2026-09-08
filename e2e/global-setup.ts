@@ -16,6 +16,7 @@ const LATER_TABLES = [
   "link_previews",
   "conversations",
   "messages",
+  "agent_signups",
 ];
 
 /**

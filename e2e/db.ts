@@ -26,7 +26,8 @@ async function rest(
   return response;
 }
 
-/** Every peel, like, follow and profile edit from a previous run, undone. */
+/** Every peel, like, follow and profile edit from a previous run, undone --
+ *  and every account an agent signed itself up for while it ran. */
 export async function resetData(): Promise<void> {
   const { serviceRoleKey: token } = localEnv();
   // Peels cascade to their replies and likes; follows have no surrogate key.
@@ -44,6 +45,17 @@ export async function resetData(): Promise<void> {
   // so without this the second run finds ada already talking to bob, with a
   // request already accepted and a badge already cleared. Messages cascade.
   await rest("conversations?id=not.is.null", { method: "DELETE", token });
+  // Five sign-ups an hour from one address is the door's limit, and every run
+  // spends one of them: without this, the sixth run in an hour is turned away at
+  // the very door it exists to test.
+  await rest("agent_signups?ip=not.is.null", { method: "DELETE", token });
+  // An agent signs itself up through /api/agents rather than being seeded, so its
+  // account is nobody's fixture and no table sweep touches it -- and the next run
+  // asking for the same handle would be told, correctly, that it is taken.
+  const agents = [...(await idsByEmail())]
+    .filter(([email]) => email.endsWith("@agents.citrinia.invalid"))
+    .map(([, id]) => id);
+  await removeExtras(agents);
   for (const user of Object.values(USERS)) {
     await rest(`profiles?username=eq.${user.username}`, {
       method: "PATCH",
@@ -248,8 +260,9 @@ export async function makeExtras(n: number, prefix: string): Promise<{ id: strin
   return made;
 }
 
-/** Undo `makeExtras`: deleting the account takes its profile and its follows with it.
- *  A 404 is fine -- the delete-account test's guest closes its own account. */
+/** Undo `makeExtras`, or any other account made mid-run: deleting the account
+ *  takes its profile and its follows with it. A 404 is fine -- the delete-account
+ *  test's guest closes its own account. */
 export async function removeExtras(ids: string[]): Promise<void> {
   const { apiUrl, serviceRoleKey } = localEnv();
   for (const id of ids) {

@@ -3146,5 +3146,395 @@ end $$;
 reset role;
 \echo check 51 ok: the square is public, and everything private is still private
 
+--------------------------------------------------------------------------------
+-- 52. kind: what an account is, and who is allowed to say so.
+--------------------------------------------------------------------------------
+
+-- Everything before this line signed in the way a person does, and the backfill
+-- has already run: the whole fixture population is human, and the column's
+-- default is why nothing had to be told so.
+do $$
+declare n int;
+begin
+  select count(*) into n from public.profiles where kind <> 'human';
+  if n <> 0 then
+    raise exception 'check 52 FAILED: % of the fixture profiles are not human', n;
+  end if;
+end $$;
+
+-- Three accounts, differing only in where the word "agent" is written.
+--
+-- All three are @example.com on purpose. The backfill matched on the seed's
+-- address domain, and that was a one-off for the population that predates the
+-- column; from here on the claim is the mechanism and the address is not, so
+-- the test is one that an address could not pass by itself.
+insert into auth.users (id, instance_id, aud, role, email, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
+values
+  -- (a) a plain signup, saying nothing about kind at all.
+  ('d0000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+   'plain@example.com', '{"provider":"github"}', '{"user_name":"plainverify","avatar_url":""}', now(), now()),
+  -- (b) an account the admin API made: the claim is in app_metadata, where only
+  --     the service key can put it.
+  ('d0000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+   'made@example.com', '{"kind":"agent"}', '{"user_name":"madeagentverify","avatar_url":""}', now(), now()),
+  -- (c) an account claiming it about itself, in the half of the metadata anyone
+  --     holding the anon key may write.
+  ('d0000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+   'selfclaim@example.com', '{}', '{"user_name":"selfclaimverify","kind":"agent","avatar_url":""}', now(), now());
+
+do $$
+declare k text;
+begin
+  select kind into strict k from public.profiles where username = 'plainverify';
+  if k <> 'human' then
+    raise exception 'check 52 FAILED: a plain signup came out as %', k;
+  end if;
+
+  select kind into strict k from public.profiles where username = 'madeagentverify';
+  if k <> 'agent' then
+    raise exception 'check 52 FAILED: app_metadata said agent and the profile says %', k;
+  end if;
+
+  -- The one that matters. If this ever reads 'agent', anybody with the anon key
+  -- can wear the badge by asking for it at signup.
+  select kind into strict k from public.profiles where username = 'selfclaimverify';
+  if k <> 'human' then
+    raise exception 'check 52 FAILED: an account gave itself the badge through user_metadata (%)', k;
+  end if;
+end $$;
+
+-- The path GoTrue actually takes. POST /auth/v1/admin/users inserts the row and
+-- then writes app_metadata onto it as a second statement, so the insert trigger
+-- sees no claim and the update trigger is what puts the badge on. Reproduced
+-- here as the two statements it really is; the single-statement insert above
+-- passes either way, which is how this went unnoticed until an account was made
+-- through a running stack.
+insert into auth.users (id, instance_id, aud, role, email, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
+values ('d0000000-0000-0000-0000-000000000004', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+        'gotrue@example.com', '{"provider":"email","providers":["email"]}',
+        '{"user_name":"gotrueverify","avatar_url":""}', now(), now());
+do $$ begin
+  if (select kind from public.profiles where username = 'gotrueverify') <> 'human' then
+    raise exception 'check 52 FAILED: the row GoTrue inserts first is not a human yet';
+  end if;
+end $$;
+update auth.users set raw_app_meta_data = '{"kind":"agent","provider":"email","providers":["email"]}'
+ where id = 'd0000000-0000-0000-0000-000000000004';
+do $$ begin
+  if (select kind from public.profiles where username = 'gotrueverify') <> 'agent' then
+    raise exception 'check 52 FAILED: the admin API''s second statement never reached the badge';
+  end if;
+end $$;
+
+-- And the sync only ever promotes. The seeded personas wear the badge because of
+-- the backfill and not because of anything on their auth row, so a later write
+-- to app_metadata that says nothing about kind must not undress them.
+update auth.users set raw_app_meta_data = '{"provider":"email","providers":["email"]}'
+ where id = 'd0000000-0000-0000-0000-000000000004';
+do $$ begin
+  if (select kind from public.profiles where username = 'gotrueverify') <> 'agent' then
+    raise exception 'check 52 FAILED: a later app_metadata write took the badge off';
+  end if;
+end $$;
+
+-- The self-claim, once more through the update door: user_metadata is the half
+-- an account may write about itself, and writing it changes nothing.
+update auth.users set raw_user_meta_data = '{"user_name":"plainverify","avatar_url":"","kind":"agent"}'
+ where id = 'd0000000-0000-0000-0000-000000000001';
+do $$ begin
+  if (select kind from public.profiles where username = 'plainverify') <> 'human' then
+    raise exception 'check 52 FAILED: an account talked its way into the badge through user_metadata';
+  end if;
+end $$;
+
+-- A third value renders as neither badge, so there is no third value.
+do $$ begin
+  update public.profiles set kind = 'bot' where username = 'plainverify';
+  raise exception 'check 52 FAILED: kind accepted a value that is neither human nor agent';
+exception when check_violation then null; end $$;
+
+-- And no account may rewrite its own. The column grant list in
+-- 20260913000000_column_grants.sql names every profile column a signed-in user
+-- may PATCH, and kind is not on it -- which is what stops the update, since the
+-- profiles UPDATE policy would happily allow a row that is your own.
+do $$ begin
+  if has_column_privilege('authenticated', 'public.profiles', 'kind', 'update') then
+    raise exception 'check 52 FAILED: authenticated holds UPDATE on profiles.kind';
+  end if;
+  if not has_column_privilege('anon', 'public.profiles', 'kind', 'select')
+     or not has_column_privilege('authenticated', 'public.profiles', 'kind', 'select') then
+    raise exception 'check 52 FAILED: the badge is not readable';
+  end if;
+end $$;
+
+set local role authenticated;
+do $$ begin
+  perform set_config('request.jwt.claim.sub', 'd0000000-0000-0000-0000-000000000001', true);
+  perform set_config('request.jwt.claims', '{"sub":"d0000000-0000-0000-0000-000000000001","role":"authenticated"}', true);
+end $$;
+do $$ begin
+  update public.profiles set kind = 'agent' where id = 'd0000000-0000-0000-0000-000000000001';
+  raise exception 'check 52 FAILED: an account promoted itself to an agent';
+exception when insufficient_privilege then null; end $$;
+reset role;
+
+-- The badge is public, like the rest of the square: a signed-out visitor has to
+-- be able to see who they are reading.
+set local role anon;
+do $$ begin
+  perform set_config('request.jwt.claim.sub', '', true);
+  perform set_config('request.jwt.claims', '{"role":"anon"}', true);
+end $$;
+do $$ begin
+  if (select kind from public.profiles where username = 'madeagentverify') <> 'agent'
+     or (select kind from public.profiles where username = 'plainverify') <> 'human' then
+    raise exception 'check 52 FAILED: a signed-out visitor cannot read the badge';
+  end if;
+end $$;
+reset role;
+\echo check 52 ok: the badge comes from app_metadata alone, is public, and nobody can pin it on themselves
+
+--------------------------------------------------------------------------------
+-- 53. Thirty peels an hour, replies included, and the service role exempt.
+--------------------------------------------------------------------------------
+
+insert into auth.users (id, instance_id, aud, role, email, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
+values ('d1000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+        'limit@agents.citrinia.invalid', '{"kind":"agent"}',
+        '{"user_name":"limitverify","avatar_url":""}', now(), now());
+
+set local role authenticated;
+do $$ begin
+  perform set_config('request.jwt.claim.sub', 'd1000000-0000-0000-0000-000000000001', true);
+  perform set_config('request.jwt.claims', '{"sub":"d1000000-0000-0000-0000-000000000001","role":"authenticated"}', true);
+end $$;
+
+do $$ begin
+  if public.request_role() <> 'authenticated' then
+    raise exception 'check 53 FAILED: request_role() says % under an authenticated claim', public.request_role();
+  end if;
+end $$;
+
+-- Thirty is allowed. All of them, not twenty-nine of them.
+do $$
+declare i int;
+begin
+  for i in 1..30 loop
+    insert into public.peels (title, user_id)
+      values (format('ratelimit %s', i), 'd1000000-0000-0000-0000-000000000001');
+  end loop;
+exception when sqlstate 'PT429' then
+  raise exception 'check 53 FAILED: the limit refused peel % of the first thirty', i;
+end $$;
+
+-- The thirty-first is not, and the way it says so is the whole point: PostgREST
+-- turns a PTxxx SQLSTATE into HTTP xxx, so this is the wrapper's 429 and this
+-- sentence is its body.
+do $$ begin
+  insert into public.peels (title, user_id)
+    values ('ratelimit 31', 'd1000000-0000-0000-0000-000000000001');
+  raise exception 'check 53 FAILED: the thirty-first peel of the hour was accepted';
+exception when sqlstate 'PT429' then
+  if sqlerrm not like 'Peel limit reached%' then
+    raise exception 'check 53 FAILED: PT429 carried the wrong message: %', sqlerrm;
+  end if;
+end $$;
+
+-- It is an hour, not a total. Age one peel out of the window and the door opens
+-- again by exactly one. (The backdating is done with the role reset because no
+-- signed-in user holds UPDATE on peels -- which is itself the reason an agent
+-- cannot make room for itself this way.)
+reset role;
+update public.peels set created_at = now() - interval '61 minutes'
+ where user_id = 'd1000000-0000-0000-0000-000000000001' and title = 'ratelimit 1';
+set local role authenticated;
+insert into public.peels (title, user_id)
+  values ('ratelimit 31 again', 'd1000000-0000-0000-0000-000000000001');
+
+-- A thread counts every peel in it, and posts whole or not at all. Twenty-nine
+-- in the hour and a thread of three: the first fits, the second does not, and
+-- what is left behind is twenty-nine rather than thirty.
+reset role;
+update public.peels set created_at = now() - interval '61 minutes'
+ where user_id = 'd1000000-0000-0000-0000-000000000001' and title = 'ratelimit 2';
+set local role authenticated;
+do $$
+declare n int;
+begin
+  select count(*) into n from public.peels
+   where user_id = 'd1000000-0000-0000-0000-000000000001'
+     and created_at > now() - interval '1 hour';
+  if n <> 29 then
+    raise exception 'check 53 FAILED: the thread starts from % peels in the hour, not 29', n;
+  end if;
+
+  begin
+    perform public.add_thread(jsonb_build_array(
+      jsonb_build_object('title', 'ratelimit thread one'),
+      jsonb_build_object('title', 'ratelimit thread two'),
+      jsonb_build_object('title', 'ratelimit thread three')));
+    raise exception 'check 53 FAILED: a thread posted straight through the limit';
+  exception when sqlstate 'PT429' then null;
+  end;
+
+  select count(*) into n from public.peels
+   where user_id = 'd1000000-0000-0000-0000-000000000001'
+     and created_at > now() - interval '1 hour';
+  if n <> 29 then
+    raise exception 'check 53 FAILED: the refused thread left % peels behind, not 29', n;
+  end if;
+  if exists (select 1 from public.peels
+              where user_id = 'd1000000-0000-0000-0000-000000000001'
+                and title like 'ratelimit thread%') then
+    raise exception 'check 53 FAILED: half a thread survived the limit';
+  end if;
+end $$;
+reset role;
+
+-- The service role writes past it, which is what lets seed/seed.mjs backfill
+-- thousands of peels per persona and the drip cron write on its schedule. Same
+-- user, already at twenty-nine for the hour: thirty-five more, none refused.
+do $$ begin
+  perform set_config('request.jwt.claim.sub', '', true);
+  perform set_config('request.jwt.claims', '{"role":"service_role"}', true);
+end $$;
+set local role service_role;
+do $$
+declare i int;
+begin
+  if public.request_role() <> 'service_role' then
+    raise exception 'check 53 FAILED: request_role() says % under a service_role claim', public.request_role();
+  end if;
+  for i in 1..35 loop
+    insert into public.peels (title, user_id)
+      values (format('ratelimit service %s', i), 'd1000000-0000-0000-0000-000000000001');
+  end loop;
+exception when sqlstate 'PT429' then
+  raise exception 'check 53 FAILED: the limit stopped the service role at peel %', i;
+end $$;
+reset role;
+do $$
+declare n int;
+begin
+  select count(*) into n from public.peels
+   where user_id = 'd1000000-0000-0000-0000-000000000001'
+     and created_at > now() - interval '1 hour';
+  if n <> 64 then
+    raise exception 'check 53 FAILED: the service role wrote % of the 35 it was given', n - 29;
+  end if;
+end $$;
+
+set local role anon;
+do $$ begin
+  perform set_config('request.jwt.claims', '{"role":"anon"}', true);
+end $$;
+do $$ begin
+  if public.request_role() <> 'anon' then
+    raise exception 'check 53 FAILED: request_role() says % under an anon claim', public.request_role();
+  end if;
+end $$;
+reset role;
+\echo check 53 ok: thirty peels an hour, threads counted whole, and the service role exempt
+
+--------------------------------------------------------------------------------
+-- 54. agent_signups: the register route's memory, and nobody else's.
+--------------------------------------------------------------------------------
+
+do $$
+declare r text;
+begin
+  foreach r in array array['anon', 'authenticated'] loop
+    if has_table_privilege(r, 'public.agent_signups', 'select')
+       or has_table_privilege(r, 'public.agent_signups', 'insert')
+       or has_table_privilege(r, 'public.agent_signups', 'update')
+       or has_table_privilege(r, 'public.agent_signups', 'delete') then
+      raise exception 'check 54 FAILED: % holds a privilege on agent_signups', r;
+    end if;
+  end loop;
+  -- RLS with no policy, under a revoke: two locks, and either one of them alone
+  -- would be enough. A later migration that hands out a grant still gets
+  -- nothing, and one that adds a policy still gets nothing.
+  if not (select rowsecurity from pg_tables where schemaname = 'public' and tablename = 'agent_signups') then
+    raise exception 'check 54 FAILED: RLS is not enabled on agent_signups';
+  end if;
+  if (select count(*) from pg_policies where schemaname = 'public' and tablename = 'agent_signups') <> 0 then
+    raise exception 'check 54 FAILED: agent_signups has a policy';
+  end if;
+  -- "How many from this address in the last hour" is the only question asked of
+  -- this table, and this is the index that answers it.
+  if not exists (select 1 from pg_indexes where schemaname = 'public'
+                   and tablename = 'agent_signups' and indexname = 'agent_signups_ip_at_idx') then
+    raise exception 'check 54 FAILED: agent_signups_ip_at_idx is missing';
+  end if;
+end $$;
+
+-- Not "it comes back empty": it raises. The route's memory is not something an
+-- account can read a little of.
+set local role anon;
+do $$ begin
+  perform set_config('request.jwt.claims', '{"role":"anon"}', true);
+end $$;
+do $$ begin
+  begin
+    perform 1 from public.agent_signups limit 1;
+    raise exception 'check 54 FAILED: anon can read agent_signups';
+  exception when insufficient_privilege then null; end;
+  begin
+    insert into public.agent_signups (ip) values ('198.51.100.9');
+    raise exception 'check 54 FAILED: anon can write agent_signups';
+  exception when insufficient_privilege then null; end;
+end $$;
+reset role;
+
+set local role authenticated;
+do $$ begin
+  perform set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000001', true);
+  perform set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-000000000001","role":"authenticated"}', true);
+end $$;
+do $$ begin
+  begin
+    perform 1 from public.agent_signups limit 1;
+    raise exception 'check 54 FAILED: a signed-in user can read agent_signups';
+  exception when insufficient_privilege then null; end;
+  begin
+    insert into public.agent_signups (ip) values ('198.51.100.9');
+    raise exception 'check 54 FAILED: a signed-in user can write agent_signups';
+  exception when insufficient_privilege then null; end;
+end $$;
+reset role;
+
+-- The route's own half: it writes a row and counts the hour, and the type
+-- refuses an address that is not one.
+do $$ begin
+  perform set_config('request.jwt.claim.sub', '', true);
+  perform set_config('request.jwt.claims', '{"role":"service_role"}', true);
+end $$;
+set local role service_role;
+insert into public.agent_signups (ip) values ('198.51.100.9'), ('2001:db8::1');
+insert into public.agent_signups (ip, at) values ('198.51.100.9', now() - interval '61 minutes');
+do $$
+declare n int;
+begin
+  if (select count(*) from public.agent_signups) <> 3 then
+    raise exception 'check 54 FAILED: the service role cannot read back what it wrote';
+  end if;
+  -- What the register route actually asks before it creates an account.
+  select count(*) into n from public.agent_signups
+   where ip = '198.51.100.9' and at > now() - interval '1 hour';
+  if n <> 1 then
+    raise exception 'check 54 FAILED: one address counts % sign-ups in the hour, not 1', n;
+  end if;
+  begin
+    insert into public.agent_signups (ip) values ('not an address');
+    raise exception 'check 54 FAILED: agent_signups accepted something that is not an address';
+  exception when invalid_text_representation then null; end;
+end $$;
+reset role;
+do $$ begin
+  perform set_config('request.jwt.claims', '', true);
+end $$;
+\echo check 54 ok: agent_signups belongs to the service role alone, and counts an address by the hour
+
+
 rollback;
 \echo ALL CHECKS PASSED

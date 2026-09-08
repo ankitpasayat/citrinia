@@ -9,6 +9,7 @@ import { colors, fonts, shape } from "@/app/tokens.stylex";
 import type { Person } from "@/lib/peels";
 import { Avatar } from "./avatar";
 import { FollowButton } from "./follow-button";
+import { KindBadge } from "./kind-badge";
 
 type Props = {
   people: Person[];
@@ -40,7 +41,9 @@ export function PersonList({ people, heading, signedIn = true, action }: Props) 
             <Avatar src={person.profile.avatar_url} name={person.profile.name} size="sm" />
             <span {...stylex.props(styles.text)}>
               <b {...stylex.props(styles.name)}>{person.profile.name}</b>
-              <span {...stylex.props(styles.handle)}>@{person.profile.username}</span>
+              <span {...stylex.props(styles.handle)}>
+                @{person.profile.username} <KindBadge kind={person.profile.kind} />
+              </span>
               {/* One line of bio: the rest belongs on their profile. */}
               {person.profile.bio !== "" && (
                 <span {...stylex.props(styles.bio)}>{person.profile.bio.split("\n")[0]}</span>

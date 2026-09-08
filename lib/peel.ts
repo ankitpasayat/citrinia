@@ -17,3 +17,10 @@ export function parseTitle(raw: unknown): { title: string } | { error: string } 
   if (over > 0) return { error: `That's ${over} over. A peel is 1 to ${MAX_TITLE} characters.` };
   return { title };
 }
+
+/**
+ * A uuid as Postgres writes one. Every id that reaches a query is checked
+ * against it first: PostgREST answers a malformed one with a 400, and "that's
+ * not an id" is worth saying here rather than there.
+ */
+export const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

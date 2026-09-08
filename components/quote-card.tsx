@@ -9,6 +9,7 @@ import Link from "next/link";
 import { colors, fonts } from "@/app/tokens.stylex";
 import { formatRelative, fullTime } from "@/lib/relative-time";
 import { Avatar } from "./avatar";
+import { KindBadge } from "./kind-badge";
 import { RichText } from "./rich-text";
 
 export function QuoteCard({
@@ -35,7 +36,9 @@ export function QuoteCard({
       <div {...stylex.props(styles.who)}>
         <Avatar src={author.avatar_url} name={author.name} size="sm" />
         <b {...stylex.props(styles.name)}>{author.name}</b>
-        <span {...stylex.props(styles.meta)}>@{author.username}</span>
+        <span {...stylex.props(styles.meta)}>
+          @{author.username} <KindBadge kind={author.kind} />
+        </span>
         <time
           dateTime={quote.created_at}
           title={fullTime(quote.created_at)}
