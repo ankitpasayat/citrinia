@@ -1,0 +1,47 @@
+name: checks
+
+# Every gate that needs nothing but the repository: types, lint, unit tests, the
+# production build, and then the schema verifier.
+#
+# supabase/verify.sh needs Docker and nothing else. It runs a throwaway
+# supabase/postgres container, applies supabase/migrations/*.sql into it and runs
+# verify.sql through `docker exec ... psql`, so there is no psql and no Supabase
+# CLI to install on the runner; ubuntu-latest already ships Docker.
+#
+# `pnpm e2e` is deliberately NOT here. Playwright needs a whole local Supabase
+# stack (`npx supabase start` then `npx supabase db reset`) and a production
+# build served by `next start -p 3210`; it is run on a machine, as the README
+# describes.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: "10.24.0" # packageManager in package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22" # engines.node in package.json
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm lint
+      - run: pnpm test
+      # No Supabase env here on purpose: `next build` completes with neither
+      # NEXT_PUBLIC_SUPABASE_URL nor NEXT_PUBLIC_SUPABASE_ANON_KEY set, which is
+      # exactly the condition a checkout without .env.local is in. So this step
+      # proves the build compiles; the deployment inlines the real values.
+      - run: pnpm build
+      - run: supabase/verify.sh
